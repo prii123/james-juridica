@@ -1,0 +1,708 @@
+// Schema para Sistema Jurídico de Insolvencia
+// Cumple con todas las reglas de negocio especificadas
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// AUTENTICACIÓN Y PERMISOS
+// ========================================
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  nombre      String
+  apellido    String
+  telefono    String?
+  documento   String?  @unique
+  activo      Boolean  @default(true)
+  
+  // Relaciones
+  roleId      String
+  role        Role     @relation(fields: [roleId], references: [id])
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones inversas
+  leads            Lead[]
+  asesorias        Asesoria[]
+  casosAsignados   Caso[] @relation("CasoResponsable")
+  casosCreados     Caso[] @relation("CasoCreador")
+  actuaciones      Actuacion[]
+  audiencias       Audiencia[]
+  facturas         Factura[]
+  gestionesCobro   GestionCobro[]
+  
+  @@map("users")
+}
+
+model Role {
+  id           String @id @default(cuid())
+  nombre       String @unique
+  descripcion  String?
+  
+  // Relaciones
+  users        User[]
+  permissions  RolePermission[]
+  
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("roles")
+}
+
+model Permission {
+  id           String @id @default(cuid())
+  nombre       String @unique
+  descripcion  String?
+  modulo       String
+  
+  // Relaciones
+  roles        RolePermission[]
+  
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  role         Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ========================================
+// FLUJO PRINCIPAL: LEAD → ASESORÍA → CONCILIACIÓN
+// ========================================
+
+// REGLA: Un lead puede tener varias asesorías
+model Lead {
+  id              String    @id @default(cuid())
+  nombre          String
+  email           String
+  telefono        String
+  empresa         String?
+  tipoPersona     TipoPersona @default(NATURAL)
+  documento       String?
+  estado          EstadoLead  @default(NUEVO)
+  origen          String?
+  observaciones   String?
+  
+  // Relaciones
+  responsableId   String?
+  responsable     User?     @relation(fields: [responsableId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  fechaSeguimiento DateTime?
+  
+  // Relaciones inversas - Un lead puede tener varias asesorías
+  asesorias       Asesoria[]
+  
+  @@map("leads")
+}
+
+// REGLA: Una asesoría pertenece a un lead
+model Asesoria {
+  id              String    @id @default(cuid())
+  tipo            TipoAsesoria
+  estado          EstadoAsesoria @default(PROGRAMADA)
+  fecha           DateTime
+  duracion        Int?      // en minutos
+  modalidad       ModalidadAsesoria @default(PRESENCIAL)
+  tema            String
+  descripcion     String?
+  notas           String?
+  valor           Decimal?  @db.Decimal(10, 2)
+  resultado       ResultadoAsesoria? // EXITOSA, RECHAZADA
+  
+  // Relaciones - Una asesoría pertenece a un lead
+  leadId          String
+  lead            Lead      @relation(fields: [leadId], references: [id])
+  asesorId        String
+  asesor          User      @relation(fields: [asesorId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones inversas - Una asesoría puede generar varias conciliaciones si es rechazada
+  conciliaciones  Conciliacion[]
+  
+  @@map("asesorias")
+}
+
+// REGLA: Una conciliación nace de una asesoría rechazada
+model Conciliacion {
+  id              String    @id @default(cuid())
+  numero          String    @unique
+  demandante      String
+  demandado       String
+  valor           Decimal   @db.Decimal(10, 2)
+  estado          EstadoConciliacion @default(SOLICITADA)
+  resultado       ResultadoConciliacion?
+  fechaSolicitud  DateTime  @default(now())
+  fechaAudiencia  DateTime?
+  observaciones   String?
+  
+  // Relaciones - Una conciliación nace de una asesoría rechazada
+  asesoriaId      String
+  asesoria        Asesoria  @relation(fields: [asesoriaId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("conciliaciones")
+}
+
+// ========================================
+// CLIENTES Y CASOS
+// ========================================
+
+// REGLA: Entidad cliente separada
+model Cliente {
+  id              String    @id @default(cuid())
+  nombre          String
+  apellido        String?
+  email           String    @unique
+  telefono        String
+  documento       String    @unique
+  tipoPersona     TipoPersona @default(NATURAL)
+  empresa         String?
+  direccion       String?
+  ciudad          String?
+  activo          Boolean   @default(true)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones inversas
+  casos           Caso[]
+  
+  @@map("clientes")
+}
+
+// REGLA: Un cliente puede tener varios casos activos pero no del mismo tipo
+model Caso {
+  id                String    @id @default(cuid())
+  numeroCaso        String    @unique
+  tipoInsolvencia   TipoInsolvencia
+  estado            EstadoCaso @default(ACTIVO)
+  prioridad         Prioridad @default(MEDIA)
+  valorDeuda        Decimal   @db.Decimal(12, 2)
+  fechaInicio       DateTime  @default(now())
+  fechaCierre       DateTime?
+  observaciones     String?
+  
+  // Relaciones
+  clienteId         String
+  cliente           Cliente   @relation(fields: [clienteId], references: [id])
+  responsableId     String
+  responsable       User      @relation("CasoResponsable", fields: [responsableId], references: [id])
+  creadoPorId       String
+  creadoPor         User      @relation("CasoCreador", fields: [creadoPorId], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relaciones inversas
+  documentos        Documento[]
+  actuaciones       Actuacion[]
+  audiencias        Audiencia[]
+  honorarios        Honorario[]
+  
+  // CONSTRAINT: Un cliente no puede tener casos activos del mismo tipo
+  @@unique([clienteId, tipoInsolvencia, estado], name: "unique_active_case_type")
+  @@map("casos")
+}
+
+// ========================================
+// ACTUACIONES, AUDIENCIAS Y DOCUMENTOS
+// ========================================
+
+// REGLA: Un caso tiene múltiples actuaciones
+model Actuacion {
+  id              String    @id @default(cuid())
+  tipo            TipoActuacion
+  titulo          String
+  descripcion     String
+  estado          EstadoActuacion @default(PENDIENTE)
+  fechaVencimiento DateTime?
+  fechaRespuesta  DateTime?
+  observaciones   String?
+  archivo         String?
+  
+  // Relaciones
+  casoId          String
+  caso            Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  responsableId   String
+  responsable     User      @relation(fields: [responsableId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("actuaciones")
+}
+
+// REGLA: Un caso tiene múltiples audiencias
+model Audiencia {
+  id              String    @id @default(cuid())
+  tipo            TipoAudiencia
+  fechaHora       DateTime
+  estado          EstadoAudiencia @default(PROGRAMADA)
+  modalidad       ModalidadAudiencia @default(PRESENCIAL)
+  direccion       String?
+  enlace          String?
+  observaciones   String?
+  resultado       String?
+  
+  // Relaciones
+  casoId          String
+  caso            Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  responsableId   String
+  responsable     User      @relation(fields: [responsableId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("audiencias")
+}
+
+model Documento {
+  id            String    @id @default(cuid())
+  nombre        String
+  tipo          TipoDocumento
+  descripcion   String?
+  archivo       String    // ruta del archivo
+  tamano        Int       // en bytes
+  extension     String
+  
+  // Relaciones
+  casoId        String
+  caso          Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("documentos")
+}
+
+// ========================================
+// HONORARIOS → FACTURACIÓN → CARTERA
+// ========================================
+
+// REGLA: Honorarios se generan tras respuesta positiva
+model Honorario {
+  id              String    @id @default(cuid())
+  tipo            TipoHonorario
+  modalidadPago   ModalidadPago
+  valor           Decimal   @db.Decimal(10, 2)
+  estado          EstadoHonorario @default(PENDIENTE)
+  fechaVencimiento DateTime?
+  fechaPago       DateTime?
+  observaciones   String?
+  
+  // Para honorarios financiados
+  numeroCuotas    Int?
+  valorCuota      Decimal?  @db.Decimal(10, 2)
+  
+  // Relaciones
+  casoId          String
+  caso            Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones inversas
+  cuotas          CuotaHonorario[]
+  facturas        Factura[] // REGLA: Facturación nace de honorarios
+  cartera         Cartera[] // REGLA: Cartera nace si honorarios son financiados
+  
+  @@map("honorarios")
+}
+
+model CuotaHonorario {
+  id              String    @id @default(cuid())
+  numeroCuota     Int
+  valor           Decimal   @db.Decimal(10, 2)
+  fechaVencimiento DateTime
+  fechaPago       DateTime?
+  estado          EstadoCuota @default(PENDIENTE)
+  observaciones   String?
+  
+  // Relaciones
+  honorarioId     String
+  honorario       Honorario @relation(fields: [honorarioId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("cuotas_honorarios")
+}
+
+// REGLA: Facturación nace de honorarios
+model Factura {
+  id              String    @id @default(cuid())
+  numero          String    @unique
+  fecha           DateTime  @default(now())
+  fechaVencimiento DateTime
+  subtotal        Decimal   @db.Decimal(10, 2)
+  impuestos       Decimal   @db.Decimal(10, 2) @default(0)
+  total           Decimal   @db.Decimal(10, 2)
+  estado          EstadoFactura @default(GENERADA)
+  observaciones   String?
+  
+  // Relaciones - Facturación nace de honorarios
+  honorarioId     String
+  honorario       Honorario @relation(fields: [honorarioId], references: [id])
+  creadoPorId     String
+  creadoPor       User      @relation(fields: [creadoPorId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones inversas
+  items           ItemFactura[]
+  pagos           Pago[]
+  
+  @@map("facturas")
+}
+
+model ItemFactura {
+  id              String    @id @default(cuid())
+  descripcion     String
+  cantidad        Int       @default(1)
+  valorUnitario   Decimal   @db.Decimal(10, 2)
+  valorTotal      Decimal   @db.Decimal(10, 2)
+  
+  // Relaciones
+  facturaId       String
+  factura         Factura   @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  
+  @@map("items_factura")
+}
+
+// REGLA: Cartera nace si honorarios son financiados
+model Cartera {
+  id              String    @id @default(cuid())
+  concepto        String
+  valor           Decimal   @db.Decimal(10, 2)
+  saldo           Decimal   @db.Decimal(10, 2)
+  fechaVencimiento DateTime
+  diasVencido     Int       @default(0)
+  estado          EstadoCartera @default(ACTIVA)
+  observaciones   String?
+  
+  // Relaciones - Cartera nace de honorarios financiados
+  honorarioId     String
+  honorario       Honorario @relation(fields: [honorarioId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones inversas
+  gestionesCobro  GestionCobro[]
+  
+  @@map("cartera")
+}
+
+model GestionCobro {
+  id              String    @id @default(cuid())
+  tipo            TipoGestionCobro
+  fecha           DateTime  @default(now())
+  descripcion     String
+  resultado       String?
+  proximaGestion  DateTime?
+  
+  // Relaciones
+  carteraId       String
+  cartera         Cartera   @relation(fields: [carteraId], references: [id])
+  responsableId   String
+  responsable     User      @relation(fields: [responsableId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("gestiones_cobro")
+}
+
+model Pago {
+  id              String    @id @default(cuid())
+  valor           Decimal   @db.Decimal(10, 2)
+  fecha           DateTime  @default(now())
+  metodoPago      MetodoPago
+  referencia      String?
+  observaciones   String?
+  
+  // Relaciones
+  facturaId       String
+  factura         Factura   @relation(fields: [facturaId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("pagos")
+}
+
+// Modelo de Acuerdos de Pago
+model AcuerdoPago {
+  id              String    @id @default(cuid())
+  valor           Decimal   @db.Decimal(10, 2)
+  numeroCuotas    Int
+  valorCuota      Decimal   @db.Decimal(10, 2)
+  fechaInicio     DateTime
+  estado          EstadoAcuerdo @default(ACTIVO)
+  observaciones   String?
+  
+  // Información del deudor
+  deudorNombre    String
+  deudorDocumento String
+  deudorEmail     String?
+  deudorTelefono  String?
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones inversas
+  cuotas          CuotaAcuerdo[]
+  
+  @@map("acuerdos_pago")
+}
+
+model CuotaAcuerdo {
+  id              String    @id @default(cuid())
+  numeroCuota     Int
+  valor           Decimal   @db.Decimal(10, 2)
+  fechaVencimiento DateTime
+  fechaPago       DateTime?
+  estado          EstadoCuota @default(PENDIENTE)
+  observaciones   String?
+  
+  // Relaciones
+  acuerdoId       String
+  acuerdo         AcuerdoPago @relation(fields: [acuerdoId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("cuotas_acuerdo")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum TipoPersona {
+  NATURAL
+  JURIDICA
+}
+
+enum EstadoLead {
+  NUEVO
+  CONTACTADO
+  CALIFICADO
+  CONVERTIDO
+  PERDIDO
+}
+
+enum TipoAsesoria {
+  INICIAL
+  SEGUIMIENTO
+  ESPECIALIZADA
+}
+
+enum EstadoAsesoria {
+  PROGRAMADA
+  REALIZADA
+  CANCELADA
+  REPROGRAMADA
+}
+
+enum ModalidadAsesoria {
+  PRESENCIAL
+  VIRTUAL
+  TELEFONICA
+}
+
+enum ResultadoAsesoria {
+  EXITOSA
+  RECHAZADA
+}
+
+enum EstadoConciliacion {
+  SOLICITADA
+  PROGRAMADA
+  REALIZADA
+  CANCELADA
+}
+
+enum ResultadoConciliacion {
+  ACUERDO_TOTAL
+  ACUERDO_PARCIAL
+  SIN_ACUERDO
+}
+
+enum EstadoCaso {
+  ACTIVO
+  CERRADO
+  SUSPENDIDO
+  ARCHIVADO
+}
+
+enum TipoInsolvencia {
+  REORGANIZACION
+  LIQUIDACION_JUDICIAL
+  INSOLVENCIA_PERSONA_NATURAL
+  ACUERDO_REORGANIZACION
+}
+
+enum Prioridad {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum TipoDocumento {
+  DEMANDA
+  CONTESTACION
+  PODER
+  CEDULA
+  RUT
+  ESTADOS_FINANCIEROS
+  CERTIFICACION_BANCARIA
+  OTRO
+}
+
+enum TipoActuacion {
+  DERECHO_PETICION
+  LEVANTAMIENTO_EMBARGOS
+  RESPUESTA_REQUERIMIENTO
+  MEMORIAL
+  OTRO
+}
+
+enum EstadoActuacion {
+  PENDIENTE
+  EN_PROCESO
+  ENVIADA
+  RESPONDIDA
+  VENCIDA
+}
+
+enum TipoAudiencia {
+  CONCILIACION
+  ADMISORIA
+  VERIFICACION_CREDITOS
+  CATEGORIA_CREDITOS
+  CONCORDATO
+  OTRA
+}
+
+enum EstadoAudiencia {
+  PROGRAMADA
+  REALIZADA
+  APLAZADA
+  CANCELADA
+}
+
+enum ModalidadAudiencia {
+  PRESENCIAL
+  VIRTUAL
+}
+
+enum TipoHonorario {
+  ASESORIA
+  REPRESENTACION
+  TRAMITE
+  GESTION_COBRANZA
+}
+
+enum ModalidadPago {
+  CONTADO
+  FINANCIADO
+}
+
+enum EstadoHonorario {
+  PENDIENTE
+  PAGADO
+  VENCIDO
+  CANCELADO
+}
+
+enum EstadoCuota {
+  PENDIENTE
+  PAGADA
+  VENCIDA
+}
+
+enum EstadoFactura {
+  GENERADA
+  ENVIADA
+  PAGADA
+  VENCIDA
+  ANULADA
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+  CONSIGNACION
+  CHEQUE
+  TARJETA_CREDITO
+  TARJETA_DEBITO
+}
+
+enum EstadoCartera {
+  ACTIVA
+  GESTIONANDO
+  RECUPERADA
+  INCOBRABLE
+}
+
+enum TipoGestionCobro {
+  LLAMADA
+  EMAIL
+  CARTA
+  VISITA
+  JURIDICA
+}
+
+enum EstadoAcuerdo {
+  ACTIVO
+  CUMPLIDO
+  INCUMPLIDO
+  CANCELADO
+}
