@@ -30,6 +30,19 @@ export class LeadsRepository {
             email: true
           }
         },
+        asesorias: {
+          include: {
+            asesor: {
+              select: {
+                nombre: true,
+                apellido: true
+              }
+            }
+          },
+          orderBy: {
+            fecha: 'desc'
+          }
+        },
         _count: {
           select: {
             asesorias: true
@@ -59,6 +72,40 @@ export class LeadsRepository {
         contains: filters.origen,
         mode: 'insensitive'
       }
+    }
+
+    // Agregar funcionalidad de búsqueda
+    if (filters.search) {
+      where.OR = [
+        {
+          nombre: {
+            contains: filters.search,
+            mode: 'insensitive'
+          }
+        },
+        {
+          email: {
+            contains: filters.search,
+            mode: 'insensitive'
+          }
+        },
+        {
+          empresa: {
+            contains: filters.search,
+            mode: 'insensitive'
+          }
+        },
+        {
+          documento: {
+            contains: filters.search
+          }
+        },
+        {
+          telefono: {
+            contains: filters.search
+          }
+        }
+      ]
     }
 
     if (filters.fechaCreacionDesde || filters.fechaCreacionHasta) {

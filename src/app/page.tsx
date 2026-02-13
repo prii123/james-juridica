@@ -18,12 +18,11 @@ export default function HomePage() {
     }
   }, [session, status, router])
 
-  // Mostrar spinner mientras se redirige
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex items-center justify-center">
+    <div className="min-vh-100 bg-dark d-flex align-items-center justify-content-center">
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
-        <p className="text-white text-lg font-medium">Redirigiendo...</p>
+        <div className="w-16 h-16 border-4 border-light border-t-transparent rounded-circle animate-spin mb-3 d-block mx-auto"></div>
+        <p className="text-light fs-5 fw-medium">Redirigiendo...</p>
       </div>
     </div>
   )

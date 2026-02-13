@@ -7,64 +7,62 @@ export default function TopBar() {
   const { data: session } = useSession()
 
   return (
-    <header className="bg-white/95 backdrop-blur-sm border-b border-slate-200/80 px-6 py-4 shadow-sm">
-      <div className="flex items-center justify-between">
+    <header className="bg-white border-bottom border-secondary px-4 py-3 shadow">
+      <div className="d-flex align-items-center justify-content-between">
         {/* Search */}
-        <div className="flex items-center flex-1 max-w-2xl">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <div className="d-flex align-items-center flex-fill">
+          <div className="input-group">
+            <span className="input-group-text"><Search className="h-4 w-4" /></span>
             <input
               type="text"
               placeholder="Buscar casos, clientes, documentos..."
-              className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50/50 focus:bg-white transition-all duration-200 text-sm placeholder-slate-400"
+              className="form-control"
             />
           </div>
         </div>
 
         {/* Right side - Notifications and User */}
-        <div className="flex items-center space-x-6">
+        <div className="d-flex align-items-center gap-3">
           {/* Quick Actions */}
-          <div className="hidden md:flex items-center space-x-2">
-            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200 text-slate-600 hover:text-slate-900">
+          <div className="d-none d-md-flex align-items-center gap-2">
+            <button className="btn btn-outline-secondary btn-sm">
               <Bell className="h-5 w-5" />
             </button>
             
             {/* Notification Badge */}
-            <div className="relative">
-              <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200">
-                <Bell className="h-5 w-5 text-slate-600" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+            <div className="position-relative">
+              <button className="btn btn-outline-secondary btn-sm position-relative">
+                <Bell className="h-5 w-5" />
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"></span>
               </button>
             </div>
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center space-x-4 pl-4 border-l border-slate-200">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-slate-900">
+          <div className="d-flex align-items-center gap-3 ps-3 border-start border-secondary">
+            <div className="d-none d-sm-block text-end">
+              <p className="mb-0 fw-semibold text-dark">
                 {session?.user?.name || 'Usuario'}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="mb-0 small text-muted">
                 {session?.user?.email || 'usuario@ejemplo.com'}
               </p>
             </div>
             
-            {/* Avatar */}
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-white">
+            <div className="d-flex align-items-center gap-3">
+              <div className="position-relative">
+                <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center shadow" style={{width: '40px', height: '40px'}}>
                   <User className="h-5 w-5 text-white" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white"></div>
+                <div className="position-absolute bottom-0 end-0 bg-success rounded-circle border border-white" style={{width: '12px', height: '12px'}}></div>
               </div>
               
-              {/* Logout Button */}
               <button
                 onClick={() => signOut({ callbackUrl: '/auth/login' })}
-                className="p-2.5 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 text-slate-600 group"
+                className="btn btn-outline-danger btn-sm"
                 title="Cerrar sesión"
               >
-                <LogOut className="h-4 w-4 group-hover:animate-pulse" />
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           </div>

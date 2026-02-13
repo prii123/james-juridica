@@ -86,6 +86,12 @@ export const PERMISSIONS = {
     EDIT: 'asesorias.edit',
     DELETE: 'asesorias.delete',
   },
+  CONCILIACIONES: {
+    VIEW: 'conciliaciones.view',
+    CREATE: 'conciliaciones.create',
+    EDIT: 'conciliaciones.edit',
+    DELETE: 'conciliaciones.delete',
+  },
   CASOS: {
     VIEW: 'casos.view',
     CREATE: 'casos.create',

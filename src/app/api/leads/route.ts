@@ -8,15 +8,17 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const limit = parseInt(searchParams.get('limit') || '50')
     const estado = searchParams.get('estado')
     const tipoPersona = searchParams.get('tipoPersona')
     const responsableId = searchParams.get('responsableId')
+    const search = searchParams.get('search')
 
     const filters: any = {}
     if (estado) filters.estado = estado
     if (tipoPersona) filters.tipoPersona = tipoPersona
     if (responsableId) filters.responsableId = responsableId
+    if (search) filters.search = search
 
     const leadsService = new LeadsService()
     const result = await leadsService.getLeads(filters, page, limit)

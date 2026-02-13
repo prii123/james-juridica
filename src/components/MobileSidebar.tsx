@@ -12,40 +12,38 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="d-lg-none position-fixed" style={{top: '1rem', left: '1rem', zIndex: 50}}>
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 bg-white rounded-lg shadow-md border border-gray-200"
+          className="p-2 bg-white rounded-3 shadow border border-secondary"
         >
-          <Menu className="h-5 w-5 text-gray-600" />
+          <Menu style={{width: '20px', height: '20px'}} className="text-secondary" />
         </button>
       </div>
 
       {/* Overlay */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="d-lg-none position-fixed bg-dark opacity-50"
+          style={{top: 0, left: 0, right: 0, bottom: 0, zIndex: 40}}
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
-      <div className={`
-        lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">ERP Jurídico</h2>
+      <div className={`d-lg-none position-fixed bg-white transition-all ${isOpen ? 'start-0' : ''}`} style={{top: 0, bottom: 0, width: '16rem', zIndex: 50, transform: isOpen ? 'translateX(0)' : 'translateX(-100%)'}}>
+        <div className="d-flex align-items-center justify-content-between p-3 border-bottom border-secondary">
+          <h2 className="fs-5 fw-semibold text-dark">ERP Jurídico</h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 btn btn-light rounded"
           >
-            <X className="h-5 w-5 text-gray-600" />
+            <X style={{width: '20px', height: '20px'}} className="text-secondary" />
           </button>
         </div>
         
-        <div className="h-full overflow-y-auto">
-          <Sidebar className="border-r-0" />
+        <div className="h-100 overflow-auto">
+          <Sidebar className="border-end-0" />
         </div>
       </div>
     </>

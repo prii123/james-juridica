@@ -41,6 +41,23 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
+export async function PATCH(request: NextRequest, { params }: Params) {
+  try {
+    await requirePermission(PERMISSIONS.LEADS.EDIT)
+
+    const body = await request.json()
+    const leadsService = new LeadsService()
+    const lead = await leadsService.updateLead(params.id, body)
+
+    return NextResponse.json(lead)
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 400 }
+    )
+  }
+}
+
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     await requirePermission(PERMISSIONS.LEADS.DELETE)

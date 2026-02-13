@@ -33,6 +33,7 @@ export interface LeadFilters {
   origen?: string
   fechaCreacionDesde?: Date
   fechaCreacionHasta?: Date
+  search?: string
 }
 
 export interface LeadWithRelations {
@@ -55,6 +56,17 @@ export interface LeadWithRelations {
     apellido: string
     email: string
   } | null
+  asesorias: Array<{
+    id: string
+    tipo: string
+    estado: string
+    fecha: Date
+    tema: string
+    asesor: {
+      nombre: string
+      apellido: string
+    }
+  }>
   _count: {
     asesorias: number
   }
