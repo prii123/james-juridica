@@ -83,7 +83,7 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
       // Cargar asesoría y asesores en paralelo
       const [asesoriaResponse, asesoresResponse] = await Promise.all([
         fetch(`/api/asesorias/${params.asesoriaId}`),
-        fetch('/api/usuarios?role=ASESOR')
+        fetch('/api/usuarios?role=Asesor')
       ])
 
       if (asesoriaResponse.ok) {
@@ -111,13 +111,18 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
       }
 
       if (asesoresResponse.ok) {
-        const asesoresData = await asesoresResponse.json()
-        setAsesores(asesoresData)
+        const response = await asesoresResponse.json()
+        // La API devuelve { usuarios: [...] }, no un array directamente
+        setAsesores(Array.isArray(response) ? response : response.usuarios || [])
+      } else {
+        console.error('Error al cargar asesores:', asesoresResponse.status)
+        setAsesores([]) // Asegurar que asesores siempre sea un array
       }
 
     } catch (error) {
       console.error('Error al cargar datos:', error)
       setErrors({ general: 'Error al cargar datos' })
+      setAsesores([]) // Asegurar que asesores siempre sea un array vacío en caso de error
     } finally {
       setLoadingData(false)
     }
@@ -377,7 +382,7 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
                     required
                   >
                     <option value="">Seleccionar asesor</option>
-                    {asesores.map((asesor) => (
+                    {Array.isArray(asesores) && asesores.map((asesor) => (
                       <option key={asesor.id} value={asesor.id}>
                         {asesor.nombre} {asesor.apellido}
                       </option>

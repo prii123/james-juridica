@@ -419,13 +419,13 @@ export default function AsesoriaPage() {
                           >
                             <Eye size={14} />
                           </Link>
-                          <Link 
+                          {/* <Link 
                             href={`/asesorias/${asesoria.id}/editar`}
                             className="btn btn-outline-secondary btn-sm"
                             title="Editar"
                           >
                             <Edit size={14} />
-                          </Link>
+                          </Link> */}
                         </div>
                       </td>
                     </tr>

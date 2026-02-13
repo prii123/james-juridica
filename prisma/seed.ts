@@ -47,6 +47,36 @@ async function main() {
       }
     }),
 
+    // Permisos de Seguimientos
+    prisma.permission.create({
+      data: {
+        nombre: 'seguimientos.view',
+        descripcion: 'Ver seguimientos',
+        modulo: 'seguimientos'
+      }
+    }),
+    prisma.permission.create({
+      data: {
+        nombre: 'seguimientos.create',
+        descripcion: 'Crear seguimientos',
+        modulo: 'seguimientos'
+      }
+    }),
+    prisma.permission.create({
+      data: {
+        nombre: 'seguimientos.edit',
+        descripcion: 'Editar seguimientos',
+        modulo: 'seguimientos'
+      }
+    }),
+    prisma.permission.create({
+      data: {
+        nombre: 'seguimientos.delete',
+        descripcion: 'Eliminar seguimientos',
+        modulo: 'seguimientos'
+      }
+    }),
+
     // Permisos de Asesorías  
     prisma.permission.create({
       data: {
@@ -333,6 +363,7 @@ async function main() {
     p.nombre.includes('audiencias.') ||
     p.nombre.includes('honorarios.') ||
     p.nombre.includes('conciliaciones.') ||
+    p.nombre.includes('seguimientos.') ||
     p.nombre === 'dashboard.view' ||
     p.nombre === 'asesorias.view' ||
     p.nombre === 'leads.view'
@@ -351,6 +382,7 @@ async function main() {
   const asesorPermissions = permissions.filter(p => 
     p.nombre.includes('leads.') ||
     p.nombre.includes('asesorias.') ||
+    p.nombre.includes('seguimientos.') ||
     p.nombre === 'dashboard.view' ||
     p.nombre === 'casos.view'
   )
@@ -393,11 +425,11 @@ async function main() {
     }
   })
 
-  // Crear usuario admin con credenciales específicas (admin/admin123)
+  // Crear usuario admin con credenciales específicas (admin/admin12345678)
   const adminTestUser = await prisma.user.create({
     data: {
       email: 'admin',
-      password: await bcrypt.hash('admin123', 12),
+      password: await bcrypt.hash('admin12345678', 12),
       nombre: 'Admin',
       apellido: 'Test',
       documento: '0000000001',
@@ -465,6 +497,70 @@ async function main() {
   ])
 
   console.log(`✅ Creados ${leads.length} leads de ejemplo`)
+
+  // Crear algunos seguimientos de ejemplo
+  await Promise.all([
+    // Seguimientos para el primer lead (Carlos Ramírez)
+    prisma.seguimiento.create({
+      data: {
+        tipo: 'LLAMADA',
+        descripcion: 'Llamada inicial para presentar servicios de insolvencia',
+        fecha: new Date('2024-02-10T10:30:00'),
+        duracion: 15,
+        resultado: 'Cliente interesado, solicita información detallada',
+        proximoSeguimiento: new Date('2024-02-15T14:00:00'),
+        leadId: leads[0].id,
+        usuarioId: asesorUser.id
+      }
+    }),
+    prisma.seguimiento.create({
+      data: {
+        tipo: 'EMAIL',
+        descripcion: 'Envío de propuesta detallada y cronograma de proceso',
+        fecha: new Date('2024-02-12T09:15:00'),
+        resultado: 'Email enviado exitosamente con documentación',
+        leadId: leads[0].id,
+        usuarioId: asesorUser.id
+      }
+    }),
+    prisma.seguimiento.create({
+      data: {
+        tipo: 'WHATSAPP',
+        descripcion: 'Confirmación de recepción de documentos y dudas adicionales',
+        fecha: new Date('2024-02-13T16:45:00'),
+        resultado: 'Cliente confirma interés, programa asesoría',
+        proximoSeguimiento: new Date('2024-02-20T10:00:00'),
+        leadId: leads[0].id,
+        usuarioId: asesorUser.id
+      }
+    }),
+
+    // Seguimientos para el segundo lead (Ana María)
+    prisma.seguimiento.create({
+      data: {
+        tipo: 'REUNION',
+        descripcion: 'Primera reunión presencial para evaluar situación financiera',
+        fecha: new Date('2024-02-11T15:00:00'),
+        duracion: 45,
+        resultado: 'Situación compleja, requiere análisis detallado',
+        leadId: leads[1].id,
+        usuarioId: abogadoUser.id
+      }
+    }),
+    prisma.seguimiento.create({
+      data: {
+        tipo: 'NOTA',
+        descripcion: 'Revisión de documentos financieros proporcionados',
+        fecha: new Date('2024-02-13T11:30:00'),
+        resultado: 'Documentación completa, procede a asesoría especializada',
+        proximoSeguimiento: new Date('2024-02-18T09:00:00'),
+        leadId: leads[1].id,
+        usuarioId: abogadoUser.id
+      }
+    })
+  ])
+
+  console.log('✅ Creados seguimientos de ejemplo')
 
   // Crear algunas asesorías de ejemplo
   await prisma.asesoria.create({

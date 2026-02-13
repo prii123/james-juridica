@@ -58,6 +58,7 @@ export default function LeadSeguimientoPage() {
   const [lead, setLead] = useState<Lead | null>(null)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingSeguimiento, setEditingSeguimiento] = useState<SeguimientoItem | null>(null)
   const [newSeguimiento, setNewSeguimiento] = useState<NewSeguimientoForm>({
     tipo: 'NOTA',
     descripcion: '',
@@ -75,6 +76,7 @@ export default function LeadSeguimientoPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
+      
       // Fetch lead data
       const leadResponse = await fetch(`/api/leads/${leadId}`)
       if (leadResponse.ok) {
@@ -82,34 +84,12 @@ export default function LeadSeguimientoPage() {
         setLead(leadData)
       }
 
-      // Fetch seguimientos (mock data for now)
-      // const seguimientosResponse = await fetch(`/api/leads/${leadId}/seguimiento`)
-      // if (seguimientosResponse.ok) {
-      //   const seguimientosData = await seguimientosResponse.json()
-      //   setSeguimientos(seguimientosData)
-      // }
-      
-      // Mock data for demonstration
-      setSeguimientos([
-        {
-          id: '1',
-          tipo: 'LLAMADA',
-          descripcion: 'Llamada inicial para presentar servicios',
-          fecha: new Date('2024-02-10T10:30:00'),
-          duracion: 15,
-          resultado: 'Interesado en asesoría',
-          proximoSeguimiento: new Date('2024-02-15T14:00:00'),
-          usuario: { id: '1', nombre: 'Juan', apellido: 'Pérez' }
-        },
-        {
-          id: '2',
-          tipo: 'EMAIL',
-          descripcion: 'Envío de propuesta detallada',
-          fecha: new Date('2024-02-12T09:15:00'),
-          resultado: 'Enviado exitosamente',
-          usuario: { id: '1', nombre: 'Juan', apellido: 'Pérez' }
-        }
-      ])
+      // Fetch seguimientos
+      const seguimientosResponse = await fetch(`/api/leads/${leadId}/seguimiento`)
+      if (seguimientosResponse.ok) {
+        const seguimientosData = await seguimientosResponse.json()
+        setSeguimientos(seguimientosData)
+      }
     } catch (error) {
       console.error('Error al cargar datos:', error)
     } finally {
@@ -129,43 +109,121 @@ export default function LeadSeguimientoPage() {
     }
 
     try {
-      // const response = await fetch(`/api/leads/${leadId}/seguimiento`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(seguimientoData)
-      // })
-
-      // if (response.ok) {
-      //   fetchData()
-      //   setShowForm(false)
-      //   setNewSeguimiento({
-      //     tipo: 'NOTA',
-      //     descripcion: '',
-      //     duracion: '',
-      //     resultado: '',
-      //     proximoSeguimiento: ''
-      //   })
-      // }
-
-      // Mock success for demo
-      const mockSeguimiento: SeguimientoItem = {
-        id: Date.now().toString(),
-        ...seguimientoData,
-        fecha: new Date(),
-        usuario: { id: '1', nombre: 'Usuario', apellido: 'Demo' }
-      }
-      setSeguimientos([mockSeguimiento, ...seguimientos])
-      setShowForm(false)
-      setNewSeguimiento({
-        tipo: 'NOTA',
-        descripcion: '',
-        duracion: '',
-        resultado: '',
-        proximoSeguimiento: ''
+      const response = await fetch(`/api/leads/${leadId}/seguimiento`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seguimientoData)
       })
+
+      if (response.ok) {
+        fetchData()
+        setShowForm(false)
+        setNewSeguimiento({
+          tipo: 'NOTA',
+          descripcion: '',
+          duracion: '',
+          resultado: '',
+          proximoSeguimiento: ''
+        })
+      } else {
+        const errorData = await response.json()
+        console.error('Error al guardar seguimiento:', errorData)
+        alert('Error al guardar seguimiento: ' + errorData.error)
+      }
     } catch (error) {
       console.error('Error al guardar seguimiento:', error)
+      alert('Error de conexión al guardar seguimiento')
     }
+  }
+
+  const handleEdit = (seguimiento: SeguimientoItem) => {
+    setEditingSeguimiento(seguimiento)
+    setNewSeguimiento({
+      tipo: seguimiento.tipo,
+      descripcion: seguimiento.descripcion,
+      duracion: seguimiento.duracion?.toString() || '',
+      resultado: seguimiento.resultado || '',
+      proximoSeguimiento: seguimiento.proximoSeguimiento ? 
+        new Date(seguimiento.proximoSeguimiento).toISOString().slice(0, 16) : ''
+    })
+    setShowForm(true)
+  }
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!editingSeguimiento) return
+
+    const seguimientoData = {
+      tipo: newSeguimiento.tipo,
+      descripcion: newSeguimiento.descripcion,
+      duracion: newSeguimiento.duracion ? parseInt(newSeguimiento.duracion) : null,
+      resultado: newSeguimiento.resultado || null,
+      proximoSeguimiento: newSeguimiento.proximoSeguimiento ? new Date(newSeguimiento.proximoSeguimiento) : null,
+    }
+
+    try {
+      const response = await fetch(`/api/leads/${leadId}/seguimiento/${editingSeguimiento.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seguimientoData)
+      })
+
+      if (response.ok) {
+        fetchData()
+        setShowForm(false)
+        setEditingSeguimiento(null)
+        setNewSeguimiento({
+          tipo: 'NOTA',
+          descripcion: '',
+          duracion: '',
+          resultado: '',
+          proximoSeguimiento: ''
+        })
+      } else {
+        const errorData = await response.json()
+        console.error('Error al actualizar seguimiento:', errorData)
+        alert('Error al actualizar seguimiento: ' + errorData.error)
+      }
+    } catch (error) {
+      console.error('Error al actualizar seguimiento:', error)
+      alert('Error de conexión al actualizar seguimiento')
+    }
+  }
+
+  const handleDelete = async (seguimientoId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este seguimiento?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/leads/${leadId}/seguimiento/${seguimientoId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        fetchData()
+      } else {
+        const errorData = await response.json()
+        console.error('Error al eliminar seguimiento:', errorData)
+        alert('Error al eliminar seguimiento: ' + errorData.error)
+      }
+    } catch (error) {
+      console.error('Error al eliminar seguimiento:', error)
+      alert('Error de conexión al eliminar seguimiento')
+    }
+  }
+
+  const handleCancelForm = () => {
+    setShowForm(false)
+    setEditingSeguimiento(null)
+    setNewSeguimiento({
+      tipo: 'NOTA',
+      descripcion: '',
+      duracion: '',
+      resultado: '',
+      proximoSeguimiento: ''
+    })
   }
 
   const getTipoIcon = (tipo: TipoSeguimiento) => {
@@ -246,10 +304,12 @@ export default function LeadSeguimientoPage() {
       {showForm && (
         <div className="card mb-4">
           <div className="card-header">
-            <h5 className="mb-0">Nuevo Seguimiento</h5>
+            <h5 className="mb-0">
+              {editingSeguimiento ? 'Editar Seguimiento' : 'Nuevo Seguimiento'}
+            </h5>
           </div>
           <div className="card-body">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={editingSeguimiento ? handleUpdate : handleSubmit}>
               <div className="row">
                 <div className="col-md-6">
                   <div className="mb-3">
@@ -339,12 +399,12 @@ export default function LeadSeguimientoPage() {
 
               <div className="d-flex gap-2">
                 <button type="submit" className="btn btn-primary">
-                  Guardar
+                  {editingSeguimiento ? 'Actualizar' : 'Guardar'}
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-outline-secondary"
-                  onClick={() => setShowForm(false)}
+                  onClick={handleCancelForm}
                 >
                   Cancelar
                 </button>
@@ -392,8 +452,19 @@ export default function LeadSeguimientoPage() {
                         <small className="text-muted">
                           {new Date(seguimiento.fecha).toLocaleString()}
                         </small>
-                        <button className="btn btn-sm btn-outline-secondary">
+                        <button 
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => handleEdit(seguimiento)}
+                          title="Editar seguimiento"
+                        >
                           <Edit size={12} />
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDelete(seguimiento.id)}
+                          title="Eliminar seguimiento"
+                        >
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>

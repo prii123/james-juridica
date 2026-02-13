@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
     let whereClause: any = { activo: true }
 
     // Filtro por rol usando el nombre del rol
-    if (role === 'ASESOR') {
+    if (role === 'ASESOR' || role === 'Asesor') {
       whereClause.role = {
-        nombre: 'ASESOR'
+        nombre: 'Asesor'
       }
     }
 

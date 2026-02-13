@@ -12,7 +12,33 @@ export interface User {
 
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getServerSession(authOptions)
-  return session?.user as User || null
+  if (!session?.user?.id) return null
+
+  // Obtener permisos frescos de la base de datos para evitar problemas con JWT cacheado
+  const userFromDb = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: {
+      role: {
+        include: {
+          permissions: {
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  if (!userFromDb) return null
+
+  return {
+    id: userFromDb.id,
+    email: userFromDb.email,
+    name: `${userFromDb.nombre} ${userFromDb.apellido}`,
+    role: userFromDb.role.nombre,
+    permissions: userFromDb.role.permissions.map(p => p.permission.nombre)
+  }
 }
 
 export async function hasPermission(permission: string): Promise<boolean> {
@@ -53,6 +79,7 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
 export type PermissionModule = 
   | 'dashboard'
   | 'leads'
+  | 'seguimientos'
   | 'asesorias'
   | 'conciliaciones'
   | 'casos'
@@ -79,6 +106,12 @@ export const PERMISSIONS = {
     CREATE: 'leads.create', 
     EDIT: 'leads.edit',
     DELETE: 'leads.delete',
+  },
+  SEGUIMIENTOS: {
+    VIEW: 'seguimientos.view',
+    CREATE: 'seguimientos.create',
+    EDIT: 'seguimientos.edit',
+    DELETE: 'seguimientos.delete',
   },
   ASESORIAS: {
     VIEW: 'asesorias.view',

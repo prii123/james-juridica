@@ -4,7 +4,7 @@ import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 
 interface Params {
   params: {
-    id: string
+    leadId: string
   }
 }
 
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     await requirePermission(PERMISSIONS.LEADS.VIEW)
 
     const leadsService = new LeadsService()
-    const lead = await leadsService.getLeadById(params.id)
+    const lead = await leadsService.getLeadById(params.leadId)
 
     return NextResponse.json(lead)
   } catch (error: any) {
@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const body = await request.json()
     const leadsService = new LeadsService()
-    const lead = await leadsService.updateLead(params.id, body)
+    const lead = await leadsService.updateLead(params.leadId, body)
 
     return NextResponse.json(lead)
   } catch (error: any) {
@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     const body = await request.json()
     const leadsService = new LeadsService()
-    const lead = await leadsService.updateLead(params.id, body)
+    const lead = await leadsService.updateLead(params.leadId, body)
 
     return NextResponse.json(lead)
   } catch (error: any) {
@@ -63,7 +63,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     await requirePermission(PERMISSIONS.LEADS.DELETE)
 
     const leadsService = new LeadsService()
-    await leadsService.deleteLead(params.id)
+    await leadsService.deleteLead(params.leadId)
 
     return NextResponse.json({ message: 'Lead eliminado exitosamente' })
   } catch (error: any) {

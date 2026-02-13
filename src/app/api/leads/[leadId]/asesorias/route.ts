@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 
 interface Params {
   params: {
-    id: string
+    leadId: string
   }
 }
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     // Obtener el lead para verificar que existe y obtener su nombre
     const lead = await prisma.lead.findUnique({
-      where: { id: params.id },
+      where: { id: params.leadId },
       select: { 
         id: true, 
         nombre: true 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     // Obtener las asesorías del lead
     const asesorias = await prisma.asesoria.findMany({
-      where: { leadId: params.id },
+      where: { leadId: params.leadId },
       include: {
         asesor: {
           select: {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     
     // Verificar que el lead existe
     const lead = await prisma.lead.findUnique({
-      where: { id: params.id }
+      where: { id: params.leadId }
     })
 
     if (!lead) {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const asesoria = await prisma.asesoria.create({
       data: {
         ...body,
-        leadId: params.id
+        leadId: params.leadId
       },
       include: {
         asesor: {

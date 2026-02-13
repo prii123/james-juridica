@@ -35,6 +35,7 @@ model User {
   // Relaciones inversas
   leads            Lead[]
   asesorias        Asesoria[]
+  seguimientos     Seguimiento[]
   casosAsignados   Caso[] @relation("CasoResponsable")
   casosCreados     Caso[] @relation("CasoCreador")
   actuaciones      Actuacion[]
@@ -116,8 +117,32 @@ model Lead {
   
   // Relaciones inversas - Un lead puede tener varias asesorías
   asesorias       Asesoria[]
+  seguimientos    Seguimiento[]
   
   @@map("leads")
+}
+
+// REGLA: Un seguimiento pertenece a un lead  
+model Seguimiento {
+  id              String    @id @default(cuid())
+  tipo            TipoSeguimiento
+  descripcion     String
+  fecha           DateTime  @default(now())
+  duracion        Int?      // en minutos
+  resultado       String?
+  proximoSeguimiento DateTime?
+  
+  // Relaciones
+  leadId          String
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  usuarioId       String
+  usuario         User      @relation(fields: [usuarioId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("seguimientos")
 }
 
 // REGLA: Una asesoría pertenece a un lead
@@ -705,4 +730,12 @@ enum EstadoAcuerdo {
   CUMPLIDO
   INCUMPLIDO
   CANCELADO
+}
+
+enum TipoSeguimiento {
+  LLAMADA
+  EMAIL
+  REUNION
+  NOTA
+  WHATSAPP
 }

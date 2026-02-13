@@ -119,6 +119,14 @@ export default function ConciliacionesPage() {
     }).format(value)
   }
 
+  const calculateDaysElapsed = (startDate: string) => {
+    const start = new Date(startDate)
+    const now = new Date()
+    const diffTime = now.getTime() - start.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
   const handleSearchChange = (value: string) => {
     setSearch(value)
     setCurrentPage(1) // Reset to first page when searching
@@ -225,6 +233,7 @@ export default function ConciliacionesPage() {
                     <th>Valor</th>
                     <th>Estado</th>
                     <th>Fecha Solicitud</th>
+                    <th>Días</th>
                     <th>Asesoría Origen</th>
                     <th>Asesor</th>
                     <th>Acciones</th>
@@ -270,6 +279,13 @@ export default function ConciliacionesPage() {
                                 Audiencia: {formatDate(conciliacion.fechaAudiencia)}
                               </div>
                             )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="small text-center">
+                            <div className="fw-semibold text-primary">
+                              {calculateDaysElapsed(conciliacion.fechaSolicitud)} días
+                            </div>
                           </div>
                         </td>
                         <td>
