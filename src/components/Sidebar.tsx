@@ -94,8 +94,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   : 'hover-shadow-sm'
                 }`}
               style={{
-                backgroundColor: isActive ? '#3b82f6' : 'transparent',
-                borderColor: isActive ? '#60a5fa' : 'transparent',
+                backgroundColor: isActive ? '#6b7280' : 'transparent',
+                borderColor: isActive ? '#9ca3af' : 'transparent',
                 color: isActive ? '#ffffff' : '#e2e8f0'
               }}
             >

@@ -360,7 +360,7 @@ export default function CarteraPage() {
                         >
                           <Eye size={14} />
                         </Link>
-                        {factura.saldoPendiente > 0 ? (
+                        {/* {factura.saldoPendiente > 0 ? (
                           <Link 
                             href={`/cartera/pagos/${factura.id}`}
                             className="btn btn-sm btn-outline-success"
@@ -376,7 +376,7 @@ export default function CarteraPage() {
                           >
                             <DollarSign size={14} />
                           </button>
-                        )}
+                        )} */}
                         {(factura.numeroCuotas ?? 1) === 1 && factura.saldoPendiente > 0 && (
                           <Link 
                             href={`/cartera/financiacion/${factura.id}`}

@@ -32,6 +32,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Renderizar con sidebar para usuarios autenticados en rutas protegidas
   return (
     <div className="min-vh-100 bg-light">
+      {/* TopBar fijo global */}
+      <TopBar />
+      
       <div className="d-flex vh-100">
         {/* Desktop Sidebar */}
         <aside 
@@ -48,13 +51,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-fill d-flex flex-column d-lg-block" style={{marginLeft: '0'}}>
           {/* Desktop: apply margin */}
           <div className="d-none d-lg-block" style={{marginLeft: '16rem'}}>
-            {/* Top Bar */}
-            <div className="bg-white border-bottom border-secondary shadow">
-              <TopBar />
-            </div>
-            
             {/* Page content */}
-            <main className="overflow-auto p-3 p-lg-4 bg-light" style={{minHeight: 'calc(100vh - 64px)'}}>
+            <main className="overflow-auto p-3 p-lg-4 bg-light" style={{minHeight: '100vh', paddingTop: '100px'}}>
               <div className="container-fluid">
                 {children}
               </div>
@@ -63,13 +61,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
           
           {/* Mobile: no margin */}
           <div className="d-lg-none d-flex flex-column h-100">
-            {/* Top Bar */}
-            <div className="bg-white border-bottom border-secondary shadow">
-              <TopBar />
-            </div>
-            
             {/* Page content */}
-            <main className="flex-fill overflow-auto p-3 bg-light">
+            <main className="flex-fill overflow-auto p-3 bg-light" style={{paddingTop: '100px'}}>
               <div className="container-fluid">
                 {children}
               </div>
