@@ -389,6 +389,17 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                   <Edit3 size={16} />
                   Editar Detalles
                 </Link>
+
+                {/* Sistema de archivos - Solo disponible si la asesoría está realizada */}
+                {asesoria.estado === 'REALIZADA' && (
+                  <Link 
+                    href={`/leads/${asesoria.lead.id}/archivos`}
+                    className="btn btn-info d-flex align-items-center justify-content-center gap-2"
+                  >
+                    <FileText size={16} />
+                    Ver Archivos
+                  </Link>
+                )}
               </div>
             </div>
           </div>

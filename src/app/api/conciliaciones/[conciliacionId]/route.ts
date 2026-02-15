@@ -97,6 +97,9 @@ export async function PATCH(
 
     // Variables para el resultado
     let casoCreado = null
+    let honorarioCreado = null
+    let facturaCreada = null
+    let casoExistente = null
     
     // Si se está aceptando la conciliación (estado REALIZADA) y se solicita crear caso  
     if (body.createCase && body.estado === 'REALIZADA' && existingConciliacion.estado !== 'REALIZADA') {
@@ -127,19 +130,89 @@ export async function PATCH(
         })
       }
 
-      // Crear el caso automáticamente
-      casoCreado = await prisma.caso.create({
-        data: {
-          numeroCaso: numeroCaso,
-          tipoInsolvencia: 'LIQUIDACION_JUDICIAL', // Valor por defecto
-          estado: 'ACTIVO',
-          prioridad: 'MEDIA',
-          valorDeuda: existingConciliacion.valor,
-          fechaInicio: new Date(),
-          observaciones: `Caso creado automáticamente al aceptar conciliación ${existingConciliacion.numero}. Demandante: ${existingConciliacion.demandante} vs ${existingConciliacion.demandado}`,
+      // Verificar si ya existe un caso activo para este cliente
+      casoExistente = await prisma.caso.findFirst({
+        where: {
           clienteId: cliente.id,
-          responsableId: existingConciliacion.asesoria.asesorId,
-          creadoPorId: existingConciliacion.asesoria.asesorId
+          tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
+          estado: 'ACTIVO'
+        }
+      })
+
+      if (casoExistente) {
+        // Usar el caso existente y actualizarlo
+        casoCreado = await prisma.caso.update({
+          where: { id: casoExistente.id },
+          data: {
+            valorDeuda: { 
+              increment: Number(existingConciliacion.valor) // Sumar el valor de esta conciliación
+            },
+            observaciones: `${casoExistente.observaciones}\n\nConciliación adicional aceptada: ${existingConciliacion.numero} - ${existingConciliacion.demandante} vs ${existingConciliacion.demandado} por ${existingConciliacion.valor}`,
+            updatedAt: new Date()
+          }
+        })
+      } else {
+        // Crear el caso automáticamente solo si no existe
+        casoCreado = await prisma.caso.create({
+          data: {
+            numeroCaso: numeroCaso,
+            tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
+            estado: 'ACTIVO',
+            prioridad: 'MEDIA',
+            valorDeuda: existingConciliacion.valor,
+            fechaInicio: new Date(),
+            observaciones: `Caso creado automáticamente al aceptar conciliación ${existingConciliacion.numero}. Demandante: ${existingConciliacion.demandante} vs ${existingConciliacion.demandado}`,
+            clienteId: cliente.id,
+            responsableId: existingConciliacion.asesoria.asesorId,
+            creadoPorId: existingConciliacion.asesoria.asesorId
+          }
+        })
+      }
+
+      // Crear honorario automáticamente (valor base de la conciliación como honorario)
+      const valorHonorario = Number(existingConciliacion.valor) * 0.15 // 15% del valor de la conciliación como honorario
+      
+      honorarioCreado = await prisma.honorario.create({
+        data: {
+          tipo: 'REPRESENTACION',
+          modalidadPago: 'CONTADO',
+          valor: valorHonorario,
+          estado: 'PENDIENTE',
+          fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para pagar
+          observaciones: `Honorario generado automáticamente por aceptación de conciliación ${existingConciliacion.numero}`,
+          casoId: casoCreado.id
+        }
+      })
+
+      // Crear factura automática pendiente por facturar
+      const numeroFactura = `FACT-${year}-${randomNum}`
+      const subtotal = valorHonorario
+      const impuestos = subtotal * 0.19 // IVA del 19%
+      const total = subtotal + impuestos
+
+      facturaCreada = await prisma.factura.create({
+        data: {
+          numero: numeroFactura,
+          fecha: new Date(),
+          fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
+          subtotal: subtotal,
+          impuestos: impuestos,
+          total: total,
+          estado: 'GENERADA', // Factura generada, pendiente de envío
+          observaciones: `Factura generada automáticamente por caso ${numeroCaso} - Conciliación aceptada`,
+          ivaActivado: true, // IVA activado por defecto en facturas automáticas
+          honorarioId: honorarioCreado.id,
+          creadoPorId: existingConciliacion.asesoria.asesorId,
+          items: {
+            create: [
+              {
+                descripcion: `Honorarios profesionales - Representación en proceso de insolvencia - Caso ${numeroCaso}`,
+                cantidad: 1,
+                valorUnitario: subtotal,
+                valorTotal: subtotal
+              }
+            ]
+          }
         }
       })
     }
@@ -178,6 +251,19 @@ export async function PATCH(
 
     if (casoCreado) {
       response.casoCreado = casoCreado
+      
+      if (honorarioCreado) {
+        response.honorarioCreado = honorarioCreado
+      }
+      
+      if (facturaCreada) {
+        response.facturaCreada = facturaCreada
+        const casoAction = casoExistente ? 'actualizado' : 'creado'
+        response.message = `¡Conciliación aceptada exitosamente! Se ${casoAction} automáticamente:
+        - Caso: ${casoCreado.numeroCaso} ${casoExistente ? '(actualizado con nueva deuda)' : '(nuevo)'}
+        - Honorario por representación: $${Number(honorarioCreado?.valor).toLocaleString('es-CO')}
+        - Factura pendiente: ${facturaCreada.numero} (Total: $${Number(facturaCreada.total).toLocaleString('es-CO')})`
+      }
     }
 
     return NextResponse.json(response)

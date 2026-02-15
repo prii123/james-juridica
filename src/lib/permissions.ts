@@ -150,6 +150,7 @@ export const PERMISSIONS = {
     VIEW: 'facturacion.view',
     CREATE: 'facturacion.create',
     EDIT: 'facturacion.edit',
+    DELETE: 'facturacion.delete',
   },
   CARTERA: {
     VIEW: 'cartera.view',

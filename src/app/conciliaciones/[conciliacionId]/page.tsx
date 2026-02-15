@@ -247,13 +247,13 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
             {conciliacion.demandante} vs {conciliacion.demandado}
           </p>
         </div>
-        <Link 
+        {/* <Link 
           href={`/conciliaciones/${params.conciliacionId}/editar`}
           className="btn btn-outline-primary d-flex align-items-center gap-2"
         >
           <Edit3 size={16} />
           Editar
-        </Link>
+        </Link> */}
       </div>
 
       <div className="row">
@@ -390,11 +390,11 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                 </Link>
                 
                 <Link 
-                  href={`/conciliaciones/${params.conciliacionId}/documentos`}
-                  className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
+                  href={`/leads/${conciliacion.asesoria.lead.id}/archivos`}
+                  className="btn btn-info d-flex align-items-center justify-content-center gap-2"
                 >
                   <FileText size={16} />
-                  Ver Documentos
+                  Ver Archivos
                 </Link>
               </div>
             </div>

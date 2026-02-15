@@ -42,6 +42,7 @@ model User {
   audiencias       Audiencia[]
   facturas         Factura[]
   gestionesCobro   GestionCobro[]
+  archivosSubidos  Archivo[]
   
   @@map("users")
 }
@@ -118,8 +119,33 @@ model Lead {
   // Relaciones inversas - Un lead puede tener varias asesorías
   asesorias       Asesoria[]
   seguimientos    Seguimiento[]
+  archivos        Archivo[]
   
   @@map("leads")
+}
+
+// REGLA: Un archivo pertenece a un lead
+model Archivo {
+  id              String    @id @default(cuid())
+  nombreOriginal  String    // Nombre original del archivo
+  nombreArchivo   String    // Nombre con el que se guarda en el storage
+  rutaArchivo     String    // Ruta completa en el storage
+  tamano          Int       // Tamaño en bytes
+  tipoMime        String    // Tipo MIME del archivo
+  url             String    // URL para acceder al archivo
+  
+  // Relaciones
+  leadId          String
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subidoPorId     String
+  subidoPor       User      @relation(fields: [subidoPorId], references: [id])
+  
+  // Timestamps
+  fechaSubida     DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("archivos")
 }
 
 // REGLA: Un seguimiento pertenece a un lead  
@@ -401,7 +427,14 @@ model Factura {
   impuestos       Decimal   @db.Decimal(10, 2) @default(0)
   total           Decimal   @db.Decimal(10, 2)
   estado          EstadoFactura @default(GENERADA)
+  modalidadPago   ModalidadPago @default(CONTADO)
   observaciones   String?
+  ivaActivado     Boolean   @default(true)
+  
+  // Para facturas a crédito con financiación
+  numeroCuotas    Int?      // Si es a crédito, número de cuotas
+  valorCuota      Decimal?  @db.Decimal(10, 2) // Valor de cada cuota
+  tasaInteres     Decimal?  @db.Decimal(5, 4) // Tasa de interés mensual
   
   // Relaciones - Facturación nace de honorarios
   honorarioId     String
@@ -416,6 +449,8 @@ model Factura {
   // Relaciones inversas
   items           ItemFactura[]
   pagos           Pago[]
+  cartera         Cartera[] // Para facturas a crédito va a cartera
+  cuotasFactura   CuotaFactura[] // Cuotas de financiación
   
   @@map("facturas")
 }
@@ -434,7 +469,58 @@ model ItemFactura {
   @@map("items_factura")
 }
 
-// REGLA: Cartera nace si honorarios son financiados
+// Modelo para cuotas de facturas financiadas
+model CuotaFactura {
+  id              String    @id @default(cuid())
+  numeroCuota     Int
+  valor           Decimal   @db.Decimal(10, 2)
+  capital         Decimal   @db.Decimal(10, 2) // Capital de la cuota
+  interes         Decimal   @db.Decimal(10, 2) // Interés de la cuota  
+  saldo           Decimal   @db.Decimal(10, 2) // Saldo pendiente después de esta cuota
+  fechaVencimiento DateTime
+  fechaPago       DateTime?
+  estado          EstadoCuota @default(PENDIENTE)
+  observaciones   String?
+  
+  // Campos para seguimiento de pagos
+  valorPagado     Decimal   @db.Decimal(10, 2) @default(0) // Total pagado de esta cuota
+  saldoCuota      Decimal   @db.Decimal(10, 2) // Saldo pendiente de la cuota específica
+  
+  // Relaciones  
+  facturaId       String
+  factura         Factura   @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  
+  // Relación con pagos aplicados
+  abonosPagos     PagoCuota[]
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("cuotas_factura")
+}
+
+// Modelo para relación many-to-many entre Pagos y Cuotas
+model PagoCuota {
+  id              String    @id @default(cuid())
+  valorAplicado   Decimal   @db.Decimal(10, 2) // Parte del pago aplicada a esta cuota
+  fechaAplicacion DateTime  @default(now())
+  observaciones   String?
+  
+  // Relaciones
+  pagoId          String
+  pago            Pago      @relation(fields: [pagoId], references: [id], onDelete: Cascade)
+  cuotaId         String  
+  cuota           CuotaFactura @relation(fields: [cuotaId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("pagos_cuotas")
+}
+
+// REGLA: Cartera nace si honorarios son financiados o facturas son a crédito
 model Cartera {
   id              String    @id @default(cuid())
   concepto        String
@@ -445,9 +531,11 @@ model Cartera {
   estado          EstadoCartera @default(ACTIVA)
   observaciones   String?
   
-  // Relaciones - Cartera nace de honorarios financiados
-  honorarioId     String
-  honorario       Honorario @relation(fields: [honorarioId], references: [id])
+  // Relaciones - Cartera nace de honorarios financiados O facturas a crédito
+  honorarioId     String?
+  honorario       Honorario? @relation(fields: [honorarioId], references: [id])
+  facturaId       String?
+  factura         Factura?   @relation(fields: [facturaId], references: [id])
   
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -491,6 +579,9 @@ model Pago {
   // Relaciones
   facturaId       String
   factura         Factura   @relation(fields: [facturaId], references: [id])
+  
+  // Relación con aplicación a cuotas
+  aplicadoCuotas  PagoCuota[] // Distribución del pago entre cuotas
   
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -689,6 +780,7 @@ enum EstadoHonorario {
 
 enum EstadoCuota {
   PENDIENTE
+  PARCIAL
   PAGADA
   VENCIDA
 }
