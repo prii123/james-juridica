@@ -214,7 +214,7 @@ async function getRecentCases() {
       id: caso.id,
       numeroCaso: caso.numeroCaso,
       tipoInsolvencia: caso.tipoInsolvencia as string, // Convertir enum a string
-      valorDeuda: caso.valorDeuda.toString(), // Convertir Decimal a string
+      // valorDeuda: caso.valorDeuda.toString(), // Convertir Decimal a string
       estado: caso.estado as string, // Convertir enum a string
       updatedAt: caso.updatedAt.toISOString(), // Convertir Date a string
       cliente: caso.cliente ? {
@@ -249,7 +249,11 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <h1>Dashboard</h1>
+      {/* Ya no necesitamos espaciador aquí, se maneja globalmente en AppLayout */}
+      <div className="page-header-spacing">
+        <h1 className="h2 fw-bold text-dark">Dashboard</h1>
+        <p className="text-muted">Resumen ejecutivo de tu firma jurídica</p>
+      </div>
 
 
 
@@ -410,7 +414,7 @@ export default async function DashboardPage() {
         </div>
 
           {/* Estadísticas Rápidas */}
-          <div className="card">
+          {/* <div className="card">
             <div className="card-body">
               <h5 className="card-title" style={{color: '#1e293b'}}>Resumen del Mes</h5>
               <div className="mb-3">
@@ -441,7 +445,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

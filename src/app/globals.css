@@ -1,5 +1,28 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
+/* Variables CSS para consistencia */
+:root {
+  --topbar-height: 80px; /* altura fija del topbar */
+  --content-padding-top: 110px; /* espacio generoso para evitar solapamiento */
+}
+
+/* Clase para contenido principal que necesita compensar el topbar fijo */
+.main-content {
+  padding-top: 0; /* Removido padding, ahora usamos espaciador */
+}
+
+/* Espaciador específico para el topbar - alternativa más robusta */
+.topbar-spacer {
+  height: var(--topbar-height);
+  flex-shrink: 0;
+}
+
+/* Clase adicional para páginas que necesitan espacio extra */
+.page-header-spacing {
+  margin-top: 20px;
+  margin-bottom: 24px;
+}
+
 /* Estilos personalizados para hover effects y scrolling suave */
 .hover-bg-light:hover {
   background-color: #f8f9fa !important;

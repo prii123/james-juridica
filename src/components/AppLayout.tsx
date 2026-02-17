@@ -52,7 +52,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {/* Desktop: apply margin */}
           <div className="d-none d-lg-block" style={{marginLeft: '16rem'}}>
             {/* Page content */}
-            <main className="overflow-auto p-3 p-lg-4 bg-light" style={{minHeight: '100vh', paddingTop: '100px'}}>
+            <main className="main-content overflow-auto p-3 p-lg-4 bg-light" style={{minHeight: '100vh'}}>
+              {/* Espaciador automático para compensar TopBar fijo */}
+              <div className="topbar-spacer"></div>
+              
               <div className="container-fluid">
                 {children}
               </div>
@@ -62,7 +65,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {/* Mobile: no margin */}
           <div className="d-lg-none d-flex flex-column h-100">
             {/* Page content */}
-            <main className="flex-fill overflow-auto p-3 bg-light" style={{paddingTop: '100px'}}>
+            <main className="main-content flex-fill overflow-auto p-3 bg-light">
+              {/* Espaciador automático para compensar TopBar fijo */}
+              <div className="topbar-spacer"></div>
+              
               <div className="container-fluid">
                 {children}
               </div>

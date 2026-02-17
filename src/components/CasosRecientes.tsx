@@ -7,7 +7,7 @@ interface CasoReciente {
   id: string
   numeroCaso: string
   tipoInsolvencia: string
-  valorDeuda: string
+  // valorDeuda: string
   estado: string
   updatedAt: string
   cliente: {
@@ -169,12 +169,12 @@ export default function CasosRecientes({ casosIniciales }: CasosRecientesProps) 
                    caso.estado === 'SUSPENDIDO' ? 'Suspendido' :
                    caso.estado === 'CERRADO' ? 'Cerrado' : 'Archivado'}
                 </span>
-                <div className="text-end">
+                {/* <div className="text-end">
                   <p className="small fw-medium text-dark mb-0">
                     {formatCurrency(Number(caso.valorDeuda))}
                   </p>
                   <p className="small text-muted mb-0">Valor deuda</p>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

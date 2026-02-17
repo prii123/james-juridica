@@ -190,6 +190,9 @@ export default function TopBar() {
           z-index: 1030;
           left: 0;
           margin-left: min(16rem, 0px);
+          height: var(--topbar-height) !important;
+          max-height: var(--topbar-height);
+          overflow: hidden;
         }
         
         @media (min-width: 992px) {
@@ -200,8 +203,8 @@ export default function TopBar() {
         }
       `}</style>
       
-      <header className="bg-white border-bottom border-secondary px-4 py-3 shadow position-fixed top-0 w-100 topbar-responsive">
-      <div className="d-flex align-items-center justify-content-between">
+      <header className="bg-white border-bottom border-secondary px-4 py-2 shadow position-fixed top-0 w-100 topbar-responsive d-flex align-items-center">
+      <div className="d-flex align-items-center justify-content-between w-100">
         {/* Search with Dropdown */}
         <div className="d-flex align-items-center flex-fill position-relative" ref={searchRef}>
           <div className="input-group" style={{ maxWidth: '500px' }}>
