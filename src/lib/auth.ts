@@ -63,6 +63,12 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/login',
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Asegura redirección correcta en producción
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl + "/dashboard"
+    },
     async jwt({ token, user }) {
       if (user) {
         token.userId = user.id
