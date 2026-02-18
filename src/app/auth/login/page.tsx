@@ -98,15 +98,6 @@ export default function LoginPage() {
                   </button>
                 </form>
 
-                <div className="mt-3">
-                  <h6 className="fw-bold">Credenciales de Prueba</h6>
-                  <ul className="list-group list-group-flush">
-                    <li className="list-group-item">Admin: admin / admin123</li>
-                    <li className="list-group-item">Admin: admin@juridica.com / admin123</li>
-                    <li className="list-group-item">Abogado: abogado@juridica.com / abogado123</li>
-                    <li className="list-group-item">Asesor: asesor@juridica.com / asesor123</li>
-                  </ul>
-                </div>
               </div>
             </div>
           </div>
