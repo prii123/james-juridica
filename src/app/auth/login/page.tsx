@@ -20,13 +20,15 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
+        callbackUrl: '/dashboard',
         redirect: false,
       })
 
       if (result?.error) {
         setError('Credenciales inválidas')
-      } else {
-        router.push('/dashboard')
+      } else if (result?.ok) {
+        // Forzar navegación correcta
+        window.location.href = '/dashboard'
       }
     } catch (error) {
       setError('Error al iniciar sesión')
