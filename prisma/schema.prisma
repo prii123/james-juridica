@@ -434,7 +434,7 @@ model Factura {
   // Para facturas a crédito con financiación
   numeroCuotas    Int?      // Si es a crédito, número de cuotas
   valorCuota      Decimal?  @db.Decimal(10, 2) // Valor de cada cuota
-  tasaInteres     Decimal?  @db.Decimal(5, 4) // Tasa de interés mensual
+  tasaInteres     Decimal?  @db.Decimal(6, 4) // Tasa de interés mensual (hasta 99.9999%)
   
   // Relaciones - Facturación nace de honorarios
   honorarioId     String

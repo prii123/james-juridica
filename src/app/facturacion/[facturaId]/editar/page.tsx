@@ -360,12 +360,12 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
                         type="number"
                         className="form-control"
                         min="0"
-                        max="10"
+                        max="30"
                         step="0.1"
                         value={formData.tasaInteres}
                         onChange={(e) => handleInputChange('tasaInteres', e.target.value)}
                       />
-                      <div className="form-text">0% para sin intereses, máx 10% mensual</div>
+                      <div className="form-text">0% para sin intereses, máx 30% mensual</div>
                     </div>
                   </div>
                 )}

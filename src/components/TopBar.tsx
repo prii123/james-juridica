@@ -65,6 +65,7 @@ export default function TopBar() {
   const [isLoading, setIsLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -81,6 +82,36 @@ export default function TopBar() {
 
     return () => clearTimeout(timer)
   }, [searchQuery])
+
+  // Calcular posición del dropdown
+  const updateDropdownPosition = () => {
+    if (searchRef.current) {
+      const rect = searchRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      })
+    }
+  }
+
+  // Actualizar posición del dropdown cuando se muestre o cambie el tamaño de la ventana
+  useEffect(() => {
+    if (showDropdown) {
+      updateDropdownPosition()
+      
+      const handleResize = () => updateDropdownPosition()
+      const handleScroll = () => updateDropdownPosition()
+      
+      window.addEventListener('resize', handleResize)
+      window.addEventListener('scroll', handleScroll, true)
+      
+      return () => {
+        window.removeEventListener('resize', handleResize)
+        window.removeEventListener('scroll', handleScroll, true)
+      }
+    }
+  }, [showDropdown])
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
@@ -102,6 +133,7 @@ export default function TopBar() {
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.results)
+        updateDropdownPosition()
         setShowDropdown(true)
         setSelectedIndex(-1)
       }
@@ -219,7 +251,12 @@ export default function TopBar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => searchQuery.length >= 2 && setShowDropdown(true)}
+              onFocus={() => {
+                if (searchQuery.length >= 2) {
+                  updateDropdownPosition()
+                  setShowDropdown(true)
+                }
+              }}
             />
             {isLoading && (
               <span className="input-group-text">
@@ -233,13 +270,13 @@ export default function TopBar() {
           {/* Dropdown Results */}
           {showDropdown && (
             <div 
-              className="position-absolute bg-white shadow border rounded-3 search-dropdown"
+              className="bg-white shadow border rounded-3 search-dropdown"
               style={{ 
-                top: '100%', 
-                left: '0', 
-                right: '0', 
+                position: 'fixed',
+                top: `${dropdownPosition.top}px`, 
+                left: `${dropdownPosition.left}px`, 
+                width: `${dropdownPosition.width}px`, 
                 zIndex: 9999, 
-                marginTop: '4px',
                 maxHeight: '400px',
                 overflowY: 'auto',
                 overflowX: 'hidden',
