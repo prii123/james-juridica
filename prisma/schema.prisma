@@ -195,26 +195,26 @@ model Asesoria {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  // Relaciones inversas - Una asesoría puede generar varias conciliaciones si es rechazada
-  conciliaciones  Conciliacion[]
+  // Relaciones inversas - Una asesoría puede generar varias radicaciones si es rechazada
+  radicaciones    Radicacion[]
   
   @@map("asesorias")
 }
 
-// REGLA: Una conciliación nace de una asesoría rechazada
-model Conciliacion {
+// REGLA: Una radicación nace de una asesoría rechazada
+model Radicacion {
   id              String    @id @default(cuid())
   numero          String    @unique
   demandante      String
   demandado       String
   valor           Decimal   @db.Decimal(10, 2)
-  estado          EstadoConciliacion @default(SOLICITADA)
-  resultado       ResultadoConciliacion?
+  estado          EstadoRadicacion @default(SOLICITADA)
+  resultado       ResultadoRadicacion?
   fechaSolicitud  DateTime  @default(now())
   fechaAudiencia  DateTime?
   observaciones   String?
   
-  // Relaciones - Una conciliación nace de una asesoría rechazada
+  // Relaciones - Una radicación nace de una asesoría rechazada
   asesoriaId      String
   asesoria        Asesoria  @relation(fields: [asesoriaId], references: [id])
   
@@ -222,7 +222,7 @@ model Conciliacion {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  @@map("conciliaciones")
+  @@map("radicaciones")
 }
 
 // ========================================
@@ -260,7 +260,6 @@ model Caso {
   tipoInsolvencia   TipoInsolvencia
   estado            EstadoCaso @default(ACTIVO)
   prioridad         Prioridad @default(MEDIA)
-  valorDeuda        Decimal   @db.Decimal(12, 2)
   fechaInicio       DateTime  @default(now())
   fechaCierre       DateTime?
   observaciones     String?
@@ -677,14 +676,14 @@ enum ResultadoAsesoria {
   RECHAZADA
 }
 
-enum EstadoConciliacion {
+enum EstadoRadicacion {
   SOLICITADA
   PROGRAMADA
   REALIZADA
   CANCELADA
 }
 
-enum ResultadoConciliacion {
+enum ResultadoRadicacion {
   ACUERDO_TOTAL
   ACUERDO_PARCIAL
   SIN_ACUERDO
@@ -739,7 +738,7 @@ enum EstadoActuacion {
 }
 
 enum TipoAudiencia {
-  CONCILIACION
+  RADICACION
   ADMISORIA
   VERIFICACION_CREDITOS
   CATEGORIA_CREDITOS

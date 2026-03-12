@@ -141,7 +141,6 @@ export async function POST(request: NextRequest) {
         modalidad: body.modalidad || 'PRESENCIAL',
         tema: body.tema,
         descripcion: body.descripcion || null,
-        valor: body.valor ? parseFloat(body.valor) : null,
         leadId: body.leadId,
         asesorId: body.asesorId,
         notas: body.notas || null

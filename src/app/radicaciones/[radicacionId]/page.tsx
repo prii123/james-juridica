@@ -18,16 +18,15 @@ import {
   AlertCircle,
   Eye
 } from 'lucide-react'
-import { EstadoConciliacion, ResultadoConciliacion } from '@prisma/client'
+import { EstadoRadicacion, ResultadoRadicacion } from '@prisma/client'
 
-interface Conciliacion {
+interface Radicacion {
   id: string
   numero: string
   demandante: string
   demandado: string
-  valor: number
-  estado: EstadoConciliacion
-  resultado?: ResultadoConciliacion
+  estado: EstadoRadicacion
+  resultado?: ResultadoRadicacion
   fechaSolicitud: string
   fechaAudiencia?: string
   observaciones?: string
@@ -90,25 +89,26 @@ const RESULTADO_CONFIG = {
   }
 }
 
-export default function ConciliacionDetailPage({ params }: { params: { conciliacionId: string } }) {
+export default function RadicacionDetailPage({ params }: { params: { radicacionId: string } }) {
   const router = useRouter()
-  const [conciliacion, setConciliacion] = useState<Conciliacion | null>(null)
+  const [radicacion, setRadicacion] = useState<Radicacion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
-    fetchConciliacion()
+    fetchRadicacion()
   }, [])
 
-  const fetchConciliacion = async () => {
+  const fetchRadicacion = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/conciliaciones/${params.conciliacionId}`)
+      const response = await fetch(`/api/radicaciones/${params.radicacionId}`)
       
       if (response.ok) {
         const data = await response.json()
-        setConciliacion(data)
+        setRadicacion(data)
       } else {
         setError('No se pudo cargar la conciliación')
       }
@@ -119,12 +119,15 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
     }
   }
 
-  const handleStatusUpdate = async (newStatus: EstadoConciliacion) => {
-    if (!conciliacion) return
+  const handleStatusUpdate = async (newStatus: EstadoRadicacion) => {
+    if (!radicacion) return
     
     try {
       setUpdating(true)
-      const response = await fetch(`/api/conciliaciones/${params.conciliacionId}`, {
+      setError('')
+      setSuccessMessage('')
+      
+      const response = await fetch(`/api/radicaciones/${params.radicacionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -139,21 +142,17 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
         const result = await response.json()
         console.log('Resultado de actualización:', result)
         
-        // Asegurar que tenemos la conciliación actualizada
-        const updatedConciliacion = result.conciliacion || result
-        console.log('Conciliación actualizada:', updatedConciliacion)
-        setConciliacion(updatedConciliacion)
+        // Asegurar que tenemos la radicación actualizada
+        const updatedRadicacion = result.radicacion || result
+        console.log('Radicación actualizada:', updatedRadicacion)
+        setRadicacion(updatedRadicacion)
         
-        // Si se creó un caso, redirigir a él
+        // Si se creó un caso, mostrar mensaje de éxito
         if (result.casoCreado) {
-          // Mostrar mensaje de éxito
-          const confirmRedirect = confirm(
-            `¡Conciliación aceptada exitosamente!\n\nSe ha creado automáticamente el caso: ${result.casoCreado.numeroCaso}\n\n¿Deseas ir al caso ahora?`
+          setSuccessMessage(
+            `✓ Radicación aceptada exitosamente. Se ha creado el caso ${result.casoCreado.numeroCaso}. Puedes visualizarlo en la sección de Casos Activos.`
           )
-          
-          if (confirmRedirect) {
-            router.push(`/casos/${result.casoCreado.id}`)
-          }
+          setError('')
         }
       } else {
         const errorData = await response.json()
@@ -193,46 +192,64 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
     )
   }
 
-  if (error || !conciliacion) {
+  if (error || !radicacion) {
     return (
       <div className="text-center py-5">
         <div className="alert alert-danger" role="alert">
           {error || 'Conciliación no encontrada'}
         </div>
-        <Link href="/conciliaciones" className="btn btn-primary">
-          Volver a Conciliaciones
+        <Link href="/radicaciones" className="btn btn-primary">
+          Volver a Radicaciones
         </Link>
       </div>
     )
   }
 
-  const estadoConfig = ESTADO_CONFIG[conciliacion.estado] || {
+  const estadoConfig = ESTADO_CONFIG[radicacion.estado] || {
     color: 'secondary',
     icon: AlertCircle,
-    label: conciliacion.estado
+    label: radicacion.estado
   }
   const IconoEstado = estadoConfig.icon
-  const resultadoConfig = conciliacion.resultado ? (RESULTADO_CONFIG[conciliacion.resultado] || {
+  const resultadoConfig = radicacion.resultado ? (RESULTADO_CONFIG[radicacion.resultado] || {
     color: 'secondary',
-    label: conciliacion.resultado
+    label: radicacion.resultado
   }) : null
 
   return (
     <>
       <Breadcrumb 
         items={[
-          { label: 'Conciliaciones', href: '/conciliaciones' },
-          { label: conciliacion.numero }
+          { label: 'Radicaciones', href: '/radicaciones' },
+          { label: radicacion.numero }
         ]} 
       />
 
+      {/* Mensaje de éxito */}
+      {successMessage && (
+        <div className="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+          <CheckCircle size={20} />
+          <div className="flex-grow-1">{successMessage}</div>
+          <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
+        </div>
+      )}
+
+      {/* Mensaje de error */}
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+          <AlertCircle size={20} />
+          <div className="flex-grow-1">{error}</div>
+          <button type="button" className="btn-close" onClick={() => setError('')}></button>
+        </div>
+      )}
+
       <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/conciliaciones" className="btn btn-outline-secondary">
+        <Link href="/radicaciones" className="btn btn-outline-secondary">
           <ArrowLeft size={16} />
         </Link>
         <div className="flex-grow-1">
           <div className="d-flex align-items-center gap-2 mb-1">
-            <h1 className="h3 fw-bold text-dark mb-0">{conciliacion.numero}</h1>
+            <h1 className="h3 fw-bold text-dark mb-0">{radicacion.numero}</h1>
             <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`}>
               <IconoEstado size={12} />
               {estadoConfig.label}
@@ -244,11 +261,11 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
             )}
           </div>
           <p className="text-secondary mb-0">
-            {conciliacion.demandante} vs {conciliacion.demandado}
+            {radicacion.demandante} vs {radicacion.demandado}
           </p>
         </div>
         {/* <Link 
-          href={`/conciliaciones/${params.conciliacionId}/editar`}
+          href={`/radicaciones/${params.radicacionId}/editar`}
           className="btn btn-outline-primary d-flex align-items-center gap-2"
         >
           <Edit3 size={16} />
@@ -270,20 +287,14 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                   <div className="mb-3">
                     <div className="d-flex align-items-center gap-2 mb-1">
                       <User size={16} />
-                      <span className="fw-semibold">Demandante:</span>
-                      <span>{conciliacion.demandante}</span>
+                      <span className="fw-semibold">Insolvente:</span>
+                      <span>{radicacion.demandante}</span>
                     </div>
                     <div className="d-flex align-items-center gap-2">
                       <Building size={16} />
-                      <span className="fw-semibold">Demandado:</span>
-                      <span>{conciliacion.demandado}</span>
+                      <span className="fw-semibold">Centro de Conciliación:</span>
+                      <span>{radicacion.demandado}</span>
                     </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <h6 className="text-muted mb-1">Valor</h6>
-                  <div className="h4 text-success mb-3">
-                    {formatCurrency(conciliacion.valor)}
                   </div>
                 </div>
               </div>
@@ -293,27 +304,27 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                   <h6 className="text-muted mb-1">Fecha de Solicitud</h6>
                   <div className="d-flex align-items-center gap-2 mb-3">
                     <Calendar size={16} />
-                    <span>{formatDate(conciliacion.fechaSolicitud)}</span>
+                    <span>{formatDate(radicacion.fechaSolicitud)}</span>
                   </div>
                 </div>
                 <div className="col-md-6">
-                  {conciliacion.fechaAudiencia && (
+                  {radicacion.fechaAudiencia && (
                     <>
                       <h6 className="text-muted mb-1">Fecha de Audiencia</h6>
                       <div className="d-flex align-items-center gap-2 mb-3">
                         <Calendar size={16} />
-                        <span>{formatDate(conciliacion.fechaAudiencia)}</span>
+                        <span>{formatDate(radicacion.fechaAudiencia)}</span>
                       </div>
                     </>
                   )}
                 </div>
               </div>
 
-              {conciliacion.observaciones && (
+              {radicacion.observaciones && (
                 <div className="mt-3">
                   <h6 className="text-muted mb-2">Observaciones</h6>
                   <div className="bg-light p-3 rounded">
-                    <p className="mb-0">{conciliacion.observaciones}</p>
+                    <p className="mb-0">{radicacion.observaciones}</p>
                   </div>
                 </div>
               )}
@@ -328,23 +339,23 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
             <div className="card-body">
               <div className="d-flex align-items-start gap-3">
                 <div className="flex-grow-1">
-                  <h6 className="fw-semibold mb-1">{conciliacion.asesoria.tema}</h6>
+                  <h6 className="fw-semibold mb-1">{radicacion.asesoria.tema}</h6>
                   <p className="text-muted mb-2">
-                    Realizada el {formatDate(conciliacion.asesoria.fecha)}
+                    Realizada el {formatDate(radicacion.asesoria.fecha)}
                   </p>
                   <div className="d-flex align-items-center gap-2 text-muted small">
                     <User size={14} />
-                    <span>Cliente: {conciliacion.asesoria.lead.nombre}</span>
+                    <span>Cliente: {radicacion.asesoria.lead.nombre}</span>
                   </div>
                   <div className="d-flex align-items-center gap-2 text-muted small">
                     <User size={14} />
                     <span>
-                      Asesor: {conciliacion.asesoria.asesor.nombre} {conciliacion.asesoria.asesor.apellido}
+                      Asesor: {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
                     </span>
                   </div>
                 </div>
                 <Link 
-                  href={`/asesorias/${conciliacion.asesoria.id}`}
+                  href={`/asesorias/${radicacion.asesoria.id}`}
                   className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
                 >
                   <Eye size={14} />
@@ -366,7 +377,7 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                 <button
                   onClick={() => handleStatusUpdate('REALIZADA')}
                   className="btn btn-success d-flex align-items-center justify-content-center gap-2"
-                  disabled={updating || conciliacion.estado === 'REALIZADA'}
+                  disabled={updating || radicacion.estado === 'REALIZADA'}
                 >
                   {updating ? (
                     <>
@@ -382,7 +393,7 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                 </button>
                 
                 <Link 
-                  href={`/conciliaciones/${params.conciliacionId}/editar`}
+                  href={`/radicaciones/${params.radicacionId}/editar`}
                   className="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2"
                 >
                   <Edit3 size={16} />
@@ -390,7 +401,7 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                 </Link>
                 
                 <Link 
-                  href={`/leads/${conciliacion.asesoria.lead.id}/archivos`}
+                  href={`/leads/${radicacion.asesoria.lead.id}/archivos`}
                   className="btn btn-info d-flex align-items-center justify-content-center gap-2"
                 >
                   <FileText size={16} />
@@ -408,15 +419,15 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
             <div className="card-body">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <User size={16} />
-                <span className="fw-semibold">{conciliacion.asesoria.lead.nombre}</span>
+                <span className="fw-semibold">{radicacion.asesoria.lead.nombre}</span>
               </div>
               <div className="small text-muted mb-2">
-                <div>{conciliacion.asesoria.lead.email}</div>
-                <div>{conciliacion.asesoria.lead.telefono}</div>
+                <div>{radicacion.asesoria.lead.email}</div>
+                <div>{radicacion.asesoria.lead.telefono}</div>
               </div>
               <div className="mt-3">
                 <Link 
-                  href={`/leads/${conciliacion.asesoria.lead.id}`}
+                  href={`/leads/${radicacion.asesoria.lead.id}`}
                   className="btn btn-outline-primary btn-sm w-100"
                 >
                   Ver Perfil del Cliente
@@ -437,7 +448,7 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                   <div className="timeline-content">
                     <h6 className="mb-1">Conciliación Creada</h6>
                     <small className="text-muted">
-                      {formatDate(conciliacion.createdAt)}
+                      {formatDate(radicacion.createdAt)}
                     </small>
                   </div>
                 </div>
@@ -447,18 +458,18 @@ export default function ConciliacionDetailPage({ params }: { params: { conciliac
                   <div className="timeline-content">
                     <h6 className="mb-1">Solicitud Presentada</h6>
                     <small className="text-muted">
-                      {formatDate(conciliacion.fechaSolicitud)}
+                      {formatDate(radicacion.fechaSolicitud)}
                     </small>
                   </div>
                 </div>
 
-                {conciliacion.fechaAudiencia && (
+                {radicacion.fechaAudiencia && (
                   <div className="timeline-item">
                     <div className={`timeline-marker bg-${estadoConfig.color}`}></div>
                     <div className="timeline-content">
                       <h6 className="mb-1">Audiencia Programada</h6>
                       <small className="text-muted">
-                        {formatDate(conciliacion.fechaAudiencia)}
+                        {formatDate(radicacion.fechaAudiencia)}
                       </small>
                     </div>
                   </div>

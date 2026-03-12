@@ -11,7 +11,8 @@ import {
   CreditCard,
   Phone,
   Settings,
-  BarChart3
+  BarChart3,
+  Calendar
 } from 'lucide-react'
 
 const navigation = [
@@ -20,6 +21,12 @@ const navigation = [
     href: '/dashboard',
     icon: Home,
     description: 'Vista general y métricas'
+  },
+  {
+    name: 'Calendario',
+    href: '/calendario',
+    icon: Calendar,
+    description: 'Eventos y agenda'
   },
   {
     name: 'Leads',
@@ -34,10 +41,10 @@ const navigation = [
     description: 'Consultas y asesorías jurídicas'
   },
   {
-    name: 'Conciliaciones',
-    href: '/conciliaciones',
+    name: 'Radicaciones',
+    href: '/radicaciones',
     icon: FileText,
-    description: 'Procesos de conciliación'
+    description: 'Procesos de radicación'
   },
   {
     name: 'Casos',

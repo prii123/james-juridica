@@ -4,13 +4,13 @@ import { prisma } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { conciliacionId: string } }
+  { params }: { params: { radicacionId: string } }
 ) {
   try {
-    await requirePermission(PERMISSIONS.CONCILIACIONES.VIEW)
+    await requirePermission(PERMISSIONS.RADICACIONES.VIEW)
 
-    const conciliacion = await prisma.conciliacion.findUnique({
-      where: { id: params.conciliacionId },
+    const radicacion = await prisma.radicacion.findUnique({
+      where: { id: params.radicacionId },
       include: {
         asesoria: {
           include: {
@@ -35,14 +35,14 @@ export async function GET(
       }
     })
 
-    if (!conciliacion) {
+    if (!radicacion) {
       return NextResponse.json(
         { error: 'Conciliación no encontrada' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json(conciliacion)
+    return NextResponse.json(radicacion)
 
   } catch (error: any) {
     console.error('Error al obtener conciliación:', error)
@@ -55,16 +55,16 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { conciliacionId: string } }
+  { params }: { params: { radicacionId: string } }
 ) {
   try {
-    await requirePermission(PERMISSIONS.CONCILIACIONES.EDIT)
+    await requirePermission(PERMISSIONS.RADICACIONES.EDIT)
 
     const body = await request.json()
     
     // Verificar que la conciliación existe
-    const existingConciliacion = await prisma.conciliacion.findUnique({
-      where: { id: params.conciliacionId },
+    const existingRadicacion = await prisma.radicacion.findUnique({
+      where: { id: params.radicacionId },
       include: {
         asesoria: {
           include: {
@@ -74,7 +74,7 @@ export async function PATCH(
       }
     })
 
-    if (!existingConciliacion) {
+    if (!existingRadicacion) {
       return NextResponse.json(
         { error: 'Conciliación no encontrada' },
         { status: 404 }
@@ -102,7 +102,7 @@ export async function PATCH(
     let casoExistente = null
     
     // Si se está aceptando la conciliación (estado REALIZADA) y se solicita crear caso  
-    if (body.createCase && body.estado === 'REALIZADA' && existingConciliacion.estado !== 'REALIZADA') {
+    if (body.createCase && body.estado === 'REALIZADA' && existingRadicacion.estado !== 'REALIZADA') {
       // Generar número de caso
       const year = new Date().getFullYear()
       const randomNum = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
@@ -110,7 +110,7 @@ export async function PATCH(
 
       // Verificar si ya existe un cliente para este lead
       let clienteId = null
-      const leadData = existingConciliacion.asesoria.lead
+      const leadData = existingRadicacion.asesoria.lead
       
       // Buscar cliente existente por email
       let cliente = await prisma.cliente.findUnique({
@@ -144,10 +144,7 @@ export async function PATCH(
         casoCreado = await prisma.caso.update({
           where: { id: casoExistente.id },
           data: {
-            valorDeuda: { 
-              increment: Number(existingConciliacion.valor) // Sumar el valor de esta conciliación
-            },
-            observaciones: `${casoExistente.observaciones}\n\nConciliación adicional aceptada: ${existingConciliacion.numero} - ${existingConciliacion.demandante} vs ${existingConciliacion.demandado} por ${existingConciliacion.valor}`,
+            observaciones: `${casoExistente.observaciones}\n\nConciliación adicional aceptada: ${existingRadicacion.numero} - ${existingRadicacion.demandante} vs ${existingRadicacion.demandado} por ${existingRadicacion.valor}`,
             updatedAt: new Date()
           }
         })
@@ -159,18 +156,17 @@ export async function PATCH(
             tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
             estado: 'ACTIVO',
             prioridad: 'MEDIA',
-            valorDeuda: existingConciliacion.valor,
             fechaInicio: new Date(),
-            observaciones: `Caso creado automáticamente al aceptar conciliación ${existingConciliacion.numero}. Demandante: ${existingConciliacion.demandante} vs ${existingConciliacion.demandado}`,
+            observaciones: `Caso creado automáticamente al aceptar conciliación ${existingRadicacion.numero}. Demandante: ${existingRadicacion.demandante} vs ${existingRadicacion.demandado}`,
             clienteId: cliente.id,
-            responsableId: existingConciliacion.asesoria.asesorId,
-            creadoPorId: existingConciliacion.asesoria.asesorId
+            responsableId: existingRadicacion.asesoria.asesorId,
+            creadoPorId: existingRadicacion.asesoria.asesorId
           }
         })
       }
 
       // Crear honorario automáticamente (valor base de la conciliación como honorario)
-      const valorHonorario = Number(existingConciliacion.valor) * 0.15 // 15% del valor de la conciliación como honorario
+      const valorHonorario = Number(existingRadicacion.valor) * 0.15 // 15% del valor de la conciliación como honorario
       
       honorarioCreado = await prisma.honorario.create({
         data: {
@@ -179,7 +175,7 @@ export async function PATCH(
           valor: valorHonorario,
           estado: 'PENDIENTE',
           fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para pagar
-          observaciones: `Honorario generado automáticamente por aceptación de conciliación ${existingConciliacion.numero}`,
+          observaciones: `Honorario generado automáticamente por aceptación de conciliación ${existingRadicacion.numero}`,
           casoId: casoCreado.id
         }
       })
@@ -202,7 +198,7 @@ export async function PATCH(
           observaciones: `Factura generada automáticamente por caso ${numeroCaso} - Conciliación aceptada`,
           ivaActivado: true, // IVA activado por defecto en facturas automáticas
           honorarioId: honorarioCreado.id,
-          creadoPorId: existingConciliacion.asesoria.asesorId,
+          creadoPorId: existingRadicacion.asesoria.asesorId,
           items: {
             create: [
               {
@@ -217,8 +213,8 @@ export async function PATCH(
       })
     }
 
-    const updatedConciliacion = await prisma.conciliacion.update({
-      where: { id: params.conciliacionId },
+    const updatedRadicacion = await prisma.radicacion.update({
+      where: { id: params.radicacionId },
       data: updateData,
       include: {
         asesoria: {
@@ -246,7 +242,7 @@ export async function PATCH(
 
     // Incluir información del caso creado en la respuesta
     const response: any = {
-      conciliacion: updatedConciliacion
+      radicacion: updatedRadicacion
     }
 
     if (casoCreado) {
@@ -279,25 +275,25 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { conciliacionId: string } }
+  { params }: { params: { radicacionId: string } }
 ) {
   try {
-    await requirePermission(PERMISSIONS.CONCILIACIONES.DELETE)
+    await requirePermission(PERMISSIONS.RADICACIONES.DELETE)
 
     // Verificar que la conciliación existe
-    const existingConciliacion = await prisma.conciliacion.findUnique({
-      where: { id: params.conciliacionId }
+    const existingRadicacion = await prisma.radicacion.findUnique({
+      where: { id: params.radicacionId }
     })
 
-    if (!existingConciliacion) {
+    if (!existingRadicacion) {
       return NextResponse.json(
         { error: 'Conciliación no encontrada' },
         { status: 404 }
       )
     }
 
-    await prisma.conciliacion.delete({
-      where: { id: params.conciliacionId }
+    await prisma.radicacion.delete({
+      where: { id: params.radicacionId }
     })
 
     return NextResponse.json({ message: 'Conciliación eliminada exitosamente' })

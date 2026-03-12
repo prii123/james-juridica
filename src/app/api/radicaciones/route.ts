@@ -2,9 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { prisma } from '@/lib/db'
 
+// Función auxiliar para generar número de radicación
+async function generateRadicacionNumber(): Promise<string> {
+  const currentYear = new Date().getFullYear()
+  const prefix = `RAD-${currentYear}`
+  
+  const lastRecord = await prisma.radicacion.findFirst({
+    where: { numero: { startsWith: prefix } },
+    orderBy: { numero: 'desc' }
+  })
+
+  let nextNumber = 1
+  if (lastRecord) {
+    const lastNumber = parseInt(lastRecord.numero.split('-')[2])
+    nextNumber = lastNumber + 1
+  }
+
+  return `${prefix}-${nextNumber.toString().padStart(4, '0')}`
+}
+
 export async function GET(request: NextRequest) {
   try {
-    await requirePermission(PERMISSIONS.CONCILIACIONES.VIEW)
+    await requirePermission(PERMISSIONS.RADICACIONES.VIEW)
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
@@ -29,8 +48,8 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [conciliaciones, total] = await Promise.all([
-      prisma.conciliacion.findMany({
+    const [radicaciones, total] = await Promise.all([
+      prisma.radicacion.findMany({
         where,
         include: {
           asesoria: {
@@ -56,11 +75,11 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit
       }),
-      prisma.conciliacion.count({ where })
+      prisma.radicacion.count({ where })
     ])
 
     return NextResponse.json({
-      conciliaciones,
+      radicaciones,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
@@ -70,7 +89,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Error al obtener conciliaciones:', error)
+    console.error('Error al obtener radicaciones:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
@@ -80,7 +99,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requirePermission(PERMISSIONS.CONCILIACIONES.CREATE)
+    await requirePermission(PERMISSIONS.RADICACIONES.CREATE)
 
     const body = await request.json()
     
@@ -96,22 +115,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que el número sea único
-    const existingConciliacion = await prisma.conciliacion.findUnique({
-      where: { numero: body.numero }
-    })
+    // Generar número automáticamente si no se proporciona o es temporal
+    let numero = body.numero
+    if (!numero || numero.includes('TEMP')) {
+      numero = await generateRadicacionNumber()
+    } else {
+      // Verificar que el número sea único solo si fue proporcionado por el usuario
+      const existingRadicacion = await prisma.radicacion.findUnique({
+        where: { numero }
+      })
 
-    if (existingConciliacion) {
-      return NextResponse.json(
-        { error: 'Ya existe una conciliación con ese número' },
-        { status: 400 }
-      )
+      if (existingRadicacion) {
+        return NextResponse.json(
+          { error: 'Ya existe una radicación con ese número' },
+          { status: 400 }
+        )
+      }
     }
 
-    // Crear la conciliación
-    const conciliacion = await prisma.conciliacion.create({
+    // Crear la radicación
+    const radicacion = await prisma.radicacion.create({
       data: {
-        numero: body.numero,
+        numero,
         demandante: body.demandante,
         demandado: body.demandado,
         valor: body.valor,
@@ -145,12 +170,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(conciliacion, { status: 201 })
+    return NextResponse.json(radicacion, { status: 201 })
 
   } catch (error: any) {
-    console.error('Error al crear conciliación:', error)
+    console.error('Error al crear radicación:', error)
     return NextResponse.json(
-      { error: error.message || 'Error al crear la conciliación' },
+      { error: error.message || 'Error al crear la radicación' },
       { status: 400 }
     )
   }

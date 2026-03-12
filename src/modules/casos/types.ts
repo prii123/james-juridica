@@ -2,7 +2,6 @@ import { TipoInsolvencia, EstadoCaso, Prioridad } from '@prisma/client'
 
 export interface CreateCasoData {
   tipoInsolvencia: TipoInsolvencia
-  valorDeuda: number
   prioridad?: Prioridad
   observaciones?: string
   clienteId: string
@@ -13,7 +12,6 @@ export interface CreateCasoData {
 export interface UpdateCasoData {
   estado?: EstadoCaso
   tipoInsolvencia?: TipoInsolvencia
-  valorDeuda?: number
   prioridad?: Prioridad
   fechaCierre?: Date
   observaciones?: string
@@ -26,8 +24,6 @@ export interface CasoFilters {
   tipoInsolvencia?: TipoInsolvencia
   prioridad?: Prioridad
   responsableId?: string
-  valorDeudaMin?: number
-  valorDeudaMax?: number
   fechaInicioDesde?: Date
   fechaInicioHasta?: Date
 }
@@ -37,7 +33,6 @@ export interface CasoWithRelations {
   numeroCaso: string
   estado: EstadoCaso
   tipoInsolvencia: TipoInsolvencia
-  valorDeuda: number
   fechaInicio: Date
   fechaCierre?: Date | null
   prioridad: Prioridad

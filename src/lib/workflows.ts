@@ -1,5 +1,5 @@
 import { prisma } from './db'
-import { TipoInsolvencia, EstadoCaso, Prioridad, EstadoLead, EstadoAsesoria, EstadoConciliacion, EstadoHonorario, EstadoFactura } from '@prisma/client'
+import { TipoInsolvencia, EstadoCaso, Prioridad, EstadoLead, EstadoAsesoria, EstadoRadicacion, EstadoHonorario, EstadoFactura } from '@prisma/client'
 import { LeadsService } from '@/modules/leads/services'
 import { CasosService } from '@/modules/casos/services'
 
@@ -24,7 +24,7 @@ export interface BusinessWorkflowDefinition {
   steps: BusinessWorkflowStep[]
 }
 
-// Workflow principal: Lead → Asesoría → Conciliación → Caso → Actuaciones → Honorarios → Facturación → Cartera
+// Workflow principal: Lead → Asesoría → Radicación → Caso → Actuaciones → Honorarios → Facturación → Cartera
 export const BUSINESS_WORKFLOW: BusinessWorkflowDefinition = {
   id: 'business_flow',
   name: 'Flujo de Negocio Jurídico',
@@ -40,11 +40,11 @@ export const BUSINESS_WORKFLOW: BusinessWorkflowDefinition = {
       id: 'asesoria',
       name: 'Asesoría',
       description: 'Consulta jurídica inicial',
-      allowedTransitions: ['conciliacion', 'caso']
+      allowedTransitions: ['radicacion', 'caso']
     },
     {
-      id: 'conciliacion',
-      name: 'Conciliación',
+      id: 'radicacion',
+      name: 'Radicación',
       description: 'Intento de resolución extrajudicial',
       allowedTransitions: ['caso', 'closed']
     },
@@ -147,18 +147,18 @@ export class BusinessWorkflowService {
     return result
   }
 
-  // Asesoría → Conciliación
-  static async asesoriaToConsiliacion(data: {
+  // Asesoría → Radicación
+  static async asesoriaToRadicacion(data: {
     asesoriaId: string
-    conciliacionData: {
+    radicacionData: {
       demandante: string
       demandado: string
       valor: number
       observaciones?: string
     }
   }) {
-    if (!this.validateTransition('asesoria', 'conciliacion')) {
-      throw new Error('Transición no permitida: Asesoría → Conciliación')
+    if (!this.validateTransition('asesoria', 'radicacion')) {
+      throw new Error('Transición no permitida: Asesoría → Radicación')
     }
 
     const asesoria = await prisma.asesoria.findUnique({
@@ -171,19 +171,19 @@ export class BusinessWorkflowService {
     }
 
     if (asesoria.estado !== 'REALIZADA') {
-      throw new Error('La asesoría debe estar realizada para generar conciliación')
+      throw new Error('La asesoría debe estar realizada para generar radicación')
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // Generar número de conciliación
-      const numero = await this.generateConciliacionNumber()
+      // Generar número de radicación
+      const numero = await this.generateRadicacionNumber()
       
-      const conciliacion = await tx.conciliacion.create({
+      const radicacion = await tx.radicacion.create({
         data: {
           numero,
           estado: 'SOLICITADA',
           asesoriaId: data.asesoriaId,
-          ...data.conciliacionData
+          ...data.radicacionData
         }
       })
 
@@ -191,11 +191,11 @@ export class BusinessWorkflowService {
       await tx.asesoria.update({
         where: { id: data.asesoriaId },
         data: {
-          notas: `${asesoria.notas || ''}\nGeneró conciliación ${conciliacion.numero} el ${new Date().toISOString()}`
+          notas: `${asesoria.notas || ''}\nGeneró radicación ${radicacion.numero} el ${new Date().toISOString()}`
         }
       })
 
-      return conciliacion
+      return radicacion
     })
 
     return result
@@ -206,7 +206,6 @@ export class BusinessWorkflowService {
     asesoriaId: string
     casoData: {
       tipoInsolvencia: TipoInsolvencia
-      valorDeuda: number
       clienteId: string
       responsableId: string
       creadoPorId: string
@@ -251,38 +250,36 @@ export class BusinessWorkflowService {
   }
 
   // Conciliación → Caso
-  static async conciliacionToCase(data: {
-    conciliacionId: string
+  static async radicacionToCase(data: {
+    radicacionId: string
     casoData: {
       tipoInsolvencia: TipoInsolvencia
-      valorDeuda: number
       clienteId: string
       responsableId: string
       creadoPorId: string
       observaciones?: string
     }
   }) {
-    if (!this.validateTransition('conciliacion', 'caso')) {
-      throw new Error('Transición no permitida: Conciliación → Caso')
+    if (!this.validateTransition('radicacion', 'caso')) {
+      throw new Error('Transición no permitida: Radicación → Caso')
     }
 
-    const conciliacion = await prisma.conciliacion.findUnique({
-      where: { id: data.conciliacionId }
+    const radicacion = await prisma.radicacion.findUnique({
+      where: { id: data.radicacionId }
     })
 
-    if (!conciliacion) {
-      throw new Error('Conciliación no encontrada')
+    if (!radicacion) {
+      throw new Error('Radicación no encontrada')
     }
 
-    if (conciliacion.resultado !== 'SIN_ACUERDO') {
-      throw new Error('Solo conciliaciones sin acuerdo pueden generar caso judicial')
+    if (radicacion.resultado !== 'SIN_ACUERDO') {
+      throw new Error('Solo radicaciones sin acuerdo pueden generar caso judicial')
     }
 
-    // Usar datos de la conciliación para crear el caso
+    // Usar datos de la radicación para crear el caso
     const casoCompleteData = {
       ...data.casoData,
-      valorDeuda: conciliacion.valor.toNumber(),
-      observaciones: `${data.casoData.observaciones || ''} - Generado desde conciliación ${conciliacion.numero} (${conciliacion.demandante} vs ${conciliacion.demandado})`
+      observaciones: `${data.casoData.observaciones || ''} - Generado desde radicación ${radicacion.numero} (${radicacion.demandante} vs ${radicacion.demandado})`
     }
 
     const casosService = new CasosService()
@@ -490,11 +487,11 @@ export class BusinessWorkflowService {
   }
 
   // Utilidades para generar números únicos
-  private static async generateConciliacionNumber(): Promise<string> {
+  private static async generateRadicacionNumber(): Promise<string> {
     const currentYear = new Date().getFullYear()
-    const prefix = `CONC-${currentYear}`
+    const prefix = `RAD-${currentYear}`
     
-    const lastRecord = await prisma.conciliacion.findFirst({
+    const lastRecord = await prisma.radicacion.findFirst({
       where: { numero: { startsWith: prefix } },
       orderBy: { numero: 'desc' }
     })
@@ -790,16 +787,13 @@ export async function getNextStepsForCase(casoId: string): Promise<WorkflowStep[
 }
 
 export function calculateCasePriority(
-  valorDeuda: number,
   fechaInicio: Date,
   tipoInsolvencia: TipoInsolvencia
 ): Prioridad {
   const now = new Date()
   const diasTranscurridos = Math.floor((now.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24))
   
-  // Reglas de prioridad
-  if (valorDeuda > 1000000000) return 'CRITICA' // Más de 1.000 millones
-  if (valorDeuda > 500000000) return 'ALTA'     // Más de 500 millones
+  // Reglas de prioridad basadas en tiempo y tipo
   if (diasTranscurridos > 90) return 'ALTA'     // Más de 90 días
   if (tipoInsolvencia === 'LIQUIDACION_JUDICIAL') return 'ALTA'
   if (diasTranscurridos > 30) return 'MEDIA'    // Más de 30 días
@@ -814,7 +808,6 @@ export async function updateCasePriorities(): Promise<void> {
 
   for (const caso of casos) {
     const newPriority = calculateCasePriority(
-      caso.valorDeuda.toNumber(),
       caso.fechaInicio,
       caso.tipoInsolvencia
     )

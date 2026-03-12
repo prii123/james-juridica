@@ -19,7 +19,8 @@ import {
   RotateCcw,
   FileText,
   ArrowRight,
-  Building
+  Building,
+  Scale
 } from 'lucide-react'
 import { EstadoAsesoria, TipoAsesoria, ModalidadAsesoria } from '@prisma/client'
 
@@ -32,7 +33,6 @@ interface Asesoria {
   modalidad: ModalidadAsesoria
   tema: string
   descripcion?: string
-  valor?: number
   notas?: string
   createdAt: string
   updatedAt: string
@@ -49,7 +49,7 @@ interface Asesoria {
     apellido: string
     email: string
   }
-  conciliaciones?: Array<{
+  radicaciones?: Array<{
     id: string
     fechaAudiencia?: string
     fechaSolicitud: string
@@ -98,6 +98,8 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [creandoRadicacion, setCreandoRadicacion] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     fetchAsesoria()
@@ -144,6 +146,51 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
       setError('Error de conexión')
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleCrearRadicacion = async () => {
+    if (!asesoria) return
+    
+    try {
+      setCreandoRadicacion(true)
+      setError('')
+      setSuccessMessage('')
+
+      // Generar número de radicación temporal (se validará en el servidor)
+      const year = new Date().getFullYear()
+      const tempNumero = `RAD-${year}-TEMP-${Date.now()}`
+
+      // Crear la radicación con datos por defecto
+      const response = await fetch('/api/radicaciones', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          numero: tempNumero,
+          demandante: asesoria.lead.nombre,
+          demandado: 'Por definir',
+          valor: 0,
+          estado: 'SOLICITADA',
+          fechaSolicitud: new Date().toISOString(),
+          observaciones: 'Radicación creada desde asesoría',
+          asesoriaId: asesoria.id
+        }),
+      })
+
+      if (response.ok) {
+        setSuccessMessage('✓ Asesoría en estado de radicación')
+        // Recargar los datos de la asesoría para mostrar la radicación
+        await fetchAsesoria()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'No se pudo crear la radicación')
+      }
+    } catch (error) {
+      setError('Error de conexión al crear la radicación')
+    } finally {
+      setCreandoRadicacion(false)
     }
   }
 
@@ -225,6 +272,14 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
         </Link>
       </div>
 
+      {/* Mensajes de éxito y error */}
+      {successMessage && (
+        <div className="alert alert-success alert-dismissible fade show" role="alert">
+          {successMessage}
+          <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
+        </div>
+      )}
+
       <div className="row">
         <div className="col-lg-8">
           {/* Información Principal */}
@@ -251,14 +306,6 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                     <MapPin size={16} />
                     <span>{MODALIDAD_LABELS[asesoria.modalidad]}</span>
                   </div>
-                  {asesoria.valor && (
-                    <div>
-                      <h6 className="text-muted mb-1">Valor</h6>
-                      <div className="h5 text-success mb-0">
-                        ${asesoria.valor?.toLocaleString('es-CO')} COP
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -281,21 +328,21 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
           </div>
 
           {/* Histórico y Seguimiento */}
-          {asesoria.conciliaciones && asesoria.conciliaciones.length > 0 ? (
+          {asesoria.radicaciones && asesoria.radicaciones.length > 0 ? (
             <div className="card mb-4">
               <div className="card-header">
                 <h5 className="mb-0">Seguimiento del Proceso</h5>
               </div>
               <div className="card-body">
                 <div className="mb-3">
-                  <h6 className="text-muted mb-2">Conciliaciones</h6>
-                  {asesoria.conciliaciones.map((conciliacion) => (
-                    <div key={conciliacion.id} className="d-flex align-items-center gap-2 mb-1">
-                      <FileText size={16} />
-                      <Link href={`/conciliaciones/${conciliacion.id}`} className="text-decoration-none">
-                        Conciliación del {new Date(conciliacion.fechaAudiencia || conciliacion.fechaSolicitud).toLocaleDateString('es-CO')}
+                  <h6 className="text-muted mb-2">Radicaciones</h6>
+                  {asesoria.radicaciones.map((radicacion) => (
+                    <div key={radicacion.id} className="d-flex align-items-center gap-2 mb-1">
+                      <Scale size={14} />
+                      <Link href={`/radicaciones/${radicacion.id}`} className="text-decoration-none">
+                        Radicación del {new Date(radicacion.fechaAudiencia || radicacion.fechaSolicitud).toLocaleDateString('es-CO')}
                       </Link>
-                      <span className="badge bg-primary">{conciliacion.estado}</span>
+                      <span className="badge bg-primary">{radicacion.estado}</span>
                     </div>
                   ))}
                 </div>
@@ -313,20 +360,30 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                     La asesoría fue completada. ¿Cuál es el siguiente paso en el proceso?
                   </p>
                   <div className="d-flex gap-2">
-                    <Link 
-                      href={`/conciliaciones/nueva?asesoriaId=${asesoria.id}`}
+                    <button 
+                      onClick={handleCrearRadicacion}
                       className="btn btn-outline-primary d-flex align-items-center gap-2"
+                      disabled={creandoRadicacion}
                     >
-                      Programar Conciliación
-                      <ArrowRight size={16} />
-                    </Link>
-                    <Link 
+                      {creandoRadicacion ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                          Creando radicación...
+                        </>
+                      ) : (
+                        <>
+                          Estado Radicación
+                          <ArrowRight size={16} />
+                        </>
+                      )}
+                    </button>
+                    {/* <Link 
                       href={`/casos/nuevo?asesoriaId=${asesoria.id}`}
                       className="btn btn-outline-success d-flex align-items-center gap-2"
                     >
                       Crear Caso
                       <ArrowRight size={16} />
-                    </Link>
+                    </Link> */}
                   </div>
                 </div>
               </div>

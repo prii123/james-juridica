@@ -81,7 +81,7 @@ export type PermissionModule =
   | 'leads'
   | 'seguimientos'
   | 'asesorias'
-  | 'conciliaciones'
+  | 'radicaciones'
   | 'casos'
   | 'actuaciones'
   | 'audiencias'
@@ -119,11 +119,11 @@ export const PERMISSIONS = {
     EDIT: 'asesorias.edit',
     DELETE: 'asesorias.delete',
   },
-  CONCILIACIONES: {
-    VIEW: 'conciliaciones.view',
-    CREATE: 'conciliaciones.create',
-    EDIT: 'conciliaciones.edit',
-    DELETE: 'conciliaciones.delete',
+  RADICACIONES: {
+    VIEW: 'radicaciones.view',
+    CREATE: 'radicaciones.create',
+    EDIT: 'radicaciones.edit',
+    DELETE: 'radicaciones.delete',
   },
   CASOS: {
     VIEW: 'casos.view',

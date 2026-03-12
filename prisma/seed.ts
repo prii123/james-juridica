@@ -107,33 +107,33 @@ async function main() {
       }
     }),
 
-    // Permisos de Conciliaciones
+    // Permisos de Radicaciones
     prisma.permission.create({
       data: {
-        nombre: 'conciliaciones.view',
-        descripcion: 'Ver conciliaciones',
-        modulo: 'conciliaciones'
+        nombre: 'radicaciones.view',
+        descripcion: 'Ver radicaciones',
+        modulo: 'radicaciones'
       }
     }),
     prisma.permission.create({
       data: {
-        nombre: 'conciliaciones.create',
-        descripcion: 'Crear conciliaciones',
-        modulo: 'conciliaciones'
+        nombre: 'radicaciones.create',
+        descripcion: 'Crear radicaciones',
+        modulo: 'radicaciones'
       }
     }),
     prisma.permission.create({
       data: {
-        nombre: 'conciliaciones.edit',
-        descripcion: 'Editar conciliaciones',
-        modulo: 'conciliaciones'
+        nombre: 'radicaciones.edit',
+        descripcion: 'Editar radicaciones',
+        modulo: 'radicaciones'
       }
     }),
     prisma.permission.create({
       data: {
-        nombre: 'conciliaciones.delete',
-        descripcion: 'Eliminar conciliaciones',
-        modulo: 'conciliaciones'
+        nombre: 'radicaciones.delete',
+        descripcion: 'Eliminar radicaciones',
+        modulo: 'radicaciones'
       }
     }),
 
@@ -362,7 +362,7 @@ async function main() {
     p.nombre.includes('actuaciones.') ||
     p.nombre.includes('audiencias.') ||
     p.nombre.includes('honorarios.') ||
-    p.nombre.includes('conciliaciones.') ||
+    p.nombre.includes('radicaciones.') ||
     p.nombre.includes('seguimientos.') ||
     p.nombre === 'dashboard.view' ||
     p.nombre === 'asesorias.view' ||

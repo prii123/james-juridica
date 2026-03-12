@@ -16,7 +16,6 @@ interface CreateAsesoriaData {
   modalidad: ModalidadAsesoria
   tema: string
   descripcion?: string
-  valor?: number
   leadId: string
   asesorId: string
   notas?: string
@@ -58,7 +57,6 @@ function NuevaAsesoriaContent() {
     modalidad: 'PRESENCIAL',
     tema: '',
     descripcion: '',
-    valor: undefined,
     leadId: leadIdParam || '',
     asesorId: '',
     notas: ''
@@ -100,7 +98,8 @@ function NuevaAsesoriaContent() {
 
       if (asesoresResponse.ok) {
         const asesoresData = await asesoresResponse.json()
-        setAsesores(asesoresData)
+        const asesoresList = Array.isArray(asesoresData) ? asesoresData : asesoresData.usuarios || []
+        setAsesores(asesoresList)
       }
 
     } catch (error) {
@@ -123,8 +122,7 @@ function NuevaAsesoriaContent() {
       const asesoriaData = {
         ...formData,
         fecha: fechaHora.toISOString(),
-        duracion: formData.duracion,
-        valor: formData.valor || null
+        duracion: formData.duracion
       }
 
       delete (asesoriaData as any).hora
@@ -261,7 +259,7 @@ function NuevaAsesoriaContent() {
                       required
                     >
                       <option value="">Seleccionar lead/cliente</option>
-                      {leads.map((lead) => (
+                      {leads && leads.map((lead) => (
                         <option key={lead.id} value={lead.id}>
                           {lead.nombre} - {lead.email}
                         </option>
@@ -411,40 +409,13 @@ function NuevaAsesoriaContent() {
                     required
                   >
                     <option value="">Seleccionar asesor</option>
-                    {asesores.map((asesor) => (
+                    {asesores && asesores.map((asesor) => (
                       <option key={asesor.id} value={asesor.id}>
                         {asesor.nombre} {asesor.apellido}
                       </option>
                     ))}
                   </select>
                   {errors.asesorId && <div className="invalid-feedback">{errors.asesorId}</div>}
-                </div>
-
-                {/* Valor */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Valor de la Asesoría</label>
-                  <div className="input-group">
-                    <span className="input-group-text">$</span>
-                    <input
-                      type="number"
-                      className={`form-control ${errors.valor ? 'is-invalid' : ''}`}
-                      value={formData.valor || ''}
-                      onChange={(e) => {
-                        const value = e.target.value.trim()
-                        if (value === '' || value === '0') {
-                          handleInputChange('valor', undefined)
-                        } else {
-                          const numValue = parseFloat(value)
-                          handleInputChange('valor', isNaN(numValue) ? undefined : numValue)
-                        }
-                      }}
-                      placeholder="0"
-                      min="0"
-                      step="1000"
-                    />
-                    <span className="input-group-text">COP</span>
-                  </div>
-                  {errors.valor && <div className="invalid-feedback">{errors.valor}</div>}
                 </div>
 
                 {/* Notas */}
@@ -502,7 +473,7 @@ function NuevaAsesoriaContent() {
                     {leadIdParam && selectedLead?.estado === 'CALIFICADO' && (
                       <li>• El lead será marcado como CONVERTIDO</li>
                     )}
-                    <li>• Una vez REALIZADA podrá generar conciliación o caso</li>
+                    <li>• Una vez REALIZADA podrá generar una radicación o caso</li>
                   </ul>
                 </div>
               </div>

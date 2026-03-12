@@ -8,7 +8,7 @@ Sistema de gestión integral para procesos de insolvencia en Colombia, desarroll
 - **Dashboard**: Resumen ejecutivo y métricas principales
 - **Leads**: Gestión de prospectos comerciales
 - **Asesorías**: Manejo de consultas jurídicas
-- **Conciliaciones**: Procesos de conciliación
+- **Radicaciones**: Procesos de radicación
 - **Casos Jurídicos**: Gestión completa de procesos de insolvencia
 - **Actuaciones**: Seguimiento de actuaciones legales
 - **Audiencias**: Programación y seguimiento de audiencias

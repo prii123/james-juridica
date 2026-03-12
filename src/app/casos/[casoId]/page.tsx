@@ -32,7 +32,6 @@ interface Caso {
   tipoInsolvencia: TipoInsolvencia
   estado: EstadoCaso
   prioridad: Prioridad
-  valorDeuda: number
   fechaInicio: string
   fechaCierre?: string
   observaciones?: string
@@ -305,11 +304,6 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
                     <span className="badge bg-info text-white">
                       {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]}
                     </span>
-                  </div>
-                  
-                  <h6 className="text-muted mb-1">Valor de la Deuda</h6>
-                  <div className="h4 text-danger mb-3">
-                    {formatCurrency(caso.valorDeuda)}
                   </div>
                 </div>
                 <div className="col-md-6">

@@ -17,15 +17,15 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
-import { EstadoConciliacion } from '@prisma/client'
+import { EstadoRadicacion } from '@prisma/client'
 
-interface Conciliacion {
+interface Radicacion {
   id: string
   numero: string
   demandante: string
   demandado: string
   valor: number
-  estado: EstadoConciliacion
+  estado: EstadoRadicacion
   fechaSolicitud: string
   fechaAudiencia?: string
   createdAt: string
@@ -68,19 +68,19 @@ const ESTADO_CONFIG = {
   }
 }
 
-export default function ConciliacionesPage() {
-  const [conciliaciones, setConciliaciones] = useState<Conciliacion[]>([])
+export default function RadicacionesPage() {
+  const [radicaciones, setRadicaciones] = useState<Radicacion[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [estadoFilter, setEstadoFilter] = useState<EstadoConciliacion | ''>('')
+  const [estadoFilter, setEstadoFilter] = useState<EstadoRadicacion | ''>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    fetchConciliaciones()
+    fetchRadicaciones()
   }, [search, estadoFilter, currentPage])
 
-  const fetchConciliaciones = async () => {
+  const fetchRadicaciones = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -91,14 +91,14 @@ export default function ConciliacionesPage() {
       if (search) params.append('search', search)
       if (estadoFilter) params.append('estado', estadoFilter)
 
-      const response = await fetch(`/api/conciliaciones?${params}`)
+      const response = await fetch(`/api/radicaciones?${params}`)
       
       if (response.ok) {
         const data = await response.json()
-        setConciliaciones(data.conciliaciones)
+        setRadicaciones(data.radicaciones)
         setTotalPages(data.pagination.pages)
       } else {
-        console.error('Error al cargar conciliaciones')
+        console.error('Error al cargar radicaciones')
       }
     } catch (error) {
       console.error('Error de conexión:', error)
@@ -111,13 +111,6 @@ export default function ConciliacionesPage() {
     return new Date(dateString).toLocaleDateString('es-CO')
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(value)
-  }
 
   const calculateDaysElapsed = (startDate: string) => {
     const start = new Date(startDate)
@@ -132,7 +125,7 @@ export default function ConciliacionesPage() {
     setCurrentPage(1) // Reset to first page when searching
   }
 
-  const handleFilterChange = (value: EstadoConciliacion | '') => {
+  const handleFilterChange = (value: EstadoRadicacion | '') => {
     setEstadoFilter(value)
     setCurrentPage(1) // Reset to first page when filtering
   }
@@ -141,16 +134,16 @@ export default function ConciliacionesPage() {
     <>
       <Breadcrumb 
         items={[
-          { label: 'Conciliaciones' }
+          { label: 'Radicaciones' }
         ]} 
       />
 
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Conciliaciones</h1>
-          <p className="text-secondary mb-0">Gestiona todas las conciliaciones del sistema</p>
+          <h1 className="h2 fw-bold text-dark mb-1">Radicaciones</h1>
+          <p className="text-secondary mb-0">Gestiona todas las radicaciones del sistema</p>
         </div>
-        <Link href="/conciliaciones/nueva" className="btn btn-primary d-flex align-items-center gap-2">
+        <Link href="/radicaciones/nueva" className="btn btn-primary d-flex align-items-center gap-2">
           <Plus size={16} />
           Nueva Conciliación
         </Link>
@@ -182,7 +175,7 @@ export default function ConciliacionesPage() {
                 <select
                   className="form-select"
                   value={estadoFilter}
-                  onChange={(e) => handleFilterChange(e.target.value as EstadoConciliacion)}
+                  onChange={(e) => handleFilterChange(e.target.value as EstadoRadicacion)}
                 >
                   <option value="">Todos los estados</option>
                   <option value="SOLICITADA">Solicitada</option>
@@ -196,10 +189,10 @@ export default function ConciliacionesPage() {
         </div>
       </div>
 
-      {/* Lista de conciliaciones */}
+      {/* Lista de radicaciones */}
       <div className="card">
         <div className="card-header">
-          <h5 className="mb-0">Listado de Conciliaciones</h5>
+          <h5 className="mb-0">Listado de Radicaciones</h5>
         </div>
         <div className="card-body">
           {loading ? (
@@ -208,17 +201,17 @@ export default function ConciliacionesPage() {
                 <span className="visually-hidden">Cargando...</span>
               </div>
             </div>
-          ) : conciliaciones.length === 0 ? (
+          ) : radicaciones.length === 0 ? (
             <div className="text-center py-5">
               <FileText size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay conciliaciones</h5>
+              <h5 className="text-muted">No hay radicaciones</h5>
               <p className="text-muted">
                 {search || estadoFilter 
-                  ? 'No se encontraron conciliaciones con los criterios de búsqueda.'
-                  : 'Aún no se han creado conciliaciones en el sistema.'
+                  ? 'No se encontraron radicaciones con los criterios de búsqueda.'
+                  : 'Aún no se han creado radicaciones en el sistema.'
                 }
               </p>
-              <Link href="/conciliaciones/nueva" className="btn btn-primary">
+              <Link href="/radicaciones/nueva" className="btn btn-primary">
                 <Plus size={16} className="me-2" />
                 Crear Primera Conciliación
               </Link>
@@ -230,7 +223,6 @@ export default function ConciliacionesPage() {
                   <tr>
                     <th>Número</th>
                     <th>Partes</th>
-                    <th>Valor</th>
                     <th>Estado</th>
                     <th>Fecha Solicitud</th>
                     <th>Días</th>
@@ -240,30 +232,27 @@ export default function ConciliacionesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {conciliaciones.map((conciliacion) => {
-                    const estadoConfig = ESTADO_CONFIG[conciliacion.estado]
+                  {radicaciones.map((radicacion) => {
+                    const estadoConfig = ESTADO_CONFIG[radicacion.estado]
                     const IconoEstado = estadoConfig.icon
+                    const diasTranscurridos = calculateDaysElapsed(radicacion.fechaSolicitud)
+                    const isOverdue = diasTranscurridos > 10
 
                     return (
-                      <tr key={conciliacion.id}>
+                      <tr key={radicacion.id} className={isOverdue ? 'table-danger' : ''}>
                         <td>
                           <Link 
-                            href={`/conciliaciones/${conciliacion.id}`}
+                            href={`/radicaciones/${radicacion.id}`}
                             className="text-decoration-none fw-semibold"
                           >
-                            {conciliacion.numero}
+                            {radicacion.numero}
                           </Link>
                         </td>
                         <td>
                           <div className="small">
-                            <div className="fw-semibold">{conciliacion.demandante}</div>
-                            <div className="text-muted">vs {conciliacion.demandado}</div>
+                            <div className="fw-semibold">{radicacion.demandante}</div>
+                            <div className="text-muted">vs {radicacion.demandado}</div>
                           </div>
-                        </td>
-                        <td>
-                          <span className="fw-semibold text-success">
-                            {formatCurrency(conciliacion.valor)}
-                          </span>
                         </td>
                         <td>
                           <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1 w-fit`}>
@@ -273,44 +262,45 @@ export default function ConciliacionesPage() {
                         </td>
                         <td>
                           <div className="small">
-                            <div>{formatDate(conciliacion.fechaSolicitud)}</div>
-                            {conciliacion.fechaAudiencia && (
+                            <div>{formatDate(radicacion.fechaSolicitud)}</div>
+                            {radicacion.fechaAudiencia && (
                               <div className="text-muted">
-                                Audiencia: {formatDate(conciliacion.fechaAudiencia)}
+                                Audiencia: {formatDate(radicacion.fechaAudiencia)}
                               </div>
                             )}
                           </div>
                         </td>
                         <td>
                           <div className="small text-center">
-                            <div className="fw-semibold text-primary">
-                              {calculateDaysElapsed(conciliacion.fechaSolicitud)} días
+                            <div className={`fw-semibold ${isOverdue ? 'text-danger d-flex align-items-center gap-1 justify-content-center' : 'text-primary'}`}>
+                              {isOverdue && <AlertCircle size={14} />}
+                              {diasTranscurridos} días
                             </div>
                           </div>
                         </td>
                         <td>
                           <div className="small">
                             <Link 
-                              href={`/asesorias/${conciliacion.asesoria.id}`}
+                              href={`/asesorias/${radicacion.asesoria.id}`}
                               className="text-decoration-none"
                             >
-                              {conciliacion.asesoria.tema}
+                              {radicacion.asesoria.tema}
                             </Link>
                             <div className="text-muted">
-                              Cliente: {conciliacion.asesoria.lead.nombre}
+                              Cliente: {radicacion.asesoria.lead.nombre}
                             </div>
                           </div>
                         </td>
                         <td>
                           <div className="small">
                             <div className="fw-semibold">
-                              {conciliacion.asesoria.asesor.nombre} {conciliacion.asesoria.asesor.apellido}
+                              {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
                             </div>
                           </div>
                         </td>
                         <td>
                           <Link 
-                            href={`/conciliaciones/${conciliacion.id}`}
+                            href={`/radicaciones/${radicacion.id}`}
                             className="btn btn-outline-primary btn-sm"
                           >
                             Ver

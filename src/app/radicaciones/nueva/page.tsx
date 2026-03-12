@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { ArrowLeft, Save, Calendar, User, FileText, AlertCircle } from 'lucide-react'
-import { EstadoConciliacion } from '@prisma/client'
+import { EstadoRadicacion } from '@prisma/client'
 
-interface CreateConciliacionData {
+interface CreateRadicacionData {
   numero: string
   demandante: string
   demandado: string
@@ -15,7 +15,7 @@ interface CreateConciliacionData {
   fechaSolicitud: string
   fechaAudiencia?: string
   asesoriaId?: string
-  estado: EstadoConciliacion
+  estado: EstadoRadicacion
   observaciones?: string
 }
 
@@ -29,18 +29,18 @@ interface Asesoria {
 }
 
 // Loading component para Suspense
-function LoadingNewConciliacion() {
+function LoadingNewRadicacion() {
   return (
     <>
       <Breadcrumb 
         items={[
-          { label: 'Conciliaciones', href: '/conciliaciones' },
+          { label: 'Radicaciones', href: '/radicaciones' },
           { label: 'Nueva Conciliación' }
         ]} 
       />
       
       <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/conciliaciones" className="btn btn-outline-secondary">
+        <Link href="/radicaciones" className="btn btn-outline-secondary">
           <ArrowLeft size={16} />
         </Link>
         <div>
@@ -59,7 +59,7 @@ function LoadingNewConciliacion() {
 }
 
 // Componente que usa useSearchParams
-function NuevaConciliacionContent() {
+function NuevaRadicacionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const asesoriaId = searchParams.get('asesoriaId')
@@ -68,7 +68,7 @@ function NuevaConciliacionContent() {
   const [loadingAsesoria, setLoadingAsesoria] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [asesoria, setAsesoria] = useState<Asesoria | null>(null)
-  const [formData, setFormData] = useState<CreateConciliacionData>({
+  const [formData, setFormData] = useState<CreateRadicacionData>({
     numero: '',
     demandante: '',
     demandado: '',
@@ -86,7 +86,7 @@ function NuevaConciliacionContent() {
     }
     
     // Generar número de conciliación automático
-    generateConciliacionNumber()
+    generateRadicacionNumber()
   }, [asesoriaId])
 
   const fetchAsesoria = async () => {
@@ -112,7 +112,7 @@ function NuevaConciliacionContent() {
     }
   }
 
-  const generateConciliacionNumber = () => {
+  const generateRadicacionNumber = () => {
     // Generar número de conciliación con formato: CONC-YYYY-NNNN
     const year = new Date().getFullYear()
     const randomNum = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
@@ -130,7 +130,7 @@ function NuevaConciliacionContent() {
     setErrors({})
 
     try {
-      const conciliacionData = {
+      const radicacionData = {
         ...formData,
         valor: parseFloat(formData.valor.toString()),
         fechaSolicitud: new Date(formData.fechaSolicitud).toISOString(),
@@ -139,17 +139,17 @@ function NuevaConciliacionContent() {
           : undefined
       }
 
-      const response = await fetch('/api/conciliaciones', {
+      const response = await fetch('/api/radicaciones', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(conciliacionData),
+        body: JSON.stringify(radicacionData),
       })
 
       if (response.ok) {
         const data = await response.json()
-        router.push(`/conciliaciones/${data.id}`)
+        router.push(`/radicaciones/${data.id}`)
       } else {
         const error = await response.json()
         if (error.errors) {
@@ -165,7 +165,7 @@ function NuevaConciliacionContent() {
     }
   }
 
-  const handleInputChange = (field: keyof CreateConciliacionData, value: string | number) => {
+  const handleInputChange = (field: keyof CreateRadicacionData, value: string | number) => {
     setFormData({ ...formData, [field]: value })
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
@@ -177,13 +177,13 @@ function NuevaConciliacionContent() {
     <>
       <Breadcrumb 
         items={[
-          { label: 'Conciliaciones', href: '/conciliaciones' },
+          { label: 'Radicaciones', href: '/radicaciones' },
           { label: 'Nueva Conciliación' }
         ]} 
       />
 
       <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/conciliaciones" className="btn btn-outline-secondary">
+        <Link href="/radicaciones" className="btn btn-outline-secondary">
           <ArrowLeft size={16} />
         </Link>
         <div>
@@ -230,7 +230,7 @@ function NuevaConciliacionContent() {
                       <select
                         className="form-select"
                         value={formData.estado}
-                        onChange={(e) => handleInputChange('estado', e.target.value as EstadoConciliacion)}
+                        onChange={(e) => handleInputChange('estado', e.target.value as EstadoRadicacion)}
                       >
                         <option value="SOLICITADA">Solicitada</option>
                         <option value="PROGRAMADA">Programada</option>
@@ -359,7 +359,7 @@ function NuevaConciliacionContent() {
                       </>
                     )}
                   </button>
-                  <Link href="/conciliaciones" className="btn btn-outline-secondary">
+                  <Link href="/radicaciones" className="btn btn-outline-secondary">
                     Cancelar
                   </Link>
                 </div>
@@ -409,10 +409,10 @@ function NuevaConciliacionContent() {
 }
 
 // Componente principal que envuelve el contenido en Suspense
-export default function NuevaConciliacionPage() {
+export default function NuevaRadicacionPage() {
   return (
-    <Suspense fallback={<LoadingNewConciliacion />}>
-      <NuevaConciliacionContent />
+    <Suspense fallback={<LoadingNewRadicacion />}>
+      <NuevaRadicacionContent />
     </Suspense>
   )
 }

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
           clientes: [],
           casos: [],
           facturas: [],
-          conciliaciones: []
+          radicaciones: []
         }
       })
     }
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const limit = 5 // Límite por categoría
 
     // Búsqueda en paralelo
-    const [leads, clientes, casos, facturas, conciliaciones] = await Promise.all([
+    const [leads, clientes, casos, facturas, radicaciones] = await Promise.all([
       // Buscar Leads
       prisma.lead.findMany({
         where: {
@@ -103,7 +103,6 @@ export async function GET(request: NextRequest) {
           numeroCaso: true,
           tipoInsolvencia: true,
           estado: true,
-          valorDeuda: true,
           fechaInicio: true,
           cliente: {
             select: {
@@ -164,8 +163,8 @@ export async function GET(request: NextRequest) {
         orderBy: { fecha: 'desc' }
       }),
 
-      // Buscar Conciliaciones
-      prisma.conciliacion.findMany({
+      // Buscar Radicaciones
+      prisma.radicacion.findMany({
         where: {
           OR: [
             { numero: { contains: query, mode: 'insensitive' } },
@@ -215,7 +214,7 @@ export async function GET(request: NextRequest) {
         titulo: caso.numeroCaso,
         subtitulo: `${caso.cliente.nombre} ${caso.cliente.apellido || ''}`.trim(),
         estado: caso.estado,
-        detalles: `${caso.tipoInsolvencia} • $${Number(caso.valorDeuda).toLocaleString()}`,
+        detalles: `${caso.tipoInsolvencia} • ${new Date(caso.fechaInicio).toLocaleDateString('es-CO')}`,
         url: `/casos/${caso.id}`
       })),
 
@@ -229,14 +228,14 @@ export async function GET(request: NextRequest) {
         url: `/facturacion/${factura.id}`
       })),
 
-      conciliaciones: conciliaciones.map(conciliacion => ({
-        id: conciliacion.id,
-        tipo: 'conciliacion',
-        titulo: conciliacion.numero,
-        subtitulo: `${conciliacion.demandante} vs ${conciliacion.demandado}`,
-        estado: conciliacion.estado,
-        detalles: `$${Number(conciliacion.valor).toLocaleString()}`,
-        url: `/conciliaciones/${conciliacion.id}`
+      radicaciones: radicaciones.map(radicacion => ({
+        id: radicacion.id,
+        tipo: 'radicacion',
+        titulo: radicacion.numero,
+        subtitulo: `${radicacion.demandante} vs ${radicacion.demandado}`,
+        estado: radicacion.estado,
+        detalles: `$${Number(radicacion.valor).toLocaleString()}`,
+        url: `/radicaciones/${radicacion.id}`
       }))
     }
 

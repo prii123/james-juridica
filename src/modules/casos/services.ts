@@ -1,7 +1,7 @@
 import { EstadoCaso } from '@prisma/client'
 import { CasosRepository } from './repository'
 import { CreateCasoData, UpdateCasoData, CasoFilters } from './types'
-import { createCasoSchema, updateCasoSchema, validateValorDeudaByTipo } from './validators'
+import { createCasoSchema, updateCasoSchema } from './validators'
 import { calculateCasePriority } from '@/lib/workflows'
 
 export class CasosService {
@@ -15,15 +15,9 @@ export class CasosService {
     // Validar datos de entrada
     const validatedData = createCasoSchema.parse(data)
 
-    // Validaciones de negocio
-    if (!validateValorDeudaByTipo(validatedData.valorDeuda, validatedData.tipoInsolvencia)) {
-      throw new Error('El valor de la deuda no es válido para el tipo de insolvencia seleccionado')
-    }
-
     // Calcular prioridad automáticamente si no se proporciona
     if (!validatedData.prioridad) {
       validatedData.prioridad = calculateCasePriority(
-        validatedData.valorDeuda,
         new Date(),
         validatedData.tipoInsolvencia
       )
@@ -41,12 +35,6 @@ export class CasosService {
 
     // Validar datos de entrada
     const validatedData = updateCasoSchema.parse(data)
-
-    // Validaciones de negocio específicas
-    if (validatedData.valorDeuda && validatedData.tipoInsolvencia &&
-        !validateValorDeudaByTipo(validatedData.valorDeuda, validatedData.tipoInsolvencia)) {
-      throw new Error('El valor de la deuda no es válido para el tipo de insolvencia seleccionado')
-    }
 
     // Si se está cerrando el caso, establecer fecha de cierre
     if (validatedData.estado === 'CERRADO' && !validatedData.fechaCierre) {
@@ -153,33 +141,20 @@ export class CasosService {
     return await this.repository.getCasosWithUpcomingDeadlines(days)
   }
 
-  async getTotalValueByStatus() {
-    return await this.repository.getTotalValueByStatus()
-  }
-
   // Método para obtener insights de casos
   async getCasosInsights(startDate: Date, endDate: Date) {
-    const [stats, valueByStatus, upcomingDeadlines] = await Promise.all([
+    const [stats, upcomingDeadlines] = await Promise.all([
       this.getCasosStats(),
-      this.getTotalValueByStatus(),
       this.getCasosWithUpcomingDeadlines(7)
     ])
 
-    const totalValue = Object.values(valueByStatus).reduce((sum, value) => sum + value, 0)
-    const activeValue = valueByStatus.ACTIVO || 0
-
     return {
       stats,
-      valueByStatus,
-      totalValue,
-      activeValue,
       upcomingDeadlines: upcomingDeadlines.length,
       insights: {
         totalCases: stats.total,
         activeCases: stats.porEstado.ACTIVO,
         criticalCases: stats.porPrioridad.CRITICA,
-        totalPortfolioValue: totalValue,
-        activePortfolioValue: activeValue,
         needsAttention: upcomingDeadlines.length
       }
     }
@@ -189,7 +164,6 @@ export class CasosService {
   async createCasoFromLead(leadData: any, additionalCasoData: Partial<CreateCasoData>) {
     const casoData: CreateCasoData = {
       tipoInsolvencia: additionalCasoData.tipoInsolvencia!,
-      valorDeuda: additionalCasoData.valorDeuda!,
       observaciones: `Caso creado a partir del lead: ${leadData.observaciones || ''}`,
       clienteId: additionalCasoData.clienteId!,
       responsableId: additionalCasoData.responsableId || leadData.responsableId,

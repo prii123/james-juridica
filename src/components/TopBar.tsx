@@ -7,7 +7,7 @@ import { Bell, Search, User, LogOut, FileText, Users, Briefcase, CreditCard, Sca
 
 interface SearchResult {
   id: string
-  tipo: 'lead' | 'cliente' | 'caso' | 'factura' | 'conciliacion'
+  tipo: 'lead' | 'cliente' | 'caso' | 'factura' | 'radicacion'
   titulo: string
   subtitulo: string
   estado: string
@@ -20,7 +20,7 @@ interface SearchResults {
   clientes: SearchResult[]
   casos: SearchResult[]
   facturas: SearchResult[]
-  conciliaciones: SearchResult[]
+  radicaciones: SearchResult[]
 }
 
 const getIcon = (tipo: string) => {
@@ -29,7 +29,7 @@ const getIcon = (tipo: string) => {
     case 'cliente': return Users
     case 'caso': return Briefcase
     case 'factura': return CreditCard
-    case 'conciliacion': return Scale
+    case 'radicacion': return Scale
     default: return FileText
   }
 }
@@ -40,7 +40,7 @@ const getTypeLabel = (tipo: string) => {
     case 'cliente': return 'Cliente'
     case 'caso': return 'Caso'
     case 'factura': return 'Factura'
-    case 'conciliacion': return 'Conciliación'
+    case 'radicacion': return 'Radicación'
     default: return tipo
   }
 }
@@ -60,7 +60,7 @@ export default function TopBar() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResults>({
-    leads: [], clientes: [], casos: [], facturas: [], conciliaciones: []
+    leads: [], clientes: [], casos: [], facturas: [], radicaciones: []
   })
   const [isLoading, setIsLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -75,7 +75,7 @@ export default function TopBar() {
       if (searchQuery.length >= 2) {
         performSearch(searchQuery)
       } else {
-        setSearchResults({ leads: [], clientes: [], casos: [], facturas: [], conciliaciones: [] })
+        setSearchResults({ leads: [], clientes: [], casos: [], facturas: [], radicaciones: [] })
         setShowDropdown(false)
       }
     }, 300)
@@ -318,7 +318,7 @@ export default function TopBar() {
                              category === 'clientes' ? '🏢 Clientes' :
                              category === 'casos' ? '⚖️ Casos' :
                              category === 'facturas' ? '💰 Facturas' :
-                             '🤝 Conciliaciones'} ({results.length})
+                             '🤝 Radicaciones'} ({results.length})
                           </small>
                         </div>
                         {results.map((result: SearchResult) => {

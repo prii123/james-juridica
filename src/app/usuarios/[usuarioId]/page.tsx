@@ -341,7 +341,7 @@ export default function UsuarioDetailPage({ params }: { params: { usuarioId: str
                   {usuario.role.nombre === 'ASESOR' && (
                     <>
                       <li>Gestión de leads y asesorías</li>
-                      <li>Creación de conciliaciones</li>
+                      <li>Creación de radicaciones</li>
                       <li>Vista de reportes básicos</li>
                     </>
                   )}

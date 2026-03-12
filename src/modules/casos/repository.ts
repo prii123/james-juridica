@@ -10,8 +10,7 @@ export class CasosRepository {
     return await prisma.caso.create({
       data: {
         ...data,
-        numeroCaso,
-        valorDeuda: new Decimal(data.valorDeuda)
+        numeroCaso
       },
       include: {
         responsable: {
@@ -75,10 +74,7 @@ export class CasosRepository {
 
     if (!caso) return null
 
-    return {
-      ...caso,
-      valorDeuda: caso.valorDeuda.toNumber()
-    } as CasoWithRelations
+    return caso as CasoWithRelations
   }
 
   async findByNumero(numeroCaso: string) {
@@ -104,16 +100,6 @@ export class CasosRepository {
 
     if (filters.responsableId) {
       where.responsableId = filters.responsableId
-    }
-
-    if (filters.valorDeudaMin || filters.valorDeudaMax) {
-      where.valorDeuda = {}
-      if (filters.valorDeudaMin) {
-        where.valorDeuda.gte = new Decimal(filters.valorDeudaMin)
-      }
-      if (filters.valorDeudaMax) {
-        where.valorDeuda.lte = new Decimal(filters.valorDeudaMax)
-      }
     }
 
     if (filters.fechaInicioDesde || filters.fechaInicioHasta) {
@@ -176,13 +162,8 @@ export class CasosRepository {
       prisma.caso.count({ where })
     ])
 
-    const casosWithDecimal = casos.map(caso => ({
-      ...caso,
-      valorDeuda: caso.valorDeuda.toNumber()
-    })) as CasoWithRelations[]
-
     return {
-      casos: casosWithDecimal,
+      casos: casos as CasoWithRelations[],
       total,
       page,
       limit,
@@ -191,15 +172,9 @@ export class CasosRepository {
   }
 
   async update(id: string, data: UpdateCasoData) {
-    const updateData: any = { ...data }
-    
-    if (data.valorDeuda !== undefined) {
-      updateData.valorDeuda = new Decimal(data.valorDeuda)
-    }
-
     const caso = await prisma.caso.update({
       where: { id },
-      data: updateData,
+      data: data,
       include: {
         responsable: {
           select: {
@@ -219,10 +194,7 @@ export class CasosRepository {
       }
     })
 
-    return {
-      ...caso,
-      valorDeuda: caso.valorDeuda.toNumber()
-    }
+    return caso
   }
 
   async delete(id: string) {
@@ -294,10 +266,7 @@ export class CasosRepository {
       }
     })
 
-    return casos.map(caso => ({
-      ...caso,
-      valorDeuda: caso.valorDeuda.toNumber()
-    }))
+    return casos
   }
 
   async getCasosByResponsable(responsableId: string) {
@@ -322,10 +291,7 @@ export class CasosRepository {
       }
     })
 
-    return casos.map(caso => ({
-      ...caso,
-      valorDeuda: caso.valorDeuda.toNumber()
-    }))
+    return casos
   }
 
   async getCasosStats() {
@@ -439,19 +405,5 @@ export class CasosRepository {
     }
 
     return `${prefix}-${nextNumber.toString().padStart(4, '0')}`
-  }
-
-  async getTotalValueByStatus() {
-    const result = await prisma.caso.groupBy({
-      by: ['estado'],
-      _sum: {
-        valorDeuda: true
-      }
-    })
-
-    return result.reduce((acc, item) => {
-      acc[item.estado] = item._sum.valorDeuda?.toNumber() || 0
-      return acc
-    }, {} as Record<string, number>)
   }
 }

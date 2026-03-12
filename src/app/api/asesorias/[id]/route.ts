@@ -35,7 +35,7 @@ export async function GET(
             email: true
           }
         },
-        conciliaciones: {
+        radicaciones: {
           select: {
             id: true,
             fechaAudiencia: true,
@@ -88,7 +88,6 @@ export async function PATCH(
       modalidad,
       tema,
       descripcion,
-      valor,
       asesorId,
       notas
     } = body
@@ -115,7 +114,6 @@ export async function PATCH(
     if (modalidad !== undefined) updateData.modalidad = modalidad as ModalidadAsesoria
     if (tema !== undefined) updateData.tema = tema
     if (descripcion !== undefined) updateData.descripcion = descripcion
-    if (valor !== undefined) updateData.valor = valor ? parseFloat(valor) : null
     if (asesorId !== undefined) updateData.asesorId = asesorId
     if (notas !== undefined) updateData.notas = notas
 
@@ -140,7 +138,7 @@ export async function PATCH(
             email: true
           }
         },
-        conciliaciones: {
+        radicaciones: {
           select: {
             id: true,
             fechaAudiencia: true,
@@ -177,7 +175,7 @@ export async function DELETE(
     const existingAsesoria = await prisma.asesoria.findUnique({
       where: { id: params.id },
       include: {
-        conciliaciones: true
+        radicaciones: true
       }
     })
 
@@ -189,9 +187,9 @@ export async function DELETE(
     }
 
     // Verificar si tiene elementos relacionados
-    if (existingAsesoria.conciliaciones.length > 0) {
+    if (existingAsesoria.radicaciones.length > 0) {
       return NextResponse.json(
-        { error: 'No se puede eliminar una asesoría que tiene conciliaciones asociadas' },
+        { error: 'No se puede eliminar una asesoría que tiene radicaciones asociadas' },
         { status: 400 }
       )
     }

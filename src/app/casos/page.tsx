@@ -30,7 +30,6 @@ interface Caso {
   tipoInsolvencia: TipoInsolvencia
   estado: EstadoCaso
   prioridad: Prioridad
-  valorDeuda: number
   fechaInicio: string
   fechaCierre?: string
   createdAt: string
@@ -184,7 +183,7 @@ export default function CasosPage() {
     cerrados: Array.isArray(casos) ? casos.filter(c => c.estado === 'CERRADO').length : 0,
     suspendidos: Array.isArray(casos) ? casos.filter(c => c.estado === 'SUSPENDIDO').length : 0,
     criticos: Array.isArray(casos) ? casos.filter(c => c.prioridad === 'CRITICA').length : 0,
-    valorTotal: Array.isArray(casos) ? casos.reduce((sum, c) => sum + c.valorDeuda, 0) : 0
+    // valorTotal: Array.isArray(casos) ? casos.reduce((sum, c) => sum + c.valorDeuda, 0) : 0
   }
 
   return (
@@ -247,14 +246,6 @@ export default function CasosPage() {
             <div className="card-body py-3">
               <div className="h4 mb-0 text-danger">{estadisticas.criticos}</div>
               <small className="text-muted">Críticos</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
-          <div className="card bg-primary bg-opacity-10 text-center">
-            <div className="card-body py-3">
-              <div className="h6 mb-0 text-primary">{formatCurrency(estadisticas.valorTotal)}</div>
-              <small className="text-muted">Valor Total</small>
             </div>
           </div>
         </div>
@@ -362,13 +353,13 @@ export default function CasosPage() {
               </h5>
               <p className="text-secondary">
                 {casos.length === 0 
-                  ? 'Los casos se crean automáticamente cuando una conciliación es aceptada por el juzgado.'
+                  ? 'Los casos se crean automáticamente cuando una radicación es aceptada por el juzgado.'
                   : 'Intenta con otros filtros de búsqueda.'
                 }
               </p>
               {casos.length === 0 && (
-                <Link href="/conciliaciones" className="btn btn-primary mt-3">
-                  Ir a Conciliaciones
+                <Link href="/radicaciones" className="btn btn-primary mt-3">
+                  Ir a Radicaciones
                 </Link>
               )}
             </div>
@@ -382,7 +373,6 @@ export default function CasosPage() {
                     <th>Tipo</th>
                     <th>Estado</th>
                     <th>Prioridad</th>
-                    <th>Valor Deuda</th>
                     <th>Responsable</th>
                     <th>Días Activo</th>
                     <th>Acciones</th>
@@ -434,11 +424,6 @@ export default function CasosPage() {
                             <IconoPrioridad size={12} />
                             {prioridadConfig.label}
                           </span>
-                        </td>
-                        <td>
-                          <div className="fw-semibold">
-                            {formatCurrency(caso.valorDeuda)}
-                          </div>
                         </td>
                         <td>
                           <div className="small">

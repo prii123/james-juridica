@@ -192,7 +192,6 @@ async function getRecentCases() {
         id: true,
         numeroCaso: true,
         tipoInsolvencia: true,
-        valorDeuda: true,
         estado: true,
         updatedAt: true,
         cliente: {
@@ -320,7 +319,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Por Cobrar */}
-        <div className="col-12 col-md-6 col-lg-3">
+        {/* <div className="col-12 col-md-6 col-lg-3">
           <div className="card h-100" style={{borderLeft: '4px solid #64748b'}}>
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -337,7 +336,7 @@ export default async function DashboardPage() {
               <p className="card-text fw-medium small" style={{color: '#dc2626'}}>{formatCurrency(stats.cartera.totalVencido)} vencido</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Secciones Principales */}

@@ -32,7 +32,6 @@ interface Asesoria {
   tema: string
   descripcion?: string | null
   notas?: string | null
-  valor?: number | null
   resultado?: ResultadoAsesoria | null
   lead: {
     id: string
@@ -174,7 +173,7 @@ export default function AsesoriaPage() {
               <Plus size={16} />
               Nueva Asesoría
             </Link>
-            <Link href="/asesorias/calendario" className="btn btn-outline-secondary d-flex align-items-center gap-2">
+            <Link href="/calendario" className="btn btn-outline-secondary d-flex align-items-center gap-2">
               <Calendar size={16} />
               Calendario
             </Link>

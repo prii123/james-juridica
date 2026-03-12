@@ -33,7 +33,7 @@ export const TARIFAS_BASE = {
   TRAMITE_DERECHO_PETICION: 500000,
   TRAMITE_LEVANTAMIENTO_EMBARGO: 800000,
   GESTION_COBRANZA: 1000000,
-  AUDIENCIA_CONCILIACION: 800000,
+  AUDIENCIA_RADICACION: 800000,
   AUDIENCIA_JUDICIAL: 1200000,
 } as const
 
@@ -172,7 +172,6 @@ export async function createFacturaFromAsesoria(asesoriaId: string, creadoPorId:
     data: {
       numeroCaso: `ASESORIA-${Date.now()}`,
       tipoInsolvencia: 'REORGANIZACION', // Default
-      valorDeuda: asesoria.valor,
       clienteId: cliente.id,
       responsableId: asesoria.asesorId,
       creadoPorId: asesoria.asesorId,

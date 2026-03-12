@@ -16,7 +16,6 @@ interface EditAsesoriaData {
   modalidad: ModalidadAsesoria
   tema: string
   descripcion?: string
-  valor?: number
   asesorId: string
   notas?: string
 }
@@ -30,7 +29,6 @@ interface Asesoria {
   modalidad: ModalidadAsesoria
   tema: string
   descripcion?: string
-  valor?: number
   notas?: string
   lead: {
     id: string
@@ -67,7 +65,6 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
     modalidad: 'PRESENCIAL',
     tema: '',
     descripcion: '',
-    valor: undefined,
     asesorId: '',
     notas: ''
   })
@@ -104,7 +101,6 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
           modalidad: asesoriaData.modalidad,
           tema: asesoriaData.tema,
           descripcion: asesoriaData.descripcion || '',
-          valor: asesoriaData.valor,
           asesorId: asesoriaData.asesor.id,
           notas: asesoriaData.notas || ''
         })
@@ -140,8 +136,7 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
       const updateData = {
         ...formData,
         fecha: fechaHora.toISOString(),
-        duracion: formData.duracion,
-        valor: formData.valor || null
+        duracion: formData.duracion
       }
 
       delete (updateData as any).hora
@@ -389,33 +384,6 @@ export default function EditAsesoriaPage({ params }: { params: { asesoriaId: str
                     ))}
                   </select>
                   {errors.asesorId && <div className="invalid-feedback">{errors.asesorId}</div>}
-                </div>
-
-                {/* Valor */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Valor de la Asesoría</label>
-                  <div className="input-group">
-                    <span className="input-group-text">$</span>
-                    <input
-                      type="number"
-                      className={`form-control ${errors.valor ? 'is-invalid' : ''}`}
-                      value={formData.valor || ''}
-                      onChange={(e) => {
-                        const value = e.target.value.trim()
-                        if (value === '' || value === '0') {
-                          handleInputChange('valor', undefined)
-                        } else {
-                          const numValue = parseFloat(value)
-                          handleInputChange('valor', isNaN(numValue) ? undefined : numValue)
-                        }
-                      }}
-                      placeholder="0"
-                      min="0"
-                      step="1000"
-                    />
-                    <span className="input-group-text">COP</span>
-                  </div>
-                  {errors.valor && <div className="invalid-feedback">{errors.valor}</div>}
                 </div>
 
                 {/* Notas */}
