@@ -471,7 +471,7 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
                   className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
                 >
                   <FileText size={16} />
-                  Actuaciones
+                  Fracaso
                 </Link>
 
                 <Link 

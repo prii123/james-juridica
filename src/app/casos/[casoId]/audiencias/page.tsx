@@ -28,7 +28,7 @@ interface Audiencia {
   fechaAudiencia: string
   horaInicio: string
   horaFin?: string
-  estado: 'PROGRAMADA' | 'EN_CURSO' | 'COMPLETADA' | 'CANCELADA' | 'REPROGRAMADA'
+  estado: 'PROGRAMADA' | 'SUSPENDIDA' | 'REPROGRAMADA' | 'FRACASO' | 'OBJECION'
   modalidad: 'PRESENCIAL' | 'VIRTUAL' | 'MIXTA'
   lugar?: string
   enlaceVirtual?: string
@@ -62,25 +62,25 @@ const ESTADO_CONFIG = {
     icon: Calendar,
     label: 'Programada'
   },
-  EN_CURSO: {
+  SUSPENDIDA: {
     color: 'warning',
     icon: Clock,
-    label: 'En Curso'
-  },
-  COMPLETADA: {
-    color: 'success',
-    icon: CheckCircle,
-    label: 'Completada'
-  },
-  CANCELADA: {
-    color: 'danger',
-    icon: XCircle,
-    label: 'Cancelada'
+    label: 'Suspendida'
   },
   REPROGRAMADA: {
     color: 'info',
     icon: AlertTriangle,
     label: 'Reprogramada'
+  },
+  FRACASO: {
+    color: 'danger',
+    icon: XCircle,
+    label: 'Fracasó'
+  },
+  OBJECION: {
+    color: 'secondary',
+    icon: AlertTriangle,
+    label: 'Objeción'
   }
 }
 
@@ -204,8 +204,8 @@ export default function AudienciasPage() {
   const estadisticas = {
     total: audiencias.length,
     programadas: audiencias.filter(a => a.estado === 'PROGRAMADA').length,
-    completadas: audiencias.filter(a => a.estado === 'COMPLETADA').length,
-    canceladas: audiencias.filter(a => a.estado === 'CANCELADA').length,
+    reprogramadas: audiencias.filter(a => a.estado === 'REPROGRAMADA').length,
+    suspendidas: audiencias.filter(a => a.estado === 'SUSPENDIDA').length,
     proximas: audiencias.filter(a => 
       a.estado === 'PROGRAMADA' && 
       getDaysUntilAudiencia(a.fechaAudiencia) <= 7
@@ -294,18 +294,18 @@ export default function AudienciasPage() {
           </div>
         </div>
         <div className="col-md-2 col-sm-6">
-          <div className="card bg-success bg-opacity-10 text-center">
+          <div className="card bg-info bg-opacity-10 text-center">
             <div className="card-body py-2">
-              <div className="h4 mb-0 text-success">{estadisticas.completadas}</div>
-              <small className="text-muted">Completadas</small>
+              <div className="h4 mb-0 text-info">{estadisticas.reprogramadas}</div>
+              <small className="text-muted">Reprogramadas</small>
             </div>
           </div>
         </div>
         <div className="col-md-2 col-sm-6">
-          <div className="card bg-danger bg-opacity-10 text-center">
+          <div className="card bg-secondary bg-opacity-10 text-center">
             <div className="card-body py-2">
-              <div className="h4 mb-0 text-danger">{estadisticas.canceladas}</div>
-              <small className="text-muted">Canceladas</small>
+              <div className="h4 mb-0 text-secondary">{estadisticas.suspendidas}</div>
+              <small className="text-muted">Suspendidas</small>
             </div>
           </div>
         </div>
@@ -327,10 +327,10 @@ export default function AudienciasPage() {
               >
                 <option value="">Todos los estados</option>
                 <option value="PROGRAMADA">Programada</option>
-                <option value="EN_CURSO">En Curso</option>
-                <option value="COMPLETADA">Completada</option>
-                <option value="CANCELADA">Cancelada</option>
+                <option value="SUSPENDIDA">Suspendida</option>
                 <option value="REPROGRAMADA">Reprogramada</option>
+                <option value="FRACASO">Fracasó</option>
+                <option value="OBJECION">Objeción</option>
               </select>
             </div>
             <div className="col-md-3">

@@ -12,7 +12,10 @@ import {
   MapPin,
   Scale,
   Gavel,
-  Plus
+  Plus,
+  CalendarCheck,
+  CalendarX,
+  RefreshCw
 } from 'lucide-react'
 import { EstadoAsesoria, TipoAudiencia } from '@prisma/client'
 
@@ -24,6 +27,8 @@ interface Asesoria {
   duracion: number
   estado: EstadoAsesoria
   modalidad: string
+  googleEventId?: string | null
+  sincronizadoGoogle: boolean
   lead: {
     nombre: string
   }
@@ -38,6 +43,8 @@ interface Audiencia {
   tipo: TipoAudiencia
   fechaHora: string
   estado: string
+  googleEventId?: string | null
+  sincronizadoGoogle: boolean
   caso?: {
     id: string
     numeroCaso: string
@@ -74,6 +81,8 @@ export default function CalendarioPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncingEvents, setSyncingEvents] = useState<Set<string>>(new Set())
+  const [syncStatus, setSyncStatus] = useState<{[key: string]: 'syncing' | 'synced' | 'error' | null}>({})
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   useEffect(() => {
@@ -193,6 +202,86 @@ export default function CalendarioPage() {
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear()
+  }
+
+  const handleSyncEvent = async (eventId: string, eventType: 'asesoria' | 'audiencia') => {
+    setSyncingEvents(prev => new Set(prev).add(eventId))
+    setSyncStatus(prev => ({ ...prev, [eventId]: 'syncing' }))
+
+    try {
+      const response = await fetch('/api/configuraciones/sincronizar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          eventType,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSyncStatus(prev => ({ ...prev, [eventId]: 'synced' }))
+        // Recargar eventos para actualizar el estado
+        await fetchEvents()
+      } else {
+        setSyncStatus(prev => ({ ...prev, [eventId]: 'error' }))
+        alert(`Error al sincronizar: ${result.error}`)
+      }
+    } catch (error) {
+      setSyncStatus(prev => ({ ...prev, [eventId]: 'error' }))
+      alert('Error al sincronizar el evento')
+    } finally {
+      setSyncingEvents(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(eventId)
+        return newSet
+      })
+    }
+  }
+
+  const handleDesyncEvent = async (eventId: string, eventType: 'asesoria' | 'audiencia') => {
+    if (!confirm('¿Estás seguro de que quieres desincronizar este evento de Google Calendar?')) {
+      return
+    }
+
+    setSyncingEvents(prev => new Set(prev).add(eventId))
+    setSyncStatus(prev => ({ ...prev, [eventId]: 'syncing' }))
+
+    try {
+      const response = await fetch('/api/configuraciones/sincronizar', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          eventType,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSyncStatus(prev => ({ ...prev, [eventId]: null }))
+        // Recargar eventos para actualizar el estado
+        await fetchEvents()
+      } else {
+        setSyncStatus(prev => ({ ...prev, [eventId]: 'error' }))
+        alert(`Error al desincronizar: ${result.error}`)
+      }
+    } catch (error) {
+      setSyncStatus(prev => ({ ...prev, [eventId]: 'error' }))
+      alert('Error al desincronizar el evento')
+    } finally {
+      setSyncingEvents(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(eventId)
+        return newSet
+      })
+    }
   }
 
   const days = getDaysInMonth()
@@ -372,14 +461,46 @@ export default function CalendarioPage() {
                                   <User size={16} className="text-info" />
                                   <span className="badge bg-info">Asesoría</span>
                                 </div>
-                                <span className={`badge ${
-                                  asesoria.estado === 'PROGRAMADA' ? 'bg-primary' :
-                                  asesoria.estado === 'REALIZADA' ? 'bg-success' :
-                                  asesoria.estado === 'CANCELADA' ? 'bg-danger' :
-                                  'bg-warning'
-                                }`}>
-                                  {asesoria.estado}
-                                </span>
+                                <div className="d-flex align-items-center gap-2">
+                                  {asesoria.sincronizadoGoogle ? (
+                                    <div className="d-flex align-items-center gap-1">
+                                      <CalendarCheck size={14} className="text-success" />
+                                      <button
+                                        onClick={() => handleDesyncEvent(asesoria.id, 'asesoria')}
+                                        disabled={syncingEvents.has(asesoria.id)}
+                                        className="btn btn-sm btn-outline-danger p-1"
+                                        title="Desincronizar de Google Calendar"
+                                      >
+                                        {syncingEvents.has(asesoria.id) ? (
+                                          <RefreshCw size={12} className="animate-spin" />
+                                        ) : (
+                                          <CalendarX size={12} />
+                                        )}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleSyncEvent(asesoria.id, 'asesoria')}
+                                      disabled={syncingEvents.has(asesoria.id)}
+                                      className="btn btn-sm btn-outline-primary p-1"
+                                      title="Sincronizar con Google Calendar"
+                                    >
+                                      {syncingEvents.has(asesoria.id) ? (
+                                        <RefreshCw size={12} className="animate-spin" />
+                                      ) : (
+                                        <CalendarCheck size={12} />
+                                      )}
+                                    </button>
+                                  )}
+                                  <span className={`badge ${
+                                    asesoria.estado === 'PROGRAMADA' ? 'bg-primary' :
+                                    asesoria.estado === 'REALIZADA' ? 'bg-success' :
+                                    asesoria.estado === 'CANCELADA' ? 'bg-danger' :
+                                    'bg-warning'
+                                  }`}>
+                                    {asesoria.estado}
+                                  </span>
+                                </div>
                               </div>
                               <h6 className="mb-2">{asesoria.tema}</h6>
                               <div className="small text-muted">
@@ -415,14 +536,46 @@ export default function CalendarioPage() {
                                   <Gavel size={16} className="text-warning" />
                                   <span className="badge bg-warning text-dark">Audiencia</span>
                                 </div>
-                                <span className={`badge ${
-                                  audiencia.estado === 'PROGRAMADA' ? 'bg-primary' :
-                                  audiencia.estado === 'REALIZADA' ? 'bg-success' :
-                                  audiencia.estado === 'CANCELADA' ? 'bg-danger' :
-                                  'bg-warning'
-                                }`}>
-                                  {audiencia.estado}
-                                </span>
+                                <div className="d-flex align-items-center gap-2">
+                                  {audiencia.sincronizadoGoogle ? (
+                                    <div className="d-flex align-items-center gap-1">
+                                      <CalendarCheck size={14} className="text-success" />
+                                      <button
+                                        onClick={() => handleDesyncEvent(audiencia.id, 'audiencia')}
+                                        disabled={syncingEvents.has(audiencia.id)}
+                                        className="btn btn-sm btn-outline-danger p-1"
+                                        title="Desincronizar de Google Calendar"
+                                      >
+                                        {syncingEvents.has(audiencia.id) ? (
+                                          <RefreshCw size={12} className="animate-spin" />
+                                        ) : (
+                                          <CalendarX size={12} />
+                                        )}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleSyncEvent(audiencia.id, 'audiencia')}
+                                      disabled={syncingEvents.has(audiencia.id)}
+                                      className="btn btn-sm btn-outline-primary p-1"
+                                      title="Sincronizar con Google Calendar"
+                                    >
+                                      {syncingEvents.has(audiencia.id) ? (
+                                        <RefreshCw size={12} className="animate-spin" />
+                                      ) : (
+                                        <CalendarCheck size={12} />
+                                      )}
+                                    </button>
+                                  )}
+                                  <span className={`badge ${
+                                    audiencia.estado === 'PROGRAMADA' ? 'bg-primary' :
+                                    audiencia.estado === 'REALIZADA' ? 'bg-success' :
+                                    audiencia.estado === 'CANCELADA' ? 'bg-danger' :
+                                    'bg-warning'
+                                  }`}>
+                                    {audiencia.estado}
+                                  </span>
+                                </div>
                               </div>
                               <h6 className="mb-2">{event.title}</h6>
                               <div className="small text-muted">

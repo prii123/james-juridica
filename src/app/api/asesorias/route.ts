@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { prisma } from '@/lib/db'
+import { prepareAsesoriaForSync, syncEventToGoogleCalendar } from '@/lib/google-calendar'
 
 export async function GET(request: NextRequest) {
   try {
@@ -163,6 +164,17 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Sincronizar con Google Calendar automáticamente
+    try {
+      const eventData = await prepareAsesoriaForSync(asesoria.id);
+      if (eventData) {
+        await syncEventToGoogleCalendar(eventData);
+      }
+    } catch (syncError) {
+      console.error('Error syncing asesoria to Google Calendar:', syncError);
+      // No fallar la creación si la sincronización falla
+    }
 
     return NextResponse.json(asesoria, { status: 201 })
 
