@@ -14,7 +14,7 @@ export class AsesoriasRepository {
         leadId: data.leadId,
         asesorId: data.asesorId,
         notas: data.notas,
-        valor: data.valor ? { toFixed: () => data.valor!.toString() } as any : undefined
+        valor: data.valor
       },
       include: {
         lead: {
@@ -193,7 +193,7 @@ export class AsesoriasRepository {
         ...(data.duracion !== undefined && { duracion: data.duracion }),
         ...(data.modalidad && { modalidad: data.modalidad }),
         ...(data.notas !== undefined && { notas: data.notas }),
-        ...(data.valor !== undefined && { valor: data.valor ? { toFixed: () => data.valor!.toString() } as any : null }),
+        ...(data.valor !== undefined && { valor: data.valor }),
         ...(data.resultado !== undefined && { resultado: data.resultado })
       },
       include: {
