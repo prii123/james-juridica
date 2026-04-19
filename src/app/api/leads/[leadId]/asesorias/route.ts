@@ -1,110 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
-import { prisma } from '@/lib/db'
+import { AsesoriaLeadService } from '@/modules/leads/asesoria-lead/services'
+import { okResponse, createdResponse, handleAPIError } from '@/lib/api-response'
 
-interface Params {
-  params: {
-    leadId: string
-  }
-}
+const service = new AsesoriaLeadService()
 
-export async function GET(request: NextRequest, { params }: Params) {
+/**
+ * GET /api/leads/[leadId]/asesorias - Obtener asesorías del lead
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { leadId: string } }
+) {
   try {
     await requirePermission(PERMISSIONS.LEADS.VIEW)
 
-    // Obtener el lead para verificar que existe y obtener su nombre
-    const lead = await prisma.lead.findUnique({
-      where: { id: params.leadId },
-      select: { 
-        id: true, 
-        nombre: true 
-      }
-    })
-
-    if (!lead) {
-      return NextResponse.json(
-        { error: 'Lead no encontrado' },
-        { status: 404 }
-      )
-    }
-
-    // Obtener las asesorías del lead
-    const asesorias = await prisma.asesoria.findMany({
-      where: { leadId: params.leadId },
-      include: {
-        asesor: {
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
-            email: true
-          }
-        }
-      },
-      orderBy: { fecha: 'desc' }
-    })
-
-    return NextResponse.json({
-      leadName: lead.nombre,
-      asesorias: asesorias
-    })
-  } catch (error: any) {
-    console.error('Error al obtener asesorías:', error)
-    return NextResponse.json(
-      { error: 'Error al cargar las asesorías' },
-      { status: 500 }
-    )
+    const resultado = await service.obtenerAsesoriasLead(params.leadId)
+    return okResponse(resultado)
+  } catch (error) {
+    return handleAPIError(error)
   }
 }
 
-export async function POST(request: NextRequest, { params }: Params) {
+/**
+ * POST /api/leads/[leadId]/asesorias - Crear asesoría
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { leadId: string } }
+) {
   try {
     await requirePermission(PERMISSIONS.ASESORIAS.CREATE)
 
     const body = await request.json()
-    
-    // Verificar que el lead existe
-    const lead = await prisma.lead.findUnique({
-      where: { id: params.leadId }
-    })
+    const asesoria = await service.crearAsesoriaLead(params.leadId, body)
 
-    if (!lead) {
-      return NextResponse.json(
-        { error: 'Lead no encontrado' },
-        { status: 404 }
-      )
-    }
-
-    // Crear la asesoría
-    const asesoria = await prisma.asesoria.create({
-      data: {
-        ...body,
-        leadId: params.leadId
-      },
-      include: {
-        asesor: {
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
-            email: true
-          }
-        },
-        lead: {
-          select: {
-            id: true,
-            nombre: true
-          }
-        }
-      }
-    })
-
-    return NextResponse.json(asesoria, { status: 201 })
-  } catch (error: any) {
-    console.error('Error al crear asesoría:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al crear la asesoría' },
-      { status: 400 }
-    )
+    return createdResponse(asesoria)
+  } catch (error) {
+    return handleAPIError(error)
   }
 }
