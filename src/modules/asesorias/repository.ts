@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { Prisma, EstadoAsesoria } from '@prisma/client'
 import { CreateAsesoriaData, UpdateAsesoriaData, AsesoriaFilters, AsesoriaWithRelations } from './types'
 
 export class AsesoriasRepository {
@@ -64,7 +65,7 @@ export class AsesoriasRepository {
   }
 
   async findAll(filters: AsesoriaFilters = {}, page: number = 1, limit: number = 10) {
-    const where: any = {}
+    const where: Prisma.AsesoriaWhereInput = {}
 
     if (filters.tipo) {
       where.tipo = filters.tipo
@@ -185,13 +186,13 @@ export class AsesoriasRepository {
     return await prisma.asesoria.update({
       where: { id },
       data: {
-        ...(data.tipo && { tipo: data.tipo }),
-        ...(data.estado && { estado: data.estado }),
-        ...(data.fecha && { fecha: data.fecha }),
-        ...(data.tema && { tema: data.tema }),
+        ...(data.tipo !== undefined && { tipo: data.tipo }),
+        ...(data.estado !== undefined && { estado: data.estado }),
+        ...(data.fecha !== undefined && { fecha: data.fecha }),
+        ...(data.tema !== undefined && { tema: data.tema }),
         ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
         ...(data.duracion !== undefined && { duracion: data.duracion }),
-        ...(data.modalidad && { modalidad: data.modalidad }),
+        ...(data.modalidad !== undefined && { modalidad: data.modalidad }),
         ...(data.notas !== undefined && { notas: data.notas }),
         ...(data.valor !== undefined && { valor: data.valor }),
         ...(data.resultado !== undefined && { resultado: data.resultado })
@@ -283,10 +284,10 @@ export class AsesoriasRepository {
   async getAsesoriasStats() {
     const [total, programadas, realizadas, canceladas, pendientes] = await Promise.all([
       prisma.asesoria.count(),
-      prisma.asesoria.count({ where: { estado: 'PROGRAMADA' } }),
-      prisma.asesoria.count({ where: { estado: 'REALIZADA' } }),
-      prisma.asesoria.count({ where: { estado: 'CANCELADA' } }),
-      prisma.asesoria.count({ where: { estado: 'PENDIENTE' } })
+      prisma.asesoria.count({ where: { estado: EstadoAsesoria.PROGRAMADA } }),
+      prisma.asesoria.count({ where: { estado: EstadoAsesoria.REALIZADA } }),
+      prisma.asesoria.count({ where: { estado: EstadoAsesoria.CANCELADA } }),
+      prisma.asesoria.count({ where: { estado: EstadoAsesoria.PENDIENTE } })
     ])
 
     return {
@@ -340,7 +341,7 @@ export class AsesoriasRepository {
         fecha: {
           gte: now
         },
-        estado: 'PROGRAMADA'
+        estado: EstadoAsesoria.PROGRAMADA
       },
       take: limit,
       include: {

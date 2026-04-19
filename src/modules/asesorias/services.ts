@@ -1,7 +1,7 @@
 import { EstadoAsesoria, ResultadoAsesoria } from '@prisma/client'
 import { AsesoriasRepository } from './repository'
 import { CreateAsesoriaData, UpdateAsesoriaData, AsesoriaFilters } from './types'
-import { createAsesoriaSchema, updateAsesoriaSchema, validateFechaFutura, validateRangoFechas } from './validators'
+import { createAsesoriaSchema, updateAsesoriaSchema, validateRangoFechas } from './validators'
 import { prisma } from '@/lib/db'
 
 export class AsesoriasService {
@@ -52,7 +52,7 @@ export class AsesoriasService {
     const validatedData = updateAsesoriaSchema.parse(data)
 
     // No permitir actualizar asesorías canceladas o realizadas (a menos que sea un cambio de estado)
-    if (existingAsesoria.estado === 'CANCELADA' && !validatedData.estado) {
+    if (existingAsesoria.estado === EstadoAsesoria.CANCELADA && !validatedData.estado) {
       throw new Error('No se puede modificar una asesoría cancelada')
     }
 
@@ -86,7 +86,7 @@ export class AsesoriasService {
     }
 
     // No permitir eliminar asesorías realizadas
-    if (existingAsesoria.estado === 'REALIZADA') {
+    if (existingAsesoria.estado === EstadoAsesoria.REALIZADA) {
       throw new Error('No se puede eliminar una asesoría que ya fue realizada')
     }
 
@@ -130,12 +130,12 @@ export class AsesoriasService {
   }
 
   async cancelarAsesoria(id: string, motivo?: string) {
-    return await this.updateAsesoriaStatus(id, 'CANCELADA', motivo)
+    return await this.updateAsesoriaStatus(id, EstadoAsesoria.CANCELADA, motivo)
   }
 
   async completarAsesoria(id: string, resultado: ResultadoAsesoria, notas?: string) {
     const updateData: UpdateAsesoriaData = {
-      estado: 'REALIZADA',
+      estado: EstadoAsesoria.REALIZADA,
       resultado
     }
 
@@ -192,7 +192,7 @@ export class AsesoriasService {
           lte: endDate
         },
         estado: {
-          in: ['PROGRAMADA', 'REALIZADA']
+          in: [EstadoAsesoria.PROGRAMADA, EstadoAsesoria.REALIZADA]
         }
       }
     })
@@ -256,8 +256,8 @@ export class AsesoriasService {
       this.getAsesoriasByDateRange(startDate, endDate)
     ])
 
-    const realizadas = asesorias.filter(a => a.estado === 'REALIZADA').length
-    const canceladas = asesorias.filter(a => a.estado === 'CANCELADA').length
+    const realizadas = asesorias.filter(a => a.estado === EstadoAsesoria.REALIZADA).length
+    const canceladas = asesorias.filter(a => a.estado === EstadoAsesoria.CANCELADA).length
     const tasaCompletitud = asesorias.length > 0 ? (realizadas / asesorias.length) * 100 : 0
     const tasaCancelacion = asesorias.length > 0 ? (canceladas / asesorias.length) * 100 : 0
 

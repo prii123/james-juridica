@@ -132,7 +132,7 @@ export const asesoriaFiltersSchema = z.object({
 })
 
 // Validación para verificar que la fecha no sea en el pasado (opcional)
-export const validateFechaFutura = (fecha: Date): boolean => {
+export const validateFechaNoEnPasado = (fecha: Date): boolean => {
   const now = new Date()
   return fecha >= now
 }
