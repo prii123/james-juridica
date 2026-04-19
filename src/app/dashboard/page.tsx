@@ -97,7 +97,7 @@ async function getDashboardStats() {
             gte: now,
             lte: endOfWeek 
           },
-          estado: { in: ['PROGRAMADA', 'APLAZADA'] }
+          estado: { in: ['PROGRAMADA', 'REPROGRAMADA'] }
         } 
       }),
       prisma.audiencia.count({ 
@@ -106,7 +106,7 @@ async function getDashboardStats() {
             gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
             lt: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
           },
-          estado: { in: ['PROGRAMADA', 'APLAZADA'] }
+          estado: { in: ['PROGRAMADA', 'REPROGRAMADA'] }
         } 
       }),
 

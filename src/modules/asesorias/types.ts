@@ -11,10 +11,10 @@ export interface CrearAsesoriaInput {
   leadId: string
   tipoAsesoria: TipoAsesoria
   fechaProgramada: Date
+  tema?: string
   descripcion?: string
   notas?: string
   abogadoId: string
-  creadoPorId: string
 }
 
 /**
@@ -24,11 +24,9 @@ export interface ActualizarAsesoriaInput {
   estado?: EstadoAsesoria
   resultado?: ResultadoAsesoria
   fechaProgramada?: Date
-  fechaRealizada?: Date
   descripcion?: string
   notas?: string
   abogadoId?: string
-  observaciones?: string
 }
 
 /**
@@ -38,7 +36,7 @@ export interface FiltrosAsesoria {
   estado?: EstadoAsesoria
   tipoAsesoria?: TipoAsesoria
   resultado?: ResultadoAsesoria
-  abogadoId?: string
+  asesorId?: string
   leadId?: string
   fechaDesde?: Date
   fechaHasta?: Date
@@ -58,7 +56,7 @@ export interface AsesoriaResponse {
   descripcion?: string | null
   notas?: string | null
   observaciones?: string | null
-  
+
   abogadoId: string
   abogado?: {
     id: string
@@ -66,20 +64,21 @@ export interface AsesoriaResponse {
     apellido: string
     email: string
   }
-  
-  leadId_info?: {
+
+  lead?: {
     id: string
     nombre: string
     email?: string
+    telefono?: string
   }
-  
-  creadoPorId: string
+
+  creadoPorId?: string
   creadoPor?: {
     id: string
     nombre: string
     apellido: string
   }
-  
+
   createdAt: Date
   updatedAt: Date
 }

@@ -84,7 +84,7 @@ export async function GET() {
             gte: now,
             lte: endOfWeek 
           },
-          estado: { in: ['PROGRAMADA', 'APLAZADA'] }
+          estado: { in: ['PROGRAMADA', 'REPROGRAMADA'] }
         } 
       }),
       prisma.audiencia.count({ 
@@ -93,7 +93,7 @@ export async function GET() {
             gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
             lt: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
           },
-          estado: { in: ['PROGRAMADA', 'APLAZADA'] }
+          estado: { in: ['PROGRAMADA', 'REPROGRAMADA'] }
         } 
       }),
 

@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { AsesoriaService } from '@/modules/asesorias/services'
-import { okResponse, noContentResponse, handleAPIError } from '@/lib/api-response'
+import { okResponse, noContentResponse } from '@/lib/api-response'
+import {  handleAPIError } from '@/lib/api-errors'
 
 const service = new AsesoriaService()
 

@@ -10,36 +10,27 @@ import {
   Search, 
   Filter, 
   Eye, 
-  Edit, 
   Clock,
-  User,
-  Phone,
-  Video,
-  Users,
   CheckCircle,
   AlertCircle,
-  XCircle
 } from 'lucide-react'
-import { TipoAsesoria, EstadoAsesoria, ModalidadAsesoria, ResultadoAsesoria } from '@prisma/client'
+import { TipoAsesoria, EstadoAsesoria, ResultadoAsesoria } from '@prisma/client'
 
 interface Asesoria {
   id: string
-  tipo: TipoAsesoria
-  estado: EstadoAsesoria  
-  fecha: Date
-  duracion?: number | null
-  modalidad: ModalidadAsesoria
-  tema: string
+  tipoAsesoria: TipoAsesoria
+  estado: EstadoAsesoria
+  fechaProgramada: Date
   descripcion?: string | null
   notas?: string | null
   resultado?: ResultadoAsesoria | null
-  lead: {
+  lead?: {
     id: string
     nombre: string
-    email: string
-    telefono: string
+    email?: string
+    telefono?: string
   }
-  asesor: {
+  abogado?: {
     id: string
     nombre: string
     apellido: string
@@ -50,7 +41,6 @@ interface Asesoria {
 interface AsesoriaFilters {
   estado?: EstadoAsesoria
   tipo?: TipoAsesoria
-  modalidad?: ModalidadAsesoria
   asesorId?: string
   search?: string
   fechaInicio?: string
@@ -87,7 +77,7 @@ export default function AsesoriaPage() {
       
       if (filters.estado) queryParams.append('estado', filters.estado)
       if (filters.tipo) queryParams.append('tipo', filters.tipo)
-      if (filters.modalidad) queryParams.append('modalidad', filters.modalidad)
+      // if (filters.modalidad) queryParams.append('modalidad', filters.modalidad)
       if (filters.asesorId) queryParams.append('asesorId', filters.asesorId)
       if (filters.search) queryParams.append('search', filters.search)
       if (filters.fechaInicio) queryParams.append('fechaInicio', filters.fechaInicio)
@@ -96,18 +86,26 @@ export default function AsesoriaPage() {
       const response = await fetch(`/api/asesorias?${queryParams.toString()}`)
       
       if (response.ok) {
-        const data = await response.json()
-        setAsesorias(data.asesorias || data)
+        const json = await response.json()
+        // La API envuelve la respuesta en { success, data: { asesorias, total, ... } }
+        const payload = json.data ?? json
+        const lista: Asesoria[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.asesorias)
+            ? payload.asesorias
+            : []
+
+        setAsesorias(lista)
         
         // Calcular estadísticas
-        const total = data.asesorias?.length || data.length || 0
-        const programadas = (data.asesorias || data).filter((a: Asesoria) => a.estado === 'PROGRAMADA').length
-        const realizadas = (data.asesorias || data).filter((a: Asesoria) => a.estado === 'REALIZADA').length
-        const canceladas = (data.asesorias || data).filter((a: Asesoria) => a.estado === 'CANCELADA').length
+        const total = payload.total ?? lista.length
+        const programadas = lista.filter((a: Asesoria) => a.estado === 'PROGRAMADA').length
+        const realizadas = lista.filter((a: Asesoria) => a.estado === 'REALIZADA').length
+        const canceladas = lista.filter((a: Asesoria) => a.estado === 'CANCELADA').length
         
         const hoy = new Date().toDateString()
-        const pendientesHoy = (data.asesorias || data).filter((a: Asesoria) => 
-          new Date(a.fecha).toDateString() === hoy && a.estado === 'PROGRAMADA'
+        const pendientesHoy = lista.filter((a: Asesoria) => 
+          new Date(a.fechaProgramada).toDateString() === hoy && a.estado === 'PROGRAMADA'
         ).length
         
         setStats({ total, programadas, realizadas, canceladas, pendientesHoy })
@@ -141,15 +139,6 @@ export default function AsesoriaPage() {
       case 'SEGUIMIENTO': return 'Seguimiento'
       case 'ESPECIALIZADA': return 'Especializada'
       default: return tipo
-    }
-  }
-
-  const getModalidadIcon = (modalidad: ModalidadAsesoria) => {
-    switch (modalidad) {
-      case 'PRESENCIAL': return <Users size={14} />
-      case 'VIRTUAL': return <Video size={14} />
-      case 'TELEFONICA': return <Phone size={14} />
-      default: return <Users size={14} />
     }
   }
 
@@ -293,18 +282,6 @@ export default function AsesoriaPage() {
                   </select>
                 </div>
                 <div className="col-md-3">
-                  <select 
-                    className="form-select"
-                    value={filters.modalidad || ''}
-                    onChange={(e) => setFilters({ ...filters, modalidad: e.target.value as ModalidadAsesoria || undefined })}
-                  >
-                    <option value="">Todas las modalidades</option>
-                    <option value="PRESENCIAL">Presencial</option>
-                    <option value="VIRTUAL">Virtual</option>
-                    <option value="TELEFONICA">Telefónica</option>
-                  </select>
-                </div>
-                <div className="col-md-3">
                   <button 
                     className="btn btn-outline-danger w-100"
                     onClick={() => setFilters({})}
@@ -365,11 +342,10 @@ export default function AsesoriaPage() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Tema</th>
+                    <th>Descripción</th>
                     <th>Lead</th>
                     <th>Asesor</th>
                     <th>Tipo</th>
-                    <th>Modalidad</th>
                     <th>Fecha</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -379,29 +355,31 @@ export default function AsesoriaPage() {
                   {asesorias.map((asesoria) => (
                     <tr key={asesoria.id}>
                       <td>
-                        <div className="fw-semibold">{asesoria.tema}</div>
                         {asesoria.descripcion && (
                           <small className="text-muted">{asesoria.descripcion.substring(0, 50)}...</small>
                         )}
                       </td>
                       <td>
-                        <Link href={`/leads/${asesoria.lead.id}`} className="text-decoration-none">
-                          {asesoria.lead.nombre}
-                        </Link>
+                        {asesoria.lead ? (
+                          <Link href={`/leads/${asesoria.lead.id}`} className="text-decoration-none">
+                            {asesoria.lead.nombre}
+                          </Link>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
                       </td>
-                      <td>{asesoria.asesor.nombre} {asesoria.asesor.apellido}</td>
-                      <td>{getTipoText(asesoria.tipo)}</td>
                       <td>
-                        <div className="d-flex align-items-center gap-1">
-                          {getModalidadIcon(asesoria.modalidad)}
-                          <small>{asesoria.modalidad}</small>
-                        </div>
+                        {asesoria.abogado
+                          ? `${asesoria.abogado.nombre} ${asesoria.abogado.apellido}`
+                          : <span className="text-muted">—</span>
+                        }
                       </td>
+                      <td>{getTipoText(asesoria.tipoAsesoria)}</td>
                       <td>
                         <small>
-                          {new Date(asesoria.fecha).toLocaleDateString()}
+                          {new Date(asesoria.fechaProgramada).toLocaleDateString()}
                           <br />
-                          {new Date(asesoria.fecha).toLocaleTimeString()}
+                          {new Date(asesoria.fechaProgramada).toLocaleTimeString()}
                         </small>
                       </td>
                       <td>
@@ -418,13 +396,6 @@ export default function AsesoriaPage() {
                           >
                             <Eye size={14} />
                           </Link>
-                          {/* <Link 
-                            href={`/asesorias/${asesoria.id}/editar`}
-                            className="btn btn-outline-secondary btn-sm"
-                            title="Editar"
-                          >
-                            <Edit size={14} />
-                          </Link> */}
                         </div>
                       </td>
                     </tr>

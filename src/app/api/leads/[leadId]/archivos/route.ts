@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { ArchivoLeadService } from '@/modules/leads/archivo-lead/services'
-import { okResponse, createdResponse, handleAPIError } from '@/lib/api-response'
+import { okResponse, createdResponse } from '@/lib/api-response'
+import {  handleAPIError } from '@/lib/api-errors'
 
 const service = new ArchivoLeadService()
 

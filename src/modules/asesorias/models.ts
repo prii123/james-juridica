@@ -25,26 +25,42 @@ export class AsesoriaBusinessError extends BusinessError {
 }
 
 /**
- * Mapea una entidad Asesoría a un DTO para respuesta
+ * Mapea una entidad Asesoría a un DTO para respuesta.
+ * La entidad Prisma usa: tipo, fecha, asesorId, asesor, lead
+ * El DTO usa:           tipoAsesoria, fechaProgramada, abogadoId, abogado, lead
  */
 export function mapearAsesoriaParaRespuesta(asesorias: any): AsesoriaResponse {
   return {
     id: asesorias.id,
     leadId: asesorias.leadId,
-    tipoAsesoria: asesorias.tipoAsesoria,
+    // La columna Prisma se llama "tipo", el DTO la expone como "tipoAsesoria"
+    tipoAsesoria: asesorias.tipoAsesoria ?? asesorias.tipo,
     estado: asesorias.estado,
     resultado: asesorias.resultado,
-    fechaProgramada: asesorias.fechaProgramada,
+    // La columna Prisma se llama "fecha", el DTO la expone como "fechaProgramada"
+    fechaProgramada: asesorias.fechaProgramada ?? asesorias.fecha,
     fechaRealizada: asesorias.fechaRealizada,
     descripcion: asesorias.descripcion,
     notas: asesorias.notas,
     observaciones: asesorias.observaciones,
-    abogadoId: asesorias.abogadoId,
-    abogado: asesorias.abogado ? {
+    // La columna Prisma se llama "asesorId", el DTO la expone como "abogadoId"
+    abogadoId: asesorias.abogadoId ?? asesorias.asesorId,
+    abogado: asesorias.asesor ? {
+      id: asesorias.asesor.id,
+      nombre: asesorias.asesor.nombre,
+      apellido: asesorias.asesor.apellido ?? '',
+      email: asesorias.asesor.email ?? '',
+    } : asesorias.abogado ? {
       id: asesorias.abogado.id,
       nombre: asesorias.abogado.nombre,
-      apellido: asesorias.abogado.apellido,
-      email: asesorias.abogado.email,
+      apellido: asesorias.abogado.apellido ?? '',
+      email: asesorias.abogado.email ?? '',
+    } : undefined,
+    lead: asesorias.lead ? {
+      id: asesorias.lead.id,
+      nombre: asesorias.lead.nombre,
+      email: asesorias.lead.email,
+      telefono: asesorias.lead.telefono,
     } : undefined,
     creadoPorId: asesorias.creadoPorId,
     creadoPor: asesorias.creadoPor ? {
@@ -79,18 +95,10 @@ export function validarCambioEstado(
  * Valida si una asesoría puede ser realizada
  */
 export function validarPuedeRealizarAsesoria(asesorias: any): boolean {
-  if (asesorias.estado !== 'PROGRAMADA') {
+  if (asesorias.estado !== 'PROGRAMADA' && asesorias.estado !== 'REPROGRAMADA') {
     throw new AsesoriaBusinessError(
       `No se puede realizar una asesoría que está en estado ${asesorias.estado}`,
       'ASESORIAS_NO_PROGRAMADA'
-    )
-  }
-
-  const ahora = new Date()
-  if (asesorias.fechaProgramada > ahora) {
-    throw new AsesoriaBusinessError(
-      'No se puede realizar una asesoría antes de su fecha programada',
-      'ASESORIAS_FECHA_FUTURA'
     )
   }
 

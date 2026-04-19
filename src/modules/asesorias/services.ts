@@ -84,7 +84,7 @@ export class AsesoriaService {
   /**
    * Realiza una asesoría
    */
-  async realizarAsesoria(id: string, resultado: any, observaciones?: string) {
+  async realizarAsesoria(id: string, resultado: any) {
     const asesorias = await this.repository.obtenerPorId(id)
     if (!asesorias) {
       throw new AsesoriaNoEncontradaError(id)
@@ -95,8 +95,6 @@ export class AsesoriaService {
     const actualizada = await this.repository.actualizar(id, {
       estado: 'REALIZADA',
       resultado,
-      fechaRealizada: new Date(),
-      observaciones,
     })
 
     return mapearAsesoriaParaRespuesta(actualizada)
@@ -105,7 +103,7 @@ export class AsesoriaService {
   /**
    * Cancela una asesoría
    */
-  async cancelarAsesoria(id: string, observaciones?: string) {
+  async cancelarAsesoria(id: string) {
     const asesorias = await this.repository.obtenerPorId(id)
     if (!asesorias) {
       throw new AsesoriaNoEncontradaError(id)
@@ -115,7 +113,6 @@ export class AsesoriaService {
 
     const cancelada = await this.repository.actualizar(id, {
       estado: 'CANCELADA',
-      observaciones,
     })
 
     return mapearAsesoriaParaRespuesta(cancelada)
@@ -124,11 +121,7 @@ export class AsesoriaService {
   /**
    * Reprograma una asesoría
    */
-  async reprogramarAsesoria(
-    id: string,
-    nuevaFecha: Date,
-    observaciones?: string,
-  ) {
+  async reprogramarAsesoria(id: string, nuevaFecha: Date) {
     const asesorias = await this.repository.obtenerPorId(id)
     if (!asesorias) {
       throw new AsesoriaNoEncontradaError(id)
@@ -139,7 +132,6 @@ export class AsesoriaService {
     const reprogramada = await this.repository.actualizar(id, {
       estado: 'REPROGRAMADA',
       fechaProgramada: nuevaFecha,
-      observaciones,
     })
 
     return mapearAsesoriaParaRespuesta(reprogramada)

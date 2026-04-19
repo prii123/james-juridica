@@ -48,8 +48,6 @@ export const actualizarAsesoriaValidator = z.object({
   
   fechaProgramada: z.coerce.date().optional(),
   
-  fechaRealizada: z.coerce.date().optional(),
-  
   descripcion: z.string()
     .max(1000, 'La descripción no puede exceder 1000 caracteres')
     .optional(),
@@ -59,35 +57,7 @@ export const actualizarAsesoriaValidator = z.object({
     .optional(),
   
   abogadoId: z.string().cuid('ID de abogado inválido').optional(),
-  
-  observaciones: z.string()
-    .max(1000, 'Las observaciones no pueden exceder 1000 caracteres')
-    .optional(),
-}).refine(
-  (data) => {
-    // Si se marca como realizada, debe tener fecha realizada
-    if (data.estado === 'REALIZADA' && !data.fechaRealizada) {
-      return false
-    }
-    return true
-  },
-  {
-    message: 'La fecha realizada es requerida cuando el estado es REALIZADA',
-    path: ['fechaRealizada'],
-  }
-).refine(
-  (data) => {
-    // Si tiene resultado, debe estar realizada
-    if (data.resultado && data.estado !== 'REALIZADA') {
-      return false
-    }
-    return true
-  },
-  {
-    message: 'Solo se puede asignar resultado a una asesoría realizada',
-    path: ['resultado'],
-  }
-)
+})
 
 export type ActualizarAsesoriaInput = z.infer<typeof actualizarAsesoriaValidator>
 

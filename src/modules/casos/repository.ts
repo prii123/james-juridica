@@ -252,10 +252,19 @@ export class CasosRepository {
             nombre: true,
             apellido: true,
             documento: true,
-            email: true
+            email: true,
+            telefono: true
           }
         },
         responsable: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
+        creadoPor: {
           select: {
             id: true,
             nombre: true,
@@ -271,18 +280,43 @@ export class CasosRepository {
 
   async getCasosByResponsable(responsableId: string) {
     const casos = await prisma.caso.findMany({
-      where: { 
+      where: {
         responsableId,
         estado: 'ACTIVO'
       },
       include: {
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            documento: true,
+            email: true,
+            telefono: true
+          }
+        },
+        responsable: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
+        creadoPor: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
         _count: {
           select: {
-            actuaciones: {
-              where: {
-                estado: 'PENDIENTE'
-              }
-            }
+            documentos: true,
+            actuaciones: true,
+            audiencias: true,
+            honorarios: true
           }
         }
       },
@@ -358,7 +392,25 @@ export class CasosRepository {
         }
       },
       include: {
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            documento: true,
+            email: true,
+            telefono: true
+          }
+        },
         responsable: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
+        creadoPor: {
           select: {
             id: true,
             nombre: true,
@@ -386,7 +438,7 @@ export class CasosRepository {
   private async generateCasoNumber(): Promise<string> {
     const currentYear = new Date().getFullYear()
     const prefix = `CASO-${currentYear}`
-    
+
     const lastCaso = await prisma.caso.findFirst({
       where: {
         numeroCaso: {

@@ -1,6 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
-import { prisma } from '@/lib/db'
+import { RadicacionService } from '@/modules/radicaciones/services'
+import { actualizarRadicacionValidator } from '@/modules/radicaciones/validators'
+import { okResponse } from '@/lib/api-response'
+import {  handleAPIError } from '@/lib/api-errors'
+
+const radicacionService = new RadicacionService()
 
 export async function GET(
   request: NextRequest,
@@ -9,47 +14,11 @@ export async function GET(
   try {
     await requirePermission(PERMISSIONS.RADICACIONES.VIEW)
 
-    const radicacion = await prisma.radicacion.findUnique({
-      where: { id: params.radicacionId },
-      include: {
-        asesoria: {
-          include: {
-            lead: {
-              select: {
-                id: true,
-                nombre: true,
-                email: true,
-                telefono: true
-              }
-            },
-            asesor: {
-              select: {
-                id: true,
-                nombre: true,
-                apellido: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
-    })
+    const radicacion = await radicacionService.obtenerRadicacionPorId(params.radicacionId)
 
-    if (!radicacion) {
-      return NextResponse.json(
-        { error: 'Conciliación no encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(radicacion)
-
+    return okResponse(radicacion)
   } catch (error: any) {
-    console.error('Error al obtener conciliación:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return await handleAPIError(error)
   }
 }
 
@@ -61,215 +30,44 @@ export async function PATCH(
     await requirePermission(PERMISSIONS.RADICACIONES.EDIT)
 
     const body = await request.json()
-    
-    // Verificar que la conciliación existe
-    const existingRadicacion = await prisma.radicacion.findUnique({
-      where: { id: params.radicacionId },
-      include: {
-        asesoria: {
-          include: {
-            lead: true
-          }
-        }
-      }
-    })
 
-    if (!existingRadicacion) {
-      return NextResponse.json(
-        { error: 'Conciliación no encontrada' },
-        { status: 404 }
-      )
-    }
+    // Validar input
+    const datosValidados = actualizarRadicacionValidator.parse(body)
 
-    // Construir datos de actualización
-    const updateData: any = {}
-
-    if (body.estado !== undefined) updateData.estado = body.estado
-    if (body.resultado !== undefined) updateData.resultado = body.resultado
-    if (body.demandante !== undefined) updateData.demandante = body.demandante
-    if (body.demandado !== undefined) updateData.demandado = body.demandado
-    if (body.valor !== undefined) updateData.valor = parseFloat(body.valor)
-    if (body.fechaSolicitud !== undefined) updateData.fechaSolicitud = new Date(body.fechaSolicitud)
-    if (body.fechaAudiencia !== undefined) {
-      updateData.fechaAudiencia = body.fechaAudiencia ? new Date(body.fechaAudiencia) : null
-    }
-    if (body.observaciones !== undefined) updateData.observaciones = body.observaciones
-
-    // Variables para el resultado
-    let casoCreado = null
-    let honorarioCreado = null
-    let facturaCreada = null
-    let casoExistente = null
-    
-    // Si se está aceptando la conciliación (estado REALIZADA) y se solicita crear caso  
-    if (body.createCase && body.estado === 'REALIZADA' && existingRadicacion.estado !== 'REALIZADA') {
-      // Generar número de caso
-      const year = new Date().getFullYear()
-      const randomNum = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
-      const numeroCaso = `CASO-${year}-${randomNum}`
-
-      // Verificar si ya existe un cliente para este lead
-      let clienteId = null
-      const leadData = existingRadicacion.asesoria.lead
-      
-      // Buscar cliente existente por email
-      let cliente = await prisma.cliente.findUnique({
-        where: { email: leadData.email }
-      })
-
-      if (!cliente) {
-        // Crear cliente si no existe
-        cliente = await prisma.cliente.create({
-          data: {
-            nombre: leadData.nombre,
-            email: leadData.email,
-            telefono: leadData.telefono || '',
-            documento: leadData.documento || `TEMP-${Date.now()}`, // Generar documento temporal si no existe
-            tipoPersona: 'NATURAL'
-          }
-        })
-      }
-
-      // Verificar si ya existe un caso activo para este cliente
-      casoExistente = await prisma.caso.findFirst({
-        where: {
-          clienteId: cliente.id,
-          tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
-          estado: 'ACTIVO'
-        }
-      })
-
-      if (casoExistente) {
-        // Usar el caso existente y actualizarlo
-        casoCreado = await prisma.caso.update({
-          where: { id: casoExistente.id },
-          data: {
-            observaciones: `${casoExistente.observaciones}\n\nConciliación adicional aceptada: ${existingRadicacion.numero} - ${existingRadicacion.demandante} vs ${existingRadicacion.demandado} por ${existingRadicacion.valor}`,
-            updatedAt: new Date()
-          }
-        })
-      } else {
-        // Crear el caso automáticamente solo si no existe
-        casoCreado = await prisma.caso.create({
-          data: {
-            numeroCaso: numeroCaso,
-            tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
-            estado: 'ACTIVO',
-            prioridad: 'MEDIA',
-            fechaInicio: new Date(),
-            observaciones: `Caso creado automáticamente al aceptar conciliación ${existingRadicacion.numero}. Demandante: ${existingRadicacion.demandante} vs ${existingRadicacion.demandado}`,
-            clienteId: cliente.id,
-            responsableId: existingRadicacion.asesoria.asesorId,
-            creadoPorId: existingRadicacion.asesoria.asesorId
-          }
-        })
-      }
-
-      // Crear honorario automáticamente (valor base de la conciliación como honorario)
-      const valorHonorario = Number(existingRadicacion.valor) * 0.15 // 15% del valor de la conciliación como honorario
-      
-      honorarioCreado = await prisma.honorario.create({
-        data: {
-          tipo: 'REPRESENTACION',
-          modalidadPago: 'CONTADO',
-          valor: valorHonorario,
-          estado: 'PENDIENTE',
-          fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para pagar
-          observaciones: `Honorario generado automáticamente por aceptación de conciliación ${existingRadicacion.numero}`,
-          casoId: casoCreado.id
-        }
-      })
-
-      // Crear factura automática pendiente por facturar
-      const numeroFactura = `FACT-${year}-${randomNum}`
-      const subtotal = valorHonorario
-      const impuestos = subtotal * 0.19 // IVA del 19%
-      const total = subtotal + impuestos
-
-      facturaCreada = await prisma.factura.create({
-        data: {
-          numero: numeroFactura,
-          fecha: new Date(),
-          fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
-          subtotal: subtotal,
-          impuestos: impuestos,
-          total: total,
-          estado: 'GENERADA', // Factura generada, pendiente de envío
-          observaciones: `Factura generada automáticamente por caso ${numeroCaso} - Conciliación aceptada`,
-          ivaActivado: true, // IVA activado por defecto en facturas automáticas
-          honorarioId: honorarioCreado.id,
-          creadoPorId: existingRadicacion.asesoria.asesorId,
-          items: {
-            create: [
-              {
-                descripcion: `Honorarios profesionales - Representación en proceso de insolvencia - Caso ${numeroCaso}`,
-                cantidad: 1,
-                valorUnitario: subtotal,
-                valorTotal: subtotal
-              }
-            ]
-          }
-        }
-      })
-    }
-
-    const updatedRadicacion = await prisma.radicacion.update({
-      where: { id: params.radicacionId },
-      data: updateData,
-      include: {
-        asesoria: {
-          include: {
-            lead: {
-              select: {
-                id: true,
-                nombre: true,
-                email: true,
-                telefono: true
-              }
-            },
-            asesor: {
-              select: {
-                id: true,
-                nombre: true,
-                apellido: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
-    })
-
-    // Incluir información del caso creado en la respuesta
-    const response: any = {
-      radicacion: updatedRadicacion
-    }
-
-    if (casoCreado) {
-      response.casoCreado = casoCreado
-      
-      if (honorarioCreado) {
-        response.honorarioCreado = honorarioCreado
-      }
-      
-      if (facturaCreada) {
-        response.facturaCreada = facturaCreada
-        const casoAction = casoExistente ? 'actualizado' : 'creado'
-        response.message = `¡Conciliación aceptada exitosamente! Se ${casoAction} automáticamente:
-        - Caso: ${casoCreado.numeroCaso} ${casoExistente ? '(actualizado con nueva deuda)' : '(nuevo)'}
-        - Honorario por representación: $${Number(honorarioCreado?.valor).toLocaleString('es-CO')}
-        - Factura pendiente: ${facturaCreada.numero} (Total: $${Number(facturaCreada.total).toLocaleString('es-CO')})`
-      }
-    }
-
-    return NextResponse.json(response)
-
-  } catch (error: any) {
-    console.error('Error al actualizar conciliación:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+    // Actualizar radicación (con creación de caso si es necesario)
+    const resultado = await radicacionService.actualizarRadicacionConCaso(
+      params.radicacionId,
+      {
+        estado: datosValidados.estado,
+        resultado: datosValidados.resultado,
+        demandante: datosValidados.demandante,
+        demandado: datosValidados.demandado,
+        valor: datosValidados.valor,
+        fechaSolicitud: datosValidados.fechaSolicitud,
+        fechaAudiencia: datosValidados.fechaAudiencia ?? undefined,
+        observaciones: datosValidados.observaciones,
+      },
+      datosValidados.createCase || false
     )
+
+    // Construir respuesta
+    const response: any = {
+      radicacion: resultado.radicacion,
+    }
+
+    if (resultado.casoCreado) {
+      response.casoCreado = resultado.casoCreado
+      response.honorarioCreado = resultado.honorarioCreado
+      response.facturaCreada = resultado.facturaCreada
+      response.message = `¡Radicación aceptada exitosamente! Se creó automáticamente:
+        - Caso: ${resultado.casoCreado.numeroCaso}
+        - Honorario por representación: $${Number(resultado.honorarioCreado?.valor).toLocaleString('es-CO')}
+        - Factura pendiente: ${resultado.facturaCreada?.numero} (Total: $${Number(resultado.facturaCreada?.total).toLocaleString('es-CO')})`
+    }
+
+    return okResponse(response)
+  } catch (error: any) {
+    return await handleAPIError(error)
   }
 }
 
@@ -280,29 +78,10 @@ export async function DELETE(
   try {
     await requirePermission(PERMISSIONS.RADICACIONES.DELETE)
 
-    // Verificar que la conciliación existe
-    const existingRadicacion = await prisma.radicacion.findUnique({
-      where: { id: params.radicacionId }
-    })
+    await radicacionService.eliminarRadicacion(params.radicacionId)
 
-    if (!existingRadicacion) {
-      return NextResponse.json(
-        { error: 'Conciliación no encontrada' },
-        { status: 404 }
-      )
-    }
-
-    await prisma.radicacion.delete({
-      where: { id: params.radicacionId }
-    })
-
-    return NextResponse.json({ message: 'Conciliación eliminada exitosamente' })
-
+    return okResponse({ message: 'Radicación eliminada exitosamente' })
   } catch (error: any) {
-    console.error('Error al eliminar conciliación:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return await handleAPIError(error)
   }
 }

@@ -28,7 +28,7 @@ interface Asesoria {
   id: string
   tipo: TipoAsesoria
   estado: EstadoAsesoria
-  fecha: string
+  fechaProgramada: string
   duracion: number
   modalidad: ModalidadAsesoria
   tema: string
@@ -112,7 +112,8 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
       
       if (response.ok) {
         const data = await response.json()
-        setAsesoria(data)
+        setAsesoria(data.data)
+        console.log(data.data)
       } else {
         setError('No se pudo cargar la asesoría')
       }
@@ -138,7 +139,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
       if (response.ok) {
         const updatedAsesoria = await response.json()
-        setAsesoria(updatedAsesoria)
+        setAsesoria(updatedAsesoria.data)
       } else {
         setError('No se pudo actualizar el estado')
       }
@@ -236,7 +237,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
   }
 
   const estadoConfig = ESTADO_CONFIG[asesoria.estado]
-  const IconoEstado = estadoConfig.icon
+  const IconoEstado = estadoConfig
 
   return (
     <>
@@ -254,13 +255,13 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
         <div className="flex-grow-1">
           <div className="d-flex align-items-center gap-2 mb-1">
             <h1 className="h3 fw-bold text-dark mb-0">{asesoria.tema}</h1>
-            <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`}>
-              <IconoEstado size={12} />
-              {estadoConfig.label}
+            <span className={`badge bg- d-flex align-items-center gap-1`}>
+              {/* <IconoEstado size={12} /> */}
+              {/* {estadoConfig.label} */}
             </span>
           </div>
           <p className="text-secondary mb-0">
-            {TIPO_LABELS[asesoria.tipo]} • {formatDate(asesoria.fecha)} • {formatTime(asesoria.fecha)}
+            {TIPO_LABELS[asesoria.tipo]} • {formatDate(asesoria.fechaProgramada)} • {formatTime(asesoria.fechaProgramada)}
           </p>
         </div>
         <Link 
@@ -293,11 +294,11 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                   <h6 className="text-muted mb-1">Fecha y Hora</h6>
                   <div className="d-flex align-items-center gap-2 mb-3">
                     <Calendar size={16} />
-                    <span>{formatDate(asesoria.fecha)}</span>
+                    <span>{formatDate(asesoria.fechaProgramada)}</span>
                   </div>
                   <div className="d-flex align-items-center gap-2 mb-3">
                     <Clock size={16} />
-                    <span>{formatTime(asesoria.fecha)} ({asesoria.duracion} minutos)</span>
+                    <span>{formatTime(asesoria.fechaProgramada)} ({asesoria.duracion} minutos)</span>
                   </div>
                 </div>
                 <div className="col-md-6">
@@ -469,23 +470,23 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
             <div className="card-body">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <User size={16} />
-                <span className="fw-semibold">{asesoria.lead.nombre}</span>
+                <span className="fw-semibold">{asesoria.lead?.nombre}</span>
               </div>
               <div className="d-flex align-items-center gap-2 mb-2 text-muted small">
                 <Mail size={14} />
-                <span>{asesoria.lead.email}</span>
+                <span>{asesoria.lead?.email}</span>
               </div>
               <div className="d-flex align-items-center gap-2 mb-3 text-muted small">
                 <Phone size={14} />
-                <span>{asesoria.lead.telefono}</span>
+                <span>{asesoria.lead?.telefono}</span>
               </div>
               <div className="d-flex align-items-center gap-2">
                 <span className="small text-muted">Estado del Lead:</span>
-                <span className="badge bg-secondary">{asesoria.lead.estado}</span>
+                <span className="badge bg-secondary">{asesoria.lead?.estado}</span>
               </div>
               <div className="mt-3">
                 <Link 
-                  href={`/leads/${asesoria.lead.id}`}
+                  href={`/leads/${asesoria.lead?.id}`}
                   className="btn btn-outline-primary btn-sm w-100"
                 >
                   Ver Perfil del Cliente
@@ -503,12 +504,12 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
               <div className="d-flex align-items-center gap-2 mb-2">
                 <User size={16} />
                 <span className="fw-semibold">
-                  {asesoria.asesor.nombre} {asesoria.asesor.apellido}
+                  {asesoria.asesor?.nombre} {asesoria.asesor?.apellido}
                 </span>
               </div>
               <div className="d-flex align-items-center gap-2 text-muted small">
                 <Mail size={14} />
-                <span>{asesoria.asesor.email}</span>
+                <span>{asesoria.asesor?.email}</span>
               </div>
             </div>
           </div>

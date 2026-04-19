@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Plus, 
-  Calendar, 
-  Clock, 
-  User, 
-  Eye, 
+import {
+  ArrowLeft,
+  Plus,
+  Calendar,
+  Clock,
+  User,
+  Eye,
   Edit,
   CheckCircle,
   XCircle,
@@ -44,7 +44,7 @@ interface Asesoria {
 export default function LeadAsesoriasPage() {
   const params = useParams()
   const leadId = params.leadId as string
-  
+
   const [asesorias, setAsesorias] = useState<Asesoria[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,9 +61,11 @@ export default function LeadAsesoriasPage() {
       setLoading(true)
       const response = await fetch(`/api/leads/${leadId}/asesorias`)
       if (response.ok) {
-        const data = await response.json()
-        setAsesorias(data.asesorias)
-        setLeadName(data.leadName)
+        const result = await response.json()
+        // console.log(result)
+        const data = result.data
+        setAsesorias(data.asesorias || [])
+        setLeadName(data.leadName || '')
       } else {
         setError('Error al cargar las asesorías')
       }
@@ -137,12 +139,12 @@ export default function LeadAsesoriasPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Leads', href: '/leads' },
           { label: leadName, href: `/leads/${leadId}` },
           { label: 'Asesorías' }
-        ]} 
+        ]}
       />
 
       <div className="d-flex align-items-center justify-content-between mb-4">
@@ -157,7 +159,7 @@ export default function LeadAsesoriasPage() {
             </p>
           </div>
         </div>
-        <Link 
+        <Link
           href={`/leads/${leadId}/asesorias/nueva`}
           className="btn btn-primary d-flex align-items-center gap-2"
         >
@@ -166,7 +168,7 @@ export default function LeadAsesoriasPage() {
         </Link>
       </div>
 
-      {asesorias.length === 0 ? (
+      {asesorias && asesorias.length === 0 ? (
         <div className="card">
           <div className="card-body text-center py-5">
             <Calendar size={64} className="text-muted mb-3" />
@@ -174,7 +176,7 @@ export default function LeadAsesoriasPage() {
             <p className="text-muted mb-4">
               Este lead no tiene asesorías programadas o realizadas.
             </p>
-            <Link 
+            <Link
               href={`/leads/${leadId}/asesorias/nueva`}
               className="btn btn-primary"
             >
@@ -184,7 +186,7 @@ export default function LeadAsesoriasPage() {
         </div>
       ) : (
         <div className="row">
-          {asesorias.map((asesoria) => (
+          {asesorias && asesorias.map((asesoria) => (
             <div key={asesoria.id} className="col-lg-6 col-xl-4 mb-4">
               <div className="card h-100">
                 <div className="card-header d-flex justify-content-between align-items-start">
@@ -226,7 +228,7 @@ export default function LeadAsesoriasPage() {
                       {asesoria.asesor.nombre} {asesoria.asesor.apellido}
                     </small>
                   </div>
-                  
+
                   {asesoria.descripcion && (
                     <p className="small text-muted mb-3">
                       {asesoria.descripcion}
@@ -242,14 +244,14 @@ export default function LeadAsesoriasPage() {
                   )}
 
                   <div className="d-flex gap-2">
-                    <Link 
+                    <Link
                       href={`/asesorias/${asesoria.id}`}
                       className="btn btn-sm btn-outline-primary flex-fill"
                     >
                       <Eye size={14} className="me-1" />
                       Ver
                     </Link>
-                    <Link 
+                    <Link
                       href={`/asesorias/${asesoria.id}/editar`}
                       className="btn btn-sm btn-outline-secondary"
                     >
@@ -264,7 +266,7 @@ export default function LeadAsesoriasPage() {
       )}
 
       {/* Resumen */}
-      {asesorias.length > 0 && (
+      {asesorias && asesorias.length > 0 && (
         <div className="card mt-4">
           <div className="card-header">
             <h5 className="mb-0">Resumen</h5>

@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { AsesoriaLeadService } from '@/modules/leads/asesoria-lead/services'
-import { okResponse, createdResponse, handleAPIError } from '@/lib/api-response'
+import { okResponse, createdResponse } from '@/lib/api-response'
+import {  handleAPIError } from '@/lib/api-errors'
 
 const service = new AsesoriaLeadService()
 
@@ -14,8 +15,9 @@ export async function GET(
 ) {
   try {
     await requirePermission(PERMISSIONS.LEADS.VIEW)
-
+    
     const resultado = await service.obtenerAsesoriasLead(params.leadId)
+    // console.log(resultado)
     return okResponse(resultado)
   } catch (error) {
     return handleAPIError(error)

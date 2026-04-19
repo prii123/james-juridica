@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { AsesoriaService } from '@/modules/asesorias/services'
-import { okResponse, createdResponse, handleAPIError } from '@/lib/api-response'
+import { okResponse, createdResponse } from '@/lib/api-response'
+import {  handleAPIError } from '@/lib/api-errors'
 
 const service = new AsesoriaService()
 

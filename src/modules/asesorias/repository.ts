@@ -15,28 +15,20 @@ export class AsesoriaRepository {
     return await prisma.asesoria.create({
       data: {
         leadId: datos.leadId,
-        tipoAsesoria: datos.tipoAsesoria,
-        estado: 'PROGRAMADA',
-        fechaProgramada: datos.fechaProgramada,
+        tipo: datos.tipoAsesoria,
+        fecha: datos.fechaProgramada,
+        tema: datos.tema || '',
         descripcion: datos.descripcion,
         notas: datos.notas,
-        abogadoId: datos.abogadoId,
-        creadoPorId: datos.creadoPorId,
+        asesorId: datos.abogadoId,
       },
       include: {
-        abogado: {
+        asesor: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
             email: true,
-          },
-        },
-        creadoPor: {
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
           },
         },
       },
@@ -50,19 +42,19 @@ export class AsesoriaRepository {
     return await prisma.asesoria.findUnique({
       where: { id },
       include: {
-        abogado: {
+        asesor: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
             email: true,
           },
         },
-        creadoPor: {
+        lead: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
           },
         },
       },
@@ -78,28 +70,26 @@ export class AsesoriaRepository {
       data: {
         ...(datos.estado && { estado: datos.estado }),
         ...(datos.resultado && { resultado: datos.resultado }),
-        ...(datos.fechaProgramada && { fechaProgramada: datos.fechaProgramada }),
-        ...(datos.fechaRealizada && { fechaRealizada: datos.fechaRealizada }),
+        ...(datos.fechaProgramada && { fecha: datos.fechaProgramada }),
         ...(datos.descripcion !== undefined && { descripcion: datos.descripcion }),
         ...(datos.notas !== undefined && { notas: datos.notas }),
-        ...(datos.abogadoId && { abogadoId: datos.abogadoId }),
-        ...(datos.observaciones !== undefined && { observaciones: datos.observaciones }),
+        ...(datos.abogadoId && { asesorId: datos.abogadoId }),
         updatedAt: new Date(),
       },
       include: {
-        abogado: {
+        asesor: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
             email: true,
           },
         },
-        creadoPor: {
+        lead: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
           },
         },
       },
@@ -130,16 +120,16 @@ export class AsesoriaRepository {
     if (filtros.estado) where.estado = filtros.estado
     if (filtros.tipoAsesoria) where.tipoAsesoria = filtros.tipoAsesoria
     if (filtros.resultado) where.resultado = filtros.resultado
-    if (filtros.abogadoId) where.abogadoId = filtros.abogadoId
+    if (filtros.asesorId) where.asesorId = filtros.asesorId
     if (filtros.leadId) where.leadId = filtros.leadId
 
     if (filtros.fechaDesde || filtros.fechaHasta) {
-      where.fechaProgramada = {}
+      where.fecha = {}
       if (filtros.fechaDesde) {
-        where.fechaProgramada.gte = filtros.fechaDesde
+        where.fecha.gte = filtros.fechaDesde
       }
       if (filtros.fechaHasta) {
-        where.fechaProgramada.lte = filtros.fechaHasta
+        where.fecha.lte = filtros.fechaHasta
       }
     }
 
@@ -148,21 +138,21 @@ export class AsesoriaRepository {
         where,
         skip,
         take: limite,
-        orderBy: { fechaProgramada: 'asc' },
+        orderBy: { fecha: 'asc' },
         include: {
-          abogado: {
+          asesor: {
             select: {
               id: true,
               nombre: true,
-              apellido: true,
+
               email: true,
             },
           },
-          creadoPor: {
+          lead: {
             select: {
               id: true,
               nombre: true,
-              apellido: true,
+
             },
           },
         },
@@ -190,18 +180,18 @@ export class AsesoriaRepository {
     return await prisma.asesoria.findMany({
       where: {
         estado: 'PROGRAMADA',
-        fechaProgramada: {
+        fecha: {
           gte: ahora,
           lte: futuro,
         },
       },
-      orderBy: { fechaProgramada: 'asc' },
+      orderBy: { fecha: 'asc' },
       include: {
-        abogado: {
+        asesor: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
             email: true,
           },
         },
@@ -218,17 +208,17 @@ export class AsesoriaRepository {
     return await prisma.asesoria.findMany({
       where: {
         estado: 'PROGRAMADA',
-        fechaProgramada: {
+        fecha: {
           lt: ahora,
         },
       },
-      orderBy: { fechaProgramada: 'asc' },
+      orderBy: { fecha: 'asc' },
       include: {
-        abogado: {
+        asesor: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
           },
         },
       },
@@ -296,19 +286,19 @@ export class AsesoriaRepository {
   /**
    * Obtiene asesorías de un abogado
    */
-  async obtenerPorAbogado(abogadoId: string, solo_pendientes: boolean = false) {
+  async obtenerPorAbogado(asesorId: string, solo_pendientes: boolean = false) {
     return await prisma.asesoria.findMany({
       where: {
-        abogadoId,
+        asesorId,
         ...(solo_pendientes && { estado: 'PROGRAMADA' }),
       },
-      orderBy: { fechaProgramada: 'asc' },
+      orderBy: { fecha: 'asc' },
       include: {
-        creadoPor: {
+        lead: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+
           },
         },
       },
@@ -321,7 +311,7 @@ export class AsesoriaRepository {
   async obtenerPorLead(leadId: string) {
     return await prisma.asesoria.findMany({
       where: { leadId },
-      orderBy: { fechaProgramada: 'desc' },
+      orderBy: { fecha: 'desc' },
     })
   }
 
@@ -334,7 +324,6 @@ export class AsesoriaRepository {
         OR: [
           { descripcion: { contains: query, mode: 'insensitive' } },
           { notas: { contains: query, mode: 'insensitive' } },
-          { observaciones: { contains: query, mode: 'insensitive' } },
         ],
       },
       take: limite,

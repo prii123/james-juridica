@@ -2,6 +2,8 @@
  * Tipos para Asesorías de Leads
  */
 
+import { TipoAsesoria, EstadoAsesoria, ResultadoAsesoria } from '@prisma/client'
+
 export interface ObtenerAsesoriasLeadResponse {
   leadId: string
   leadNombre: string
@@ -10,9 +12,9 @@ export interface ObtenerAsesoriasLeadResponse {
 
 export interface AsesoriaLead {
   id: string
-  tipo: string
-  estado: string
-  resultado?: string
+  tipo: TipoAsesoria
+  estado: EstadoAsesoria
+  resultado?: ResultadoAsesoria
   fecha?: Date
   tema: string
   descripcion?: string
@@ -27,11 +29,11 @@ export interface AsesoriaLead {
 }
 
 export interface CrearAsesoriaLeadInput {
-  tipo: string
-  estado: string
+  tipo: TipoAsesoria
+  estado: EstadoAsesoria
   fecha?: Date
   tema: string
   descripcion?: string
   asesorId?: string
-  resultado?: string
+  resultado?: ResultadoAsesoria
 }

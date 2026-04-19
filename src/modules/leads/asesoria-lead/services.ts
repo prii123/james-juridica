@@ -4,8 +4,7 @@
 
 import { prisma } from '@/lib/db'
 import { AsesoriaLeadRepository } from './repository'
-import { CrearAsesoriaLeadInput } from './types'
-import { crearAsesoriaLeadValidator } from './validators'
+import { crearAsesoriaLeadValidator, CrearAsesoriaLeadInput } from './validators'
 import {
   LeadNoEncontradoError,
   mapearAsesoriaParaRespuesta,
@@ -34,7 +33,7 @@ export class AsesoriaLeadService {
 
     return {
       leadId: lead.id,
-      leadNombre: lead.nombre,
+      leadName: lead.nombre,
       asesorias: asesorias.map(mapearAsesoriaParaRespuesta)
     }
   }
