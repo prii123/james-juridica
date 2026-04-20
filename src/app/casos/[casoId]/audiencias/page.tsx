@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
+import { ModalProcesosLiquidacion } from '@/components/ModalProcesosLiquidacion'
 import {
   ArrowLeft,
   Plus,
@@ -17,7 +18,8 @@ import {
   Eye,
   Edit3,
   Filter,
-  Video
+  Video,
+  AlertCircle
 } from 'lucide-react'
 
 interface Audiencia {
@@ -133,6 +135,8 @@ export default function AudienciasPage() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroModalidad, setFiltroModalidad] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [audienciaSeleccionada, setAudienciaSeleccionada] = useState<Audiencia | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -233,6 +237,16 @@ export default function AudienciasPage() {
     ).length
   }
 
+  const abrirModalLiquidacion = (audiencia: Audiencia) => {
+    setAudienciaSeleccionada(audiencia)
+    setModalOpen(true)
+  }
+
+  const cerrarModalLiquidacion = () => {
+    setModalOpen(false)
+    setAudienciaSeleccionada(null)
+  }
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -258,6 +272,26 @@ export default function AudienciasPage() {
 
   return (
     <>
+      <style>{`
+        @keyframes pulse-blink {
+          0% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .btn-parpadeante {
+          animation: pulse-blink 1s infinite;
+          box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+        }
+      `}</style>
       <Breadcrumb
         items={[
           { label: 'Casos', href: '/casos' },
@@ -464,6 +498,19 @@ export default function AudienciasPage() {
                           </div>
                         )}
 
+                        {audiencia.estado === 'REALIZADA' && audiencia.resultadoAudiencia === 'FRACASO' && (
+                          <div className="mb-3">
+                            <button
+                              className="btn btn-danger btn-sm w-100 btn-parpadeante d-flex align-items-center justify-content-center gap-2"
+                              onClick={() => abrirModalLiquidacion(audiencia)}
+                              title="Iniciar proceso de liquidación"
+                            >
+                              <AlertCircle size={16} />
+                              Iniciar Liquidación
+                            </button>
+                          </div>
+                        )}
+
                         <div className="d-flex align-items-center gap-2 mb-2">
                           <Calendar size={14} className="text-muted" />
                           <span className="small">{formatDateTime(audiencia.fechaHora)}</span>
@@ -552,6 +599,16 @@ export default function AudienciasPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Procesos de Liquidación */}
+      {audienciaSeleccionada && (
+        <ModalProcesosLiquidacion
+          isOpen={modalOpen}
+          onClose={cerrarModalLiquidacion}
+          audienciaId={audienciaSeleccionada.id}
+          casoId={casoId}
+        />
+      )}
     </>
   )
 }

@@ -281,6 +281,7 @@ model Caso {
   actuaciones       Actuacion[]
   audiencias        Audiencia[]
   honorarios        Honorario[]
+  procesosLiquidacion ProcesoLiquidacion[]
   
   // CONSTRAINT: Un cliente no puede tener casos activos del mismo tipo
   @@unique([clienteId, tipoInsolvencia, estado], name: "unique_active_case_type")
@@ -335,11 +336,34 @@ model Audiencia {
   responsableId   String
   responsable     User      @relation(fields: [responsableId], references: [id])
   
+  // Relaciones inversas - Procesos de liquidación generados cuando audiencia fracasa
+  procesosLiquidacion ProcesoLiquidacion[]
+  
   // Timestamps
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
   @@map("audiencias")
+}
+
+// REGLA: Procesos de liquidación se generan cuando una audiencia fracasa
+model ProcesoLiquidacion {
+  id              String    @id @default(cuid())
+  
+  // Relaciones
+  audienciaId     String    @unique
+  audiencia       Audiencia @relation(fields: [audienciaId], references: [id], onDelete: Cascade)
+  casoId          String
+  caso            Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  
+  // Pasos del proceso de liquidación (JSON array)
+  pasos           Json      @default("[]") // Array de { id, nombre, completado }
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("procesos_liquidacion")
 }
 
 model Documento {
