@@ -1,79 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
-import { prisma } from '@/lib/db'
+import { AudienciasService } from '@/modules/audiencias/services'
+import { AudienciaFilters } from '@/modules/audiencias/types'
 
 export async function GET(request: NextRequest) {
   try {
     await requirePermission(PERMISSIONS.CASOS.VIEW)
 
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '10')
     const page = parseInt(searchParams.get('page') || '1')
-    const casoId = searchParams.get('casoId')
-    const estado = searchParams.get('estado')
+    const limit = parseInt(searchParams.get('limit') || '10')
 
-    const skip = (page - 1) * limit
-
-    // Construir filtros
-    const where: any = {}
-
-    if (casoId) {
-      where.casoId = casoId
+    // Parsear filtros opcionales
+    const filters: AudienciaFilters = {
+      casoId: searchParams.get('casoId') || undefined,
+      tipo: (searchParams.get('tipo') as any) || undefined,
+      estado: (searchParams.get('estado') as any) || undefined,
+      modalidad: (searchParams.get('modalidad') as any) || undefined,
+      responsableId: searchParams.get('responsableId') || undefined
     }
 
-    if (estado) {
-      where.estado = estado
-    }
-
-    const [audiencias, total] = await Promise.all([
-      prisma.audiencia.findMany({
-        where,
-        include: {
-          caso: {
-            select: {
-              id: true,
-              numeroCaso: true,
-              tipoInsolvencia: true,
-              cliente: {
-                select: {
-                  id: true,
-                  nombre: true,
-                  apellido: true,
-                  empresa: true
-                }
-              }
-            }
-          },
-          responsable: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
-              email: true
-            }
-          }
-        },
-        orderBy: { fechaHora: 'asc' },
-        skip: limit === 1000 ? undefined : skip,
-        take: limit === 1000 ? undefined : limit
-      }),
-      prisma.audiencia.count({ where })
-    ])
+    const audienciasService = new AudienciasService()
+    const result = await audienciasService.getAudiencias(filters, page, limit)
 
     return NextResponse.json({
-      audiencias,
-      pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        currentPage: page,
-        limit
-      }
+      data: result.data,
+      pagination: result.pagination
     })
 
   } catch (error: any) {
     console.error('Error al obtener audiencias:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: error.message },
       { status: 500 }
     )
   }

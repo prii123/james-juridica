@@ -4,18 +4,18 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Edit3, 
-  Calendar, 
-  Clock, 
-  User, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  CheckCircle, 
-  Clock3, 
-  XCircle, 
+import {
+  ArrowLeft,
+  Edit3,
+  Calendar,
+  Clock,
+  User,
+  MapPin,
+  Phone,
+  Mail,
+  CheckCircle,
+  Clock3,
+  XCircle,
   RotateCcw,
   FileText,
   ArrowRight,
@@ -58,19 +58,24 @@ interface Asesoria {
 }
 
 const ESTADO_CONFIG = {
+  PENDIENTE: {
+    color: 'secondary',
+    icon: Clock3,
+    label: 'Pendiente'
+  },
   PROGRAMADA: {
     color: 'primary',
     icon: Clock3,
     label: 'Programada'
   },
   REALIZADA: {
-    color: 'success', 
+    color: 'success',
     icon: CheckCircle,
     label: 'Realizada'
   },
   CANCELADA: {
     color: 'danger',
-    icon: XCircle, 
+    icon: XCircle,
     label: 'Cancelada'
   },
   REPROGRAMADA: {
@@ -82,7 +87,7 @@ const ESTADO_CONFIG = {
 
 const TIPO_LABELS = {
   INICIAL: 'Consulta Inicial',
-  SEGUIMIENTO: 'Seguimiento', 
+  SEGUIMIENTO: 'Seguimiento',
   ESPECIALIZADA: 'Asesoría Especializada'
 }
 
@@ -109,7 +114,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
     try {
       setLoading(true)
       const response = await fetch(`/api/asesorias/${params.asesoriaId}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setAsesoria(data)
@@ -125,7 +130,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
   const handleStatusUpdate = async (newStatus: EstadoAsesoria) => {
     if (!asesoria) return
-    
+
     try {
       setUpdating(true)
       const response = await fetch(`/api/asesorias/${params.asesoriaId}`, {
@@ -151,7 +156,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
   const handleCrearRadicacion = async () => {
     if (!asesoria) return
-    
+
     try {
       setCreandoRadicacion(true)
       setError('')
@@ -240,11 +245,11 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Asesorías', href: '/asesorias' },
           { label: asesoria.tema }
-        ]} 
+        ]}
       />
 
       <div className="d-flex align-items-center gap-3 mb-4">
@@ -263,7 +268,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
             {TIPO_LABELS[asesoria.tipo]} • {formatDate(asesoria.fecha)} • {formatTime(asesoria.fecha)}
           </p>
         </div>
-        <Link 
+        <Link
           href={`/asesorias/${params.asesoriaId}/editar`}
           className="btn btn-outline-primary d-flex align-items-center gap-2"
         >
@@ -360,7 +365,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                     La asesoría fue completada. ¿Cuál es el siguiente paso en el proceso?
                   </p>
                   <div className="d-flex gap-2">
-                    <button 
+                    <button
                       onClick={handleCrearRadicacion}
                       className="btn btn-outline-primary d-flex align-items-center gap-2"
                       disabled={creandoRadicacion}
@@ -427,7 +432,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                     </button>
                   </>
                 )}
-                
+
                 {asesoria.estado !== 'PROGRAMADA' && (
                   <button
                     onClick={() => handleStatusUpdate('PROGRAMADA')}
@@ -439,7 +444,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                   </button>
                 )}
 
-                <Link 
+                <Link
                   href={`/asesorias/${params.asesoriaId}/editar`}
                   className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
                 >
@@ -449,7 +454,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
                 {/* Sistema de archivos - Solo disponible si la asesoría está realizada */}
                 {asesoria.estado === 'REALIZADA' && (
-                  <Link 
+                  <Link
                     href={`/leads/${asesoria.lead.id}/archivos`}
                     className="btn btn-info d-flex align-items-center justify-content-center gap-2"
                   >
@@ -484,7 +489,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
                 <span className="badge bg-secondary">{asesoria.lead.estado}</span>
               </div>
               <div className="mt-3">
-                <Link 
+                <Link
                   href={`/leads/${asesoria.lead.id}`}
                   className="btn btn-outline-primary btn-sm w-100"
                 >

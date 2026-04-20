@@ -322,6 +322,7 @@ model Audiencia {
   tipo            TipoAudiencia
   fechaHora       DateTime
   estado          EstadoAudiencia @default(PROGRAMADA)
+  resultadoAudiencia ResultadoAudiencia @default(PENDIENTE)
   modalidad       ModalidadAudiencia @default(PRESENCIAL)
   direccion       String?
   enlace          String?
@@ -663,6 +664,7 @@ enum EstadoAsesoria {
   REALIZADA
   CANCELADA
   REPROGRAMADA
+  PENDIENTE
 }
 
 enum ModalidadAsesoria {
@@ -756,6 +758,14 @@ enum EstadoAudiencia {
 enum ModalidadAudiencia {
   PRESENCIAL
   VIRTUAL
+  MIXTA
+}
+
+enum ResultadoAudiencia {
+  CONCILIACION
+  FRACASO
+  OTRA_AUDIENCIA
+  PENDIENTE
 }
 
 enum TipoHonorario {

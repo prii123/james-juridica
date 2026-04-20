@@ -140,11 +140,11 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
 
       if (response.ok) {
         const result = await response.json()
-        console.log('Resultado de actualización:', result)
+        // console.log('Resultado de actualización:', result)
         
         // Asegurar que tenemos la radicación actualizada
         const updatedRadicacion = result.radicacion || result
-        console.log('Radicación actualizada:', updatedRadicacion)
+        // console.log('Radicación actualizada:', updatedRadicacion)
         setRadicacion(updatedRadicacion)
         
         // Si se creó un caso, mostrar mensaje de éxito

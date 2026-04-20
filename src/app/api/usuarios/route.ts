@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
-import { prisma } from '@/lib/db'
-import bcrypt from 'bcryptjs'
+import { UsuariosService } from '@/modules/usuarios/services'
+
+const usuariosService = new UsuariosService()
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,41 +16,12 @@ export async function GET(request: NextRequest) {
       await requirePermission(PERMISSIONS.USUARIOS.VIEW)
     }
 
-    let whereClause: any = { activo: true }
+    // Construir filtros
+    const filters: any = {}
+    if (role) filters.role = role
+    if (roleId) filters.roleId = roleId
 
-    // Filtro por rol usando el nombre del rol
-    if (role === 'ASESOR' || role === 'Asesor') {
-      whereClause.role = {
-        nombre: 'Asesor'
-      }
-    }
-
-    // Filtro por roleId
-    if (roleId) {
-      whereClause.roleId = roleId
-    }
-
-    const usuarios = await prisma.user.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        telefono: true,
-        activo: true,
-        role: {
-          select: {
-            id: true,
-            nombre: true
-          }
-        }
-      },
-      orderBy: [
-        { nombre: 'asc' },
-        { apellido: 'asc' }
-      ]
-    })
+    const usuarios = await usuariosService.getAllUsuarios(filters)
 
     return NextResponse.json({ usuarios })
   } catch (error: any) {
@@ -66,89 +38,22 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.USUARIOS.CREATE)
 
     const body = await request.json()
-    const { 
-      nombre, 
-      apellido, 
-      email, 
-      password, 
-      telefono, 
-      documento, 
-      roleId, 
-      activo 
-    } = body
 
-    // Validaciones básicas
-    if (!nombre || !apellido || !email || !password || !roleId) {
-      return NextResponse.json(
-        { error: 'Faltan campos obligatorios' },
-        { status: 400 }
-      )
-    }
-
-    // Verificar que el email no existe
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Ya existe un usuario con este email' },
-        { status: 400 }
-      )
-    }
-
-    // Verificar que el documento no existe (si se proporciona)
-    if (documento) {
-      const existingDocument = await prisma.user.findUnique({
-        where: { documento }
-      })
-
-      if (existingDocument) {
-        return NextResponse.json(
-          { error: 'Ya existe un usuario con este documento' },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Hash de la contraseña
-    const hashedPassword = await bcrypt.hash(password, 12)
-
-    // Crear usuario
-    const usuario = await prisma.user.create({
-      data: {
-        nombre,
-        apellido,
-        email,
-        password: hashedPassword,
-        telefono: telefono || null,
-        documento: documento || null,
-        roleId,
-        activo: activo ?? true
-      },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        telefono: true,
-        documento: true,
-        activo: true,
-        role: {
-          select: {
-            id: true,
-            nombre: true,
-            descripcion: true
-          }
-        },
-        createdAt: true
-      }
-    })
+    const usuario = await usuariosService.createUsuario(body)
 
     return NextResponse.json(usuario)
 
   } catch (error: any) {
     console.error('Error al crear usuario:', error)
+
+    // Manejo de errores específicos de validación
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Datos inválidos', details: error.errors },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
       { error: error.message || 'Error interno del servidor' },
       { status: 500 }

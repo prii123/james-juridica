@@ -44,7 +44,7 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function hasPermission(permission: string): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
-  
+
   return user.permissions.includes(permission) || user.role === 'Administrador'
 }
 
@@ -76,7 +76,7 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
   return user.role.permissions.map(p => p.permission.nombre)
 }
 
-export type PermissionModule = 
+export type PermissionModule =
   | 'dashboard'
   | 'leads'
   | 'seguimientos'
@@ -103,7 +103,7 @@ export const PERMISSIONS = {
   },
   LEADS: {
     VIEW: 'leads.view',
-    CREATE: 'leads.create', 
+    CREATE: 'leads.create',
     EDIT: 'leads.edit',
     DELETE: 'leads.delete',
   },
@@ -140,6 +140,7 @@ export const PERMISSIONS = {
     VIEW: 'audiencias.view',
     CREATE: 'audiencias.create',
     EDIT: 'audiencias.edit',
+    DELETE: 'audiencias.delete',
   },
   HONORARIOS: {
     VIEW: 'honorarios.view',
