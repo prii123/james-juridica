@@ -661,6 +661,25 @@ model CuotaAcuerdo {
 }
 
 // ========================================
+// MÓDULOS DEL SIDEBAR / NAVEGACIÓN
+// ========================================
+
+model Module {
+  id          String   @id @default(cuid())
+  name        String
+  href        String
+  icon        String   // nombre del icono en lucide-react
+  description String?
+  permission  String?  // permiso requerido (null = público)
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("modules")
+}
+
+// ========================================
 // SINCRONIZACIÓN GOOGLE CALENDAR
 // ========================================
 
