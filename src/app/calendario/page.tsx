@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { 
@@ -12,7 +12,10 @@ import {
   MapPin,
   Scale,
   Gavel,
-  Plus
+  Plus,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react'
 import { EstadoAsesoria, TipoAudiencia } from '@prisma/client'
 
@@ -75,6 +78,53 @@ export default function CalendarioPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [syncStatus, setSyncStatus] = useState<{
+    syncing: boolean
+    lastSync: Date | null
+    configured: boolean
+    message: string
+  }>({ syncing: false, lastSync: null, configured: false, message: '' })
+
+  const triggerSync = useCallback(async () => {
+    if (syncStatus.syncing) return
+    setSyncStatus(prev => ({ ...prev, syncing: true, message: 'Sincronizando con Google Calendar...' }))
+    try {
+      const res = await fetch('/api/calendario/sync', { method: 'POST' })
+      const result = await res.json()
+      if (result.success) {
+        setSyncStatus(prev => ({
+          ...prev,
+          syncing: false,
+          lastSync: new Date(),
+          message: `Sincronizado: ${result.created} creados, ${result.updated} actualizados`,
+        }))
+      } else {
+        setSyncStatus(prev => ({
+          ...prev,
+          syncing: false,
+          message: `Error: ${result.errors?.join(', ') || 'Error al sincronizar'}`,
+        }))
+      }
+    } catch {
+      setSyncStatus(prev => ({
+        ...prev,
+        syncing: false,
+        message: 'Error de conexión al sincronizar',
+      }))
+    }
+  }, [syncStatus.syncing])
+
+  useEffect(() => {
+    fetch('/api/calendario/sync')
+      .then(res => res.json())
+      .then(data => {
+        setSyncStatus(prev => ({ ...prev, configured: data.configured }))
+        if (data.configured) {
+          triggerSync()
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetchEvents()
@@ -86,7 +136,7 @@ export default function CalendarioPage() {
       
       // Obtener primer y último día del mes actual
       const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999)
 
       // Fetch asesorías
       const asesoriasResponse = await fetch('/api/asesorias?limit=1000')
@@ -116,7 +166,7 @@ export default function CalendarioPage() {
 
       if (audienciasResponse.ok) {
         const audienciasData = await audienciasResponse.json()
-        const audiencias = audienciasData.audiencias || []
+        const audiencias = audienciasData.data || audienciasData.audiencias || []
         
         audiencias.forEach((audiencia: Audiencia) => {
           const audienciaDate = new Date(audiencia.fechaHora)
@@ -212,8 +262,38 @@ export default function CalendarioPage() {
           <p className="text-secondary mb-0">
             Visualiza y gestiona todos tus eventos: asesorías, audiencias y más
           </p>
+          {syncStatus.configured && (
+            <div className="d-flex align-items-center gap-2 mt-1">
+              {syncStatus.syncing ? (
+                <span className="small text-muted d-flex align-items-center gap-1">
+                  <RefreshCw size={12} className="spinner" /> Sincronizando...
+                </span>
+              ) : syncStatus.lastSync ? (
+                <span className="small text-muted d-flex align-items-center gap-1">
+                  <CheckCircle2 size={12} style={{color: '#0f766e'}} />
+                  Última sincronización: {syncStatus.lastSync.toLocaleTimeString('es-CO')}
+                </span>
+              ) : null}
+              {syncStatus.message && !syncStatus.syncing && syncStatus.message.startsWith('Error') && (
+                <span className="small text-danger d-flex align-items-center gap-1">
+                  <AlertCircle size={12} /> {syncStatus.message}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 align-items-center">
+          {syncStatus.configured && (
+            <button
+              onClick={triggerSync}
+              disabled={syncStatus.syncing}
+              className="btn btn-outline-secondary d-flex align-items-center gap-2"
+              style={{fontSize: '0.875rem'}}
+            >
+              <RefreshCw size={16} className={syncStatus.syncing ? 'spinner' : ''} />
+              Sincronizar
+            </button>
+          )}
           <Link href="/asesorias/nueva" className="btn btn-primary d-flex align-items-center gap-2">
             <Plus size={16} />
             Nueva Asesoría
@@ -476,6 +556,16 @@ export default function CalendarioPage() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        :global(.spinner) {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   )
 }

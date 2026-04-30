@@ -661,6 +661,24 @@ model CuotaAcuerdo {
 }
 
 // ========================================
+// SINCRONIZACIÓN GOOGLE CALENDAR
+// ========================================
+
+model CalendarEventSync {
+  id               String   @id @default(cuid())
+  eventType        String   // 'asesoria' | 'audiencia'
+  eventId          String   // ID local en la DB
+  googleEventId    String   // ID del evento en Google Calendar
+  googleCalendarId String   // ID del calendario de Google
+  lastSyncedAt     DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([eventType, eventId])
+  @@map("calendar_event_sync")
+}
+
+// ========================================
 // ENUMS
 // ========================================
 
