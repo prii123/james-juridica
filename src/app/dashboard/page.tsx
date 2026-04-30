@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import CasosRecientes from '@/components/CasosRecientes'
+import TimelineLiquidacion from '@/components/TimelineLiquidacion'
 import {
   TrendingUp,
   Users,
@@ -318,31 +319,13 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Por Cobrar */}
-        {/* <div className="col-12 col-md-6 col-lg-3">
-          <div className="card h-100" style={{borderLeft: '4px solid #64748b'}}>
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="p-2 rounded" style={{backgroundColor: '#f8fafc'}}>
-                  <CreditCard style={{color: '#64748b'}} />
-                </div>
-                <div className="d-flex align-items-center fw-medium small" style={{color: '#dc2626'}}>
-                  {stats.cartera.growthDirection === 'up' ? <ArrowUpRight className="me-1" /> : <ArrowDownRight className="me-1" />}
-                  {stats.cartera.growth}%
-                </div>
-              </div>
-              <h6 className="card-title text-muted text-uppercase small mb-1">Por Cobrar</h6>
-              <h2 className="card-text fw-bold mb-1" style={{color: '#64748b'}}>{formatCurrency(stats.cartera.totalPendiente)}</h2>
-              <p className="card-text fw-medium small" style={{color: '#dc2626'}}>{formatCurrency(stats.cartera.totalVencido)} vencido</p>
-            </div>
-          </div>
-        </div> */}
+
       </div>
 
       {/* Secciones Principales */}
       <div className="row g-4">
         {/* Casos Recientes */}
-        <div className="col-12 col-xl-8">
+        <div className="col-12 col-xl-6">
           <div className="card">
             <div className="card-header" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid #e2e8f0'}}>
               <div className="d-flex justify-content-between align-items-center">
@@ -367,84 +350,10 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Tareas Pendientes y Estadísticas */}
-        <div className="col-12 col-xl-4">
-          {/* Tareas Pendientes */}
-          <div className="card mb-4">
-            <div className="card-header" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid #e2e8f0'}}>
-              <div className="d-flex align-items-center">
-                <div className="p-2 rounded me-3" style={{backgroundColor: '#f0f9ff'}}>
-                  <Clock style={{color: '#0369a1'}} />
-                </div>
-                <div>
-                  <h5 className="card-title mb-0" style={{color: '#1e293b'}}>Tareas Pendientes</h5>
-                  <p className="card-subtitle text-muted small mb-0">Próximas a vencer</p>
-                </div>
-              </div>
-            </div>
-            <div className="card-body p-0">
-              {[
-                { task: "Derecho de Petición", date: "15/02/2026", priority: "high", color: "#dc2626", bgColor: "#fef2f2" },
-                { task: "Respuesta Juzgado", date: "18/02/2026", priority: "medium", color: "#0369a1", bgColor: "#f0f9ff" },
-                { task: "Audiencia Preliminar", date: "22/02/2026", priority: "high", color: "#dc2626", bgColor: "#fef2f2" },
-                { task: "Presentar Recurso", date: "25/02/2026", priority: "low", color: "#0f766e", bgColor: "#f0fdfa" },
-                { task: "Revisión Contrato", date: "28/02/2026", priority: "medium", color: "#0369a1", bgColor: "#f0f9ff" }
-              ].map((item, i) => (
-                <div key={i} className="d-flex justify-content-between align-items-center p-3 border-bottom">
-                  <div className="d-flex align-items-center">
-                    <div className="rounded-circle me-3" style={{width: '12px', height: '12px', backgroundColor: item.color}}></div>
-                    <div>
-                      <p className="fw-medium mb-0" style={{color: '#1e293b'}}>
-                        {item.task}
-                      </p>
-                      <p className="small text-muted mb-0">Vence: {item.date}</p>
-                    </div>
-                  </div>
-                  <span className="badge" style={{
-                    backgroundColor: item.bgColor, 
-                    color: item.color, 
-                    border: `1px solid ${item.color}20`
-                  }}>
-                    {item.priority === 'high' ? 'Alta' : item.priority === 'medium' ? 'Media' : 'Baja'}
-                  </span>
-                </div>
-              ))}
-            </div>
-        </div>
+        {/* Proceso de Liquidación */}
+        <div className="col-12 col-xl-6">
+          <TimelineLiquidacion />
 
-          {/* Estadísticas Rápidas */}
-          {/* <div className="card">
-            <div className="card-body">
-              <h5 className="card-title" style={{color: '#1e293b'}}>Resumen del Mes</h5>
-              <div className="mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small text-muted">Eficiencia Casos</span>
-                  <span className="small fw-semibold" style={{color: '#0f766e'}}>85%</span>
-                </div>
-                <div className="progress" style={{height: '8px', backgroundColor: '#f1f5f9'}}>
-                  <div className="progress-bar" style={{width: '85%', backgroundColor: '#0f766e'}}></div>
-                </div>
-              </div>
-              <div className="mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small text-muted">Tareas Completadas</span>
-                  <span className="small fw-semibold" style={{color: '#1e40af'}}>73%</span>
-                </div>
-                <div className="progress" style={{height: '8px', backgroundColor: '#f1f5f9'}}>
-                  <div className="progress-bar" style={{width: '73%', backgroundColor: '#1e40af'}}></div>
-                </div>
-              </div>
-              <div>
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small text-muted">Satisfacción Cliente</span>
-                  <span className="small fw-semibold" style={{color: '#0369a1'}}>92%</span>
-                </div>
-                <div className="progress" style={{height: '8px', backgroundColor: '#f1f5f9'}}>
-                  <div className="progress-bar" style={{width: '92%', backgroundColor: '#0369a1'}}></div>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </div>
       </div>
     </>

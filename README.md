@@ -153,6 +153,9 @@ npm run db:reset         # Resetear base de datos
 
 # Código
 npm run lint             # Linter ESLint
+
+ npm run db:seed o npx prisma db seed  #iniciar datos seed
+
 ```
 
 ## 🔒 Sistema de Permisos

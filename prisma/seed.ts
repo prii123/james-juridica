@@ -580,6 +580,278 @@ async function main() {
 
   console.log('✅ Creadas asesorías de ejemplo')
 
+  // ==========================================
+  // CLIENTES
+  // ==========================================
+  const clientes = await Promise.all([
+    prisma.cliente.create({
+      data: {
+        nombre: 'Luis Fernando',
+        apellido: 'González Martínez',
+        email: 'luis.gonzalez@email.com',
+        telefono: '3101234567',
+        documento: '1012345678',
+        tipoPersona: 'NATURAL',
+        direccion: 'Calle 45 # 23-12',
+        ciudad: 'Bogotá',
+        activo: true
+      }
+    }),
+    prisma.cliente.create({
+      data: {
+        nombre: 'Inversiones del Valle',
+        apellido: 'S.A.S.',
+        email: 'contacto@inversionesvalle.com',
+        telefono: '6023456789',
+        documento: '900123456',
+        tipoPersona: 'JURIDICA',
+        empresa: 'Inversiones del Valle S.A.S.',
+        direccion: 'Av. 6N # 15-20',
+        ciudad: 'Cali',
+        activo: true
+      }
+    }),
+    prisma.cliente.create({
+      data: {
+        nombre: 'María Victoria',
+        apellido: 'Restrepo Londoño',
+        email: 'maria.restrepo@email.com',
+        telefono: '3159876543',
+        documento: '1122334455',
+        tipoPersona: 'NATURAL',
+        direccion: 'Carrera 19 # 85-34',
+        ciudad: 'Medellín',
+        activo: true
+      }
+    }),
+    prisma.cliente.create({
+      data: {
+        nombre: 'Constructora del Caribe',
+        apellido: 'Ltda.',
+        email: 'info@constructcaribe.com',
+        telefono: '6051234567',
+        documento: '800654321',
+        tipoPersona: 'JURIDICA',
+        empresa: 'Constructora del Caribe Ltda.',
+        direccion: 'Av. San Martín # 8-50',
+        ciudad: 'Barranquilla',
+        activo: true
+      }
+    }),
+  ])
+  console.log(`✅ Creados ${clientes.length} clientes`)
+
+  // ==========================================
+  // CASOS
+  // ==========================================
+  const casos = await Promise.all([
+    prisma.caso.create({
+      data: {
+        numeroCaso: 'REO-2025-001',
+        tipoInsolvencia: 'REORGANIZACION',
+        estado: 'ACTIVO',
+        prioridad: 'ALTA',
+        fechaInicio: new Date('2025-01-15'),
+        observaciones: 'Proceso de reorganización empresarial para mejoras financieras',
+        clienteId: clientes[1].id,
+        responsableId: abogadoUser.id,
+        creadoPorId: abogadoUser.id
+      }
+    }),
+    prisma.caso.create({
+      data: {
+        numeroCaso: 'LIQ-2025-002',
+        tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
+        estado: 'ACTIVO',
+        prioridad: 'CRITICA',
+        fechaInicio: new Date('2025-02-01'),
+        observaciones: 'Liquidación judicial urgente por incumplimiento de acuerdos',
+        clienteId: clientes[2].id,
+        responsableId: abogadoUser.id,
+        creadoPorId: abogadoUser.id
+      }
+    }),
+    prisma.caso.create({
+      data: {
+        numeroCaso: 'IPN-2025-003',
+        tipoInsolvencia: 'INSOLVENCIA_PERSONA_NATURAL',
+        estado: 'ACTIVO',
+        prioridad: 'MEDIA',
+        fechaInicio: new Date('2025-03-10'),
+        observaciones: 'Persona natural con deudas por $150.000.000',
+        clienteId: clientes[0].id,
+        responsableId: abogadoUser.id,
+        creadoPorId: abogadoUser.id
+      }
+    }),
+    prisma.caso.create({
+      data: {
+        numeroCaso: 'ARE-2025-004',
+        tipoInsolvencia: 'ACUERDO_REORGANIZACION',
+        estado: 'CERRADO',
+        prioridad: 'BAJA',
+        fechaInicio: new Date('2024-06-20'),
+        fechaCierre: new Date('2025-01-30'),
+        observaciones: 'Acuerdo de reorganización exitoso culminado',
+        clienteId: clientes[3].id,
+        responsableId: abogadoUser.id,
+        creadoPorId: adminUser.id
+      }
+    }),
+    prisma.caso.create({
+      data: {
+        numeroCaso: 'REO-2025-005',
+        tipoInsolvencia: 'REORGANIZACION',
+        estado: 'SUSPENDIDO',
+        prioridad: 'MEDIA',
+        fechaInicio: new Date('2025-01-05'),
+        observaciones: 'Proceso suspendido por falta de documentación del cliente',
+        clienteId: clientes[0].id,
+        responsableId: abogadoUser.id,
+        creadoPorId: abogadoUser.id
+      }
+    }),
+  ])
+  console.log(`✅ Creados ${casos.length} casos`)
+
+  // ==========================================
+  // ACTUACIONES
+  // ==========================================
+  const tiposActuacion = ['DERECHO_PETICION', 'LEVANTAMIENTO_EMBARGOS', 'RESPUESTA_REQUERIMIENTO', 'MEMORIAL', 'OTRO'] as const
+  const estadosActuacion = ['PENDIENTE', 'EN_PROCESO', 'ENVIADA', 'RESPONDIDA', 'VENCIDA'] as const
+
+  for (const caso of casos) {
+    const numActuaciones = caso.estado === 'CERRADO' ? 4 : 3
+    for (let i = 0; i < numActuaciones; i++) {
+      await prisma.actuacion.create({
+        data: {
+          tipo: tiposActuacion[i % tiposActuacion.length],
+          titulo: `Actuación ${i + 1} - ${tiposActuacion[i % tiposActuacion.length]}`,
+          estado: i === 0 && caso.estado !== 'CERRADO' ? 'EN_PROCESO' : 'RESPONDIDA',
+          descripcion: `Actuación ${i + 1} del caso ${caso.numeroCaso}`,
+          fechaVencimiento: new Date(caso.fechaInicio.getTime() + (i + 2) * 7 * 24 * 60 * 60 * 1000),
+          casoId: caso.id,
+          responsableId: abogadoUser.id
+        }
+      })
+    }
+  }
+  console.log('✅ Creadas actuaciones de ejemplo')
+
+  // ==========================================
+  // AUDIENCIAS
+  // ==========================================
+  const tiposAudiencia = ['RADICACION', 'ADMISORIA', 'VERIFICACION_CREDITOS', 'CATEGORIA_CREDITOS', 'CONCORDATO'] as const
+
+  // Audiencias para el caso activo de reorganización (REO-2025-001)
+  await Promise.all([
+    prisma.audiencia.create({
+      data: {
+        tipo: 'RADICACION',
+        estado: 'REALIZADA',
+        modalidad: 'PRESENCIAL',
+        resultadoAudiencia: 'CONCILIACION',
+        fechaHora: new Date('2025-02-10T09:00:00'),
+        resultado: 'Audiencia de radicación exitosa, se aceptó la solicitud',
+        casoId: casos[0].id,
+        responsableId: abogadoUser.id
+      }
+    }),
+    prisma.audiencia.create({
+      data: {
+        tipo: 'ADMISORIA',
+        estado: 'REALIZADA',
+        modalidad: 'VIRTUAL',
+        resultadoAudiencia: 'CONCILIACION',
+        fechaHora: new Date('2025-03-05T10:30:00'),
+        resultado: 'Audiencia admisoria virtual, se admitió la solicitud de reorganización',
+        casoId: casos[0].id,
+        responsableId: abogadoUser.id
+      }
+    }),
+    prisma.audiencia.create({
+      data: {
+        tipo: 'VERIFICACION_CREDITOS',
+        estado: 'REALIZADA',
+        modalidad: 'VIRTUAL',
+        resultadoAudiencia: 'PENDIENTE',
+        fechaHora: new Date('2025-03-20T14:00:00'),
+        resultado: 'Verificación de créditos presentados por los acreedores',
+        casoId: casos[0].id,
+        responsableId: abogadoUser.id
+      }
+    }),
+  ])
+
+  // Audiencia con FRACASO para el caso de liquidación (LIQ-2025-002)
+  const audienciaFracaso = await prisma.audiencia.create({
+    data: {
+      tipo: 'CONCORDATO',
+      estado: 'REALIZADA',
+      modalidad: 'PRESENCIAL',
+      resultadoAudiencia: 'FRACASO',
+      fechaHora: new Date('2025-03-01T08:30:00'),
+      resultado: 'Audiencia de concordato fallida, no se llegó a acuerdo con acreedores',
+      casoId: casos[1].id,
+      responsableId: abogadoUser.id
+    }
+  })
+
+  // Audiencia programada para el caso IPN-2025-003
+  await prisma.audiencia.create({
+    data: {
+      tipo: 'RADICACION',
+      estado: 'PROGRAMADA',
+      modalidad: 'MIXTA',
+      resultadoAudiencia: 'PENDIENTE',
+      fechaHora: new Date('2025-05-15T10:00:00'),
+      resultado: 'Audiencia de radicación programada para inicio del proceso',
+      casoId: casos[2].id,
+      responsableId: abogadoUser.id
+    }
+  })
+  console.log('✅ Creadas audiencias de ejemplo')
+
+  // ==========================================
+  // PROCESOS DE LIQUIDACIÓN (desde el FRACASO)
+  // ==========================================
+  await prisma.procesoLiquidacion.create({
+    data: {
+      audienciaId: audienciaFracaso.id,
+      casoId: casos[1].id,
+      pasos: [
+        { id: 'autodeadmision', nombre: 'Autodeadmisión', completado: true, descripcion: 'Auto de Admisión de la insolvencia' },
+        { id: 'nombrar-liquidador', nombre: 'Nombrar Liquidador', completado: true, descripcion: 'Nombrar al liquidador del proceso' },
+        { id: 'inventario-avaluo', nombre: 'Inventario y Avalúo', completado: false, descripcion: 'Diligenciar inventario y avalúo de bienes' },
+        { id: 'audiencia-adjudicacion', nombre: 'Audiencia y Adjudicación', completado: false, descripcion: 'Realizar audiencia y adjudicación de bienes' },
+        { id: 'sentencia', nombre: 'Sentencia', completado: false, descripcion: 'Sentencia de liquidación' },
+        { id: 'notificar-cliente', nombre: 'Notificar al Cliente Terminación del Caso', completado: false, descripcion: 'Notificar al cliente la terminación del caso' },
+      ]
+    }
+  })
+  console.log('✅ Creado proceso de liquidación')
+
+  // ==========================================
+  // DOCUMENTOS
+  // ==========================================
+  const tipoDocs = ['DEMANDA', 'PODER', 'CEDULA', 'ESTADOS_FINANCIEROS', 'CERTIFICACION_BANCARIA'] as const
+  for (const caso of casos.slice(0, 3)) {
+    for (let i = 0; i < 3; i++) {
+      await prisma.documento.create({
+        data: {
+          nombre: `${tipoDocs[i]}_${caso.numeroCaso}`,
+          tipo: tipoDocs[i],
+          descripcion: `Documento de ${tipoDocs[i]} para el caso ${caso.numeroCaso}`,
+          archivo: `/documentos/${caso.id}/${tipoDocs[i]}.pdf`,
+          tamano: Math.floor(Math.random() * 5000) + 100,
+          extension: 'pdf',
+          casoId: caso.id
+        }
+      })
+    }
+  }
+  console.log('✅ Creados documentos de ejemplo')
+
   console.log('🎉 Seed completado exitosamente!')
 }
 
