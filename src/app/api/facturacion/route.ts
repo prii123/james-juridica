@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.FACTURACION.CREATE)
 
     const body = await request.json()
-    const { honorarioId, fechaVencimiento, observaciones, items } = body
+    const { honorarioId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
 
     // Validar datos requeridos
     if (!honorarioId || !fechaVencimiento || !items || items.length === 0) {
@@ -141,6 +141,9 @@ export async function POST(request: NextRequest) {
     const impuestos = subtotal * 0.19 // IVA 19%
     const total = subtotal + impuestos
 
+    // Determinar modalidad de pago
+    const pagoEsCredito = modalidadPago === 'CREDITO'
+
     // Crear la factura
     const factura = await prisma.factura.create({
       data: {
@@ -151,6 +154,11 @@ export async function POST(request: NextRequest) {
         impuestos: impuestos,
         total: total,
         estado: 'GENERADA',
+        modalidadPago: pagoEsCredito ? 'FINANCIADO' : 'CONTADO',
+        ...(pagoEsCredito && {
+          numeroCuotas: numeroCuotas || 1,
+          tasaInteres: tasaInteres || 0,
+        }),
         observaciones: observaciones || '',
         honorarioId: honorarioId,
         creadoPorId: session.user.id,

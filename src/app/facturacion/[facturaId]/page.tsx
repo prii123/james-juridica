@@ -105,6 +105,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     fetchFactura()
@@ -160,6 +161,32 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
       setError('Error de conexión')
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloadingPdf(true)
+      const response = await fetch(`/api/facturacion/${params.facturaId}/pdf`)
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.error || 'Error al descargar el PDF')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `factura-${factura?.numero || params.facturaId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error: any) {
+      setError(error.message || 'Error al descargar el PDF')
+    } finally {
+      setDownloadingPdf(false)
     }
   }
 
@@ -264,9 +291,17 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
             <Printer size={16} />
             Imprimir
           </button>
-          <button className="btn btn-outline-primary d-flex align-items-center gap-2">
-            <Download size={16} />
-            Descargar PDF
+          <button
+            onClick={handleDownloadPDF}
+            className="btn btn-outline-primary d-flex align-items-center gap-2"
+            disabled={downloadingPdf}
+          >
+            {downloadingPdf ? (
+              <span className="spinner-border spinner-border-sm" role="status" />
+            ) : (
+              <Download size={16} />
+            )}
+            {downloadingPdf ? 'Descargando...' : 'Descargar PDF'}
           </button>
         </div>
       </div>

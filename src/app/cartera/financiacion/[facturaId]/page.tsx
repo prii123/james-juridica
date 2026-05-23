@@ -11,7 +11,8 @@ import {
   DollarSign,
   Calendar,
   Percent,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react'
 
 interface Factura {
@@ -48,6 +49,7 @@ export default function FinanciacionPage() {
   const [factura, setFactura] = useState<Factura | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [error, setError] = useState('')
   
   const [formData, setFormData] = useState({
@@ -217,6 +219,32 @@ export default function FinanciacionPage() {
     }
   }
 
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloadingPdf(true)
+      const response = await fetch(`/api/cartera/financiacion/${facturaId}/pdf`)
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.error || 'Error al descargar el PDF')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `financiacion-${factura?.numero || facturaId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error: any) {
+      setError(error.message || 'Error al descargar el PDF')
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -262,7 +290,7 @@ export default function FinanciacionPage() {
         <Link href="/cartera" className="btn btn-outline-secondary">
           <ArrowLeft size={16} />
         </Link>
-        <div>
+        <div className="flex-grow-1">
           <h1 className="h3 fw-bold text-dark mb-1">
             {factura?.numeroCuotas && factura.numeroCuotas > 1 
               ? 'Modificar Financiación' 
@@ -275,6 +303,20 @@ export default function FinanciacionPage() {
             )}
           </p>
         </div>
+        {tablaCuotas.length > 0 && (
+          <button
+            onClick={handleDownloadPDF}
+            className="btn btn-outline-primary d-flex align-items-center gap-2"
+            disabled={downloadingPdf}
+          >
+            {downloadingPdf ? (
+              <span className="spinner-border spinner-border-sm" role="status" />
+            ) : (
+              <Download size={16} />
+            )}
+            {downloadingPdf ? 'Descargando...' : 'Descargar PDF'}
+          </button>
+        )}
       </div>
 
       {error && (

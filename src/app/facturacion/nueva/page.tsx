@@ -11,7 +11,10 @@ import {
   Calculator,
   Save,
   User,
-  FileText
+  FileText,
+  Search,
+  CreditCard,
+  Building
 } from 'lucide-react'
 
 interface Honorario {
@@ -44,10 +47,14 @@ export default function NuevaFacturaPage() {
   const [honorarios, setHonorarios] = useState<Honorario[]>([])
   const [loadingHonorarios, setLoadingHonorarios] = useState(true)
   
+  const [searchTerm, setSearchTerm] = useState('')
   const [formData, setFormData] = useState({
     honorarioId: '',
     fechaVencimiento: '',
-    observaciones: ''
+    observaciones: '',
+    modalidadPago: 'CONTADO',
+    numeroCuotas: 6,
+    tasaInteres: 2.5,
   })
   
   const [items, setItems] = useState<ItemFactura[]>([
@@ -88,7 +95,7 @@ export default function NuevaFacturaPage() {
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -141,15 +148,22 @@ export default function NuevaFacturaPage() {
       setLoading(true)
       setError('')
       
+      const { modalidadPago, numeroCuotas, tasaInteres, ...restForm } = formData
+      const body: Record<string, any> = {
+        ...restForm,
+        modalidadPago,
+        items: items.filter(item => item.descripcion && item.valorUnitario > 0),
+      }
+      if (modalidadPago === 'CREDITO') {
+        body.numeroCuotas = numeroCuotas
+        body.tasaInteres = tasaInteres
+      }
       const response = await fetch('/api/facturacion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          items: items.filter(item => item.descripcion && item.valorUnitario > 0)
-        }),
+        body: JSON.stringify(body),
       })
 
       if (response.ok) {
@@ -218,6 +232,17 @@ export default function NuevaFacturaPage() {
               <div className="card-body">
                 <div className="row">
                   <div className="col-md-6">
+                    <label className="form-label">Buscar Cliente</label>
+                    <div className="input-group mb-2">
+                      <span className="input-group-text"><Search size={16} /></span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Nombre del cliente o número de caso..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
                     <label className="form-label">Honorario a Facturar *</label>
                     {loadingHonorarios ? (
                       <div className="text-center py-3">
@@ -228,17 +253,45 @@ export default function NuevaFacturaPage() {
                     ) : (
                       <select
                         className="form-select"
+                        size={5}
                         value={formData.honorarioId}
                         onChange={(e) => handleInputChange('honorarioId', e.target.value)}
                         required
+                        style={{ minHeight: '130px' }}
                       >
-                        <option value="">Selecciona un honorario</option>
-                        {honorarios.map((honorario) => (
-                          <option key={honorario.id} value={honorario.id}>
-                            {honorario.caso.numeroCaso} - {honorario.caso.cliente.nombre} {honorario.caso.cliente.apellido} - {formatCurrency(honorario.valor)}
-                          </option>
-                        ))}
+                        <option value="">-- Selecciona un honorario --</option>
+                        {honorarios
+                          .filter(h => {
+                            if (!searchTerm) return true
+                            const q = searchTerm.toLowerCase()
+                            const c = h.caso.cliente
+                            return c.nombre.toLowerCase().includes(q) ||
+                              (c.apellido?.toLowerCase() || '').includes(q) ||
+                              h.caso.numeroCaso.toLowerCase().includes(q)
+                          })
+                          .map((honorario) => (
+                            <option key={honorario.id} value={honorario.id}>
+                              {honorario.caso.cliente.nombre} {honorario.caso.cliente.apellido} | {honorario.caso.numeroCaso} | {formatCurrency(honorario.valor)}
+                            </option>
+                          ))}
                       </select>
+                    )}
+                    {honorarios.length === 0 && !loadingHonorarios && (
+                      <div className="alert alert-warning py-2 mt-2 small">
+                        No hay honorarios pendientes por facturar.
+                      </div>
+                    )}
+                    {honorarios.filter(h => {
+                      if (!searchTerm) return true
+                      const q = searchTerm.toLowerCase()
+                      const c = h.caso.cliente
+                      return c.nombre.toLowerCase().includes(q) ||
+                        (c.apellido?.toLowerCase() || '').includes(q) ||
+                        h.caso.numeroCaso.toLowerCase().includes(q)
+                    }).length === 0 && searchTerm && (
+                      <div className="alert alert-info py-2 mt-2 small">
+                        No se encontraron honorarios con ese criterio de búsqueda.
+                      </div>
                     )}
                   </div>
                   <div className="col-md-6">
@@ -251,6 +304,55 @@ export default function NuevaFacturaPage() {
                       min={new Date().toISOString().split('T')[0]}
                       required
                     />
+                    <div className="mt-3">
+                      <label className="form-label">Modalidad de Pago</label>
+                      <div className="d-flex gap-2">
+                        <button
+                          type="button"
+                          className={`btn ${formData.modalidadPago === 'CONTADO' ? 'btn-success' : 'btn-outline-success'} d-flex align-items-center gap-2 flex-fill`}
+                          onClick={() => handleInputChange('modalidadPago', 'CONTADO')}
+                        >
+                          <Building size={16} />
+                          Contado
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn ${formData.modalidadPago === 'CREDITO' ? 'btn-primary' : 'btn-outline-primary'} d-flex align-items-center gap-2 flex-fill`}
+                          onClick={() => handleInputChange('modalidadPago', 'CREDITO')}
+                        >
+                          <CreditCard size={16} />
+                          Crédito
+                        </button>
+                      </div>
+                    </div>
+                    {formData.modalidadPago === 'CREDITO' && (
+                      <div className="mt-3 p-3 border rounded bg-light">
+                        <h6 className="mb-2">Configuración de Financiación</h6>
+                        <div className="mb-2">
+                          <label className="form-label small">Número de Cuotas</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            min={2}
+                            max={60}
+                            value={formData.numeroCuotas}
+                            onChange={(e) => handleInputChange('numeroCuotas', parseInt(e.target.value) || 1)}
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label small">Tasa de Interés Mensual (%)</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={formData.tasaInteres}
+                            onChange={(e) => handleInputChange('tasaInteres', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 

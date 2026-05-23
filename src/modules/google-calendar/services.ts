@@ -10,6 +10,7 @@ import {
 } from './types'
 
 const RATE_LIMIT_DELAY_MS = 250
+let isSyncing = false
 
 function getConfig(): GoogleCalendarConfig {
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL
@@ -176,6 +177,7 @@ export class GoogleCalendarService {
           pageToken,
           singleEvents: true,
           orderBy: 'startTime',
+          timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
         })
 
         const items = response.data.items || []
@@ -205,6 +207,26 @@ export class GoogleCalendarService {
     if (existing) {
       await this.saveMapping(eventType, eventId, existing.googleEventId)
       return existing.googleEventId
+    }
+    return null
+  }
+
+  private async findExistingGoogleEvent(eventType: string, eventId: string): Promise<string | null> {
+    try {
+      const calendar = await this.ensureAuth()
+      const appId = encodeAppEventId(eventType, eventId)
+      const response = await calendar.events.list({
+        calendarId: this.config.calendarId,
+        q: appId,
+        singleEvents: true,
+        maxResults: 1,
+      })
+      const item = response.data.items?.[0]
+      if (item?.id) {
+        return item.id
+      }
+    } catch {
+      // fallback: no se pudo buscar, se intentará crear
     }
     return null
   }
@@ -248,9 +270,17 @@ export class GoogleCalendarService {
               await this.updateEvent(googleId, syncEvent)
               updated++
             } else {
-              const newGoogleId = await this.createEvent(syncEvent)
-              await this.saveMapping('asesoria', asesoria.id, newGoogleId)
-              created++
+              // Buscar directamente en Google Calendar (dedup ante concurrencia)
+              const directId = await this.findExistingGoogleEvent('asesoria', asesoria.id)
+              if (directId) {
+                await this.saveMapping('asesoria', asesoria.id, directId)
+                await this.updateEvent(directId, syncEvent)
+                updated++
+              } else {
+                const newGoogleId = await this.createEvent(syncEvent)
+                await this.saveMapping('asesoria', asesoria.id, newGoogleId)
+                created++
+              }
             }
           }
 
@@ -305,9 +335,16 @@ export class GoogleCalendarService {
               await this.updateEvent(googleId, syncEvent)
               updated++
             } else {
-              const newGoogleId = await this.createEvent(syncEvent)
-              await this.saveMapping('audiencia', audiencia.id, newGoogleId)
-              created++
+              const directId = await this.findExistingGoogleEvent('audiencia', audiencia.id)
+              if (directId) {
+                await this.saveMapping('audiencia', audiencia.id, directId)
+                await this.updateEvent(directId, syncEvent)
+                updated++
+              } else {
+                const newGoogleId = await this.createEvent(syncEvent)
+                await this.saveMapping('audiencia', audiencia.id, newGoogleId)
+                created++
+              }
             }
           }
 
@@ -324,6 +361,19 @@ export class GoogleCalendarService {
   }
 
   async syncAll(): Promise<SyncResult> {
+    if (isSyncing) {
+      console.warn('[GoogleCalendar] Sync already in progress, skipping')
+      return {
+        success: false,
+        created: 0,
+        updated: 0,
+        deleted: 0,
+        errors: ['Sync already in progress'],
+        timestamp: new Date(),
+      }
+    }
+
+    isSyncing = true
     const errors: string[] = []
     let created = 0
     let updated = 0
@@ -349,6 +399,36 @@ export class GoogleCalendarService {
       updated += audienciaResult.updated
       errors.push(...audienciaResult.errors)
 
+      // Limpieza de huérfanos: eliminar de Google Calendar eventos que ya no existen en DB
+      try {
+        const [localAsesorias, localAudiencias] = await Promise.all([
+          prisma.asesoria.findMany({ select: { id: true } }),
+          prisma.audiencia.findMany({ select: { id: true } }),
+        ])
+        const validKeys = new Set<string>()
+        localAsesorias.forEach(a => validKeys.add(`asesoria-${a.id}`))
+        localAudiencias.forEach(a => validKeys.add(`audiencia-${a.id}`))
+
+        for (const [key, { googleEventId }] of googleEvents) {
+          if (!validKeys.has(key)) {
+            try {
+              await this.deleteEvent(googleEventId)
+              // Limpiar mapping si existe
+              const separatorIndex = key.indexOf('-')
+              const eType = key.substring(0, separatorIndex)
+              const eId = key.substring(separatorIndex + 1)
+              await this.deleteMapping(eType, eId)
+              deleted++
+            } catch (err: any) {
+              errors.push(`Orphan cleanup failed for ${key}: ${err.message}`)
+            }
+            await delay(100)
+          }
+        }
+      } catch (err: any) {
+        errors.push(`Error during orphan cleanup: ${err.message}`)
+      }
+
       console.log(`[GoogleCalendar] Sync completed: ${created} created, ${updated} updated, ${deleted} deleted`)
 
       return {
@@ -369,6 +449,8 @@ export class GoogleCalendarService {
         errors: [error.message],
         timestamp: new Date(),
       }
+    } finally {
+      isSyncing = false
     }
   }
 }
