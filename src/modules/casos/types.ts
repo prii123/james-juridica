@@ -4,7 +4,7 @@ export interface CreateCasoData {
   tipoInsolvencia: TipoInsolvencia
   prioridad?: Prioridad
   observaciones?: string
-  clienteId: string
+  clienteId?: string
   responsableId: string
   creadoPorId: string
 }

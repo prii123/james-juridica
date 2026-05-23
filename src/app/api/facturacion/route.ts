@@ -92,35 +92,22 @@ export async function POST(request: NextRequest) {
     const { honorarioId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
 
     // Validar datos requeridos
-    if (!honorarioId || !fechaVencimiento || !items || items.length === 0) {
+    if (!fechaVencimiento || !items || items.length === 0) {
       return NextResponse.json({ 
         error: 'Datos incompletos' 
       }, { status: 400 })
     }
 
-    // Verificar que el honorario existe y está pendiente
-    const honorario = await prisma.honorario.findUnique({
-      where: { id: honorarioId },
-      include: {
-        caso: {
-          include: {
-            cliente: true
-          }
-        },
-        facturas: true
+    // Si se proporciona honorarioId, verificar que existe
+    if (honorarioId) {
+      const honorario = await prisma.honorario.findUnique({
+        where: { id: honorarioId }
+      })
+      if (!honorario) {
+        return NextResponse.json({ 
+          error: 'Honorario no encontrado' 
+        }, { status: 404 })
       }
-    })
-
-    if (!honorario) {
-      return NextResponse.json({ 
-        error: 'Honorario no encontrado' 
-      }, { status: 404 })
-    }
-
-    if (honorario.facturas && honorario.facturas.length > 0) {
-      return NextResponse.json({ 
-        error: 'Este honorario ya tiene facturas asociadas' 
-      }, { status: 400 })
     }
 
     // Generar número de factura único
@@ -160,7 +147,7 @@ export async function POST(request: NextRequest) {
           tasaInteres: tasaInteres || 0,
         }),
         observaciones: observaciones || '',
-        honorarioId: honorarioId,
+        ...(honorarioId ? { honorarioId } : {}),
         creadoPorId: session.user.id,
         items: {
           create: items.map((item: any) => ({

@@ -7,11 +7,13 @@ export class CasosRepository {
     // Generar número de caso único
     const numeroCaso = await this.generateCasoNumber()
 
+    const { clienteId, ...rest } = data
     return await prisma.caso.create({
       data: {
-        ...data,
-        numeroCaso
-      },
+        ...rest,
+        numeroCaso,
+        ...(clienteId ? { clienteId } : {}),
+      } as any,
       include: {
         responsable: {
           select: {

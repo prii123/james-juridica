@@ -103,6 +103,13 @@ export async function PATCH(
     
     // Si se está aceptando la conciliación (estado REALIZADA) y se solicita crear caso  
     if (body.createCase && body.estado === 'REALIZADA' && existingRadicacion.estado !== 'REALIZADA') {
+      if (!existingRadicacion.asesoria) {
+        return NextResponse.json(
+          { error: 'La conciliación no tiene una asesoría asociada' },
+          { status: 400 }
+        )
+      }
+
       // Generar número de caso
       const year = new Date().getFullYear()
       const randomNum = Math.floor(Math.random() * 9999).toString().padStart(4, '0')

@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
         id: factura.id,
         tipo: 'factura',
         titulo: factura.numero,
-        subtitulo: `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido || ''}`.trim(),
+        subtitulo: `${factura.honorario?.caso?.cliente?.nombre ?? ''} ${factura.honorario?.caso?.cliente?.apellido ?? ''}`.trim(),
         estado: factura.estado,
         detalles: `$${Number(factura.total).toLocaleString()} • ${factura.modalidadPago}`,
         url: `/facturacion/${factura.id}`

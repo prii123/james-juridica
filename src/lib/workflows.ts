@@ -387,7 +387,7 @@ export class BusinessWorkflowService {
           estado: 'GENERADA',
           items: {
             create: {
-              descripcion: `Honorarios profesionales - ${honorario.tipo} - Caso: ${honorario.caso.numeroCaso}`,
+              descripcion: `Honorarios profesionales - ${honorario.tipo} - Caso: ${honorario.caso?.numeroCaso ?? ''}`,
               cantidad: 1,
               valorUnitario: subtotal,
               valorTotal: subtotal

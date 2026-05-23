@@ -201,7 +201,6 @@ model Asesoria {
   @@map("asesorias")
 }
 
-// REGLA: Una radicación nace de una asesoría rechazada
 model Radicacion {
   id              String    @id @default(cuid())
   numero          String    @unique
@@ -214,9 +213,9 @@ model Radicacion {
   fechaAudiencia  DateTime?
   observaciones   String?
   
-  // Relaciones - Una radicación nace de una asesoría rechazada
-  asesoriaId      String
-  asesoria        Asesoria  @relation(fields: [asesoriaId], references: [id])
+  // Relaciones opcionales - Puede nacer de una asesoría o crearse directamente
+  asesoriaId      String?
+  asesoria        Asesoria? @relation(fields: [asesoriaId], references: [id])
   
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -283,8 +282,6 @@ model Caso {
   honorarios        Honorario[]
   procesosLiquidacion ProcesoLiquidacion[]
   
-  // CONSTRAINT: Un cliente no puede tener casos activos del mismo tipo
-  @@unique([clienteId, tipoInsolvencia, estado], name: "unique_active_case_type")
   @@map("casos")
 }
 
@@ -405,9 +402,9 @@ model Honorario {
   numeroCuotas    Int?
   valorCuota      Decimal?  @db.Decimal(10, 2)
   
-  // Relaciones
-  casoId          String
-  caso            Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  // Relaciones opcionales - Puede pertenecer a un caso o crearse directamente
+  casoId          String?
+  caso            Caso?     @relation(fields: [casoId], references: [id])
   
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -415,8 +412,8 @@ model Honorario {
   
   // Relaciones inversas
   cuotas          CuotaHonorario[]
-  facturas        Factura[] // REGLA: Facturación nace de honorarios
-  cartera         Cartera[] // REGLA: Cartera nace si honorarios son financiados
+  facturas        Factura[]
+  cartera         Cartera[]
   
   @@map("honorarios")
 }
@@ -460,9 +457,9 @@ model Factura {
   valorCuota      Decimal?  @db.Decimal(10, 2) // Valor de cada cuota
   tasaInteres     Decimal?  @db.Decimal(6, 4) // Tasa de interés mensual (hasta 99.9999%)
   
-  // Relaciones - Facturación nace de honorarios
-  honorarioId     String
-  honorario       Honorario @relation(fields: [honorarioId], references: [id])
+  // Relaciones opcionales - Puede nacer de un honorario o crearse directamente
+  honorarioId     String?
+  honorario       Honorario? @relation(fields: [honorarioId], references: [id])
   creadoPorId     String
   creadoPor       User      @relation(fields: [creadoPorId], references: [id])
   

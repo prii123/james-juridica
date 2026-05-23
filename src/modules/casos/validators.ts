@@ -12,7 +12,7 @@ export const createCasoSchema = z.object({
     .max(2000, 'Las observaciones no pueden exceder 2000 caracteres')
     .optional(),
   
-  clienteId: z.string().cuid('ID de cliente inválido'),
+  clienteId: z.string().cuid('ID de cliente inválido').optional(),
   responsableId: z.string().cuid('ID de responsable inválido'),
   creadoPorId: z.string().cuid('ID de creador inválido')
 })

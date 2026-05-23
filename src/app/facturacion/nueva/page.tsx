@@ -48,6 +48,7 @@ export default function NuevaFacturaPage() {
   const [loadingHonorarios, setLoadingHonorarios] = useState(true)
   
   const [searchTerm, setSearchTerm] = useState('')
+  const [clienteNombre, setClienteNombre] = useState('')
   const [formData, setFormData] = useState({
     honorarioId: '',
     fechaVencimiento: '',
@@ -128,11 +129,6 @@ export default function NuevaFacturaPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!formData.honorarioId) {
-      setError('Selecciona un honorario')
-      return
-    }
 
     if (!formData.fechaVencimiento) {
       setError('Ingresa la fecha de vencimiento')
@@ -243,7 +239,7 @@ export default function NuevaFacturaPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <label className="form-label">Honorario a Facturar *</label>
+                    <label className="form-label">Honorario a Facturar (opcional)</label>
                     {loadingHonorarios ? (
                       <div className="text-center py-3">
                         <div className="spinner-border spinner-border-sm" role="status">
@@ -256,10 +252,9 @@ export default function NuevaFacturaPage() {
                         size={5}
                         value={formData.honorarioId}
                         onChange={(e) => handleInputChange('honorarioId', e.target.value)}
-                        required
                         style={{ minHeight: '130px' }}
                       >
-                        <option value="">-- Selecciona un honorario --</option>
+                        <option value="">-- Sin honorario (factura libre) --</option>
                         {honorarios
                           .filter(h => {
                             if (!searchTerm) return true
@@ -277,8 +272,8 @@ export default function NuevaFacturaPage() {
                       </select>
                     )}
                     {honorarios.length === 0 && !loadingHonorarios && (
-                      <div className="alert alert-warning py-2 mt-2 small">
-                        No hay honorarios pendientes por facturar.
+                      <div className="alert alert-info py-2 mt-2 small">
+                        No hay honorarios pendientes. Puedes crear la factura sin asociar un honorario.
                       </div>
                     )}
                     {honorarios.filter(h => {
@@ -291,6 +286,13 @@ export default function NuevaFacturaPage() {
                     }).length === 0 && searchTerm && (
                       <div className="alert alert-info py-2 mt-2 small">
                         No se encontraron honorarios con ese criterio de búsqueda.
+                      </div>
+                    )}
+                    {!formData.honorarioId && (
+                      <div className="mt-2">
+                        <label className="form-label">Cliente para la factura (si no hay honorario)</label>
+                        <input type="text" className="form-control" placeholder="Nombre del cliente"
+                          value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} />
                       </div>
                     )}
                   </div>

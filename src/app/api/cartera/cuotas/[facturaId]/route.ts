@@ -129,11 +129,11 @@ export async function GET(
         valorCuota: factura.valorCuota ? Number(factura.valorCuota) : null,
         tasaInteres: factura.tasaInteres ? Number(factura.tasaInteres) : null,
         cliente: {
-          nombre: factura.honorario.caso.cliente.nombre,
-          apellido: factura.honorario.caso.cliente.apellido
+          nombre: factura.honorario?.caso?.cliente?.nombre ?? '',
+          apellido: factura.honorario?.caso?.cliente?.apellido ?? ''
         },
         caso: {
-          numeroCaso: factura.honorario.caso.numeroCaso
+          numeroCaso: factura.honorario?.caso?.numeroCaso ?? ''
         }
       },
       resumen: {

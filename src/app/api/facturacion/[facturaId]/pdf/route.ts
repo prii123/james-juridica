@@ -57,10 +57,10 @@ export async function GET(
       ivaActivado: factura.ivaActivado,
       observaciones: factura.observaciones,
       honorario: {
-        tipo: factura.honorario.tipo,
+        tipo: factura.honorario?.tipo ?? '',
         caso: {
-          numeroCaso: factura.honorario.caso.numeroCaso,
-          cliente: factura.honorario.caso.cliente,
+          numeroCaso: factura.honorario?.caso?.numeroCaso ?? '',
+          cliente: factura.honorario?.caso?.cliente ?? { nombre: '', apellido: '', documento: '', email: '', telefono: '' },
         },
       },
       items: factura.items.map((item) => ({

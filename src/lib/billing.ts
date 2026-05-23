@@ -109,7 +109,7 @@ export async function createFactura(honorarioId: string, creadoPorId: string) {
       creadoPorId,
       items: {
         create: [{
-          descripcion: `Honorarios profesionales - ${honorario.tipo} - Caso: ${honorario.caso.numeroCaso}`,
+          descripcion: `Honorarios profesionales - ${honorario.tipo} - Caso: ${honorario.caso?.numeroCaso ?? ''}`,
           cantidad: 1,
           valorUnitario: new Decimal(honorario.valor),
           valorTotal: new Decimal(honorario.valor)

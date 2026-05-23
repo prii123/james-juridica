@@ -102,17 +102,18 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.RADICACIONES.CREATE)
 
     const body = await request.json()
-    
-    // Validar que la asesoría existe
-    const asesoria = await prisma.asesoria.findUnique({
-      where: { id: body.asesoriaId }
-    })
 
-    if (!asesoria) {
-      return NextResponse.json(
-        { error: 'Asesoría no encontrada' },
-        { status: 404 }
-      )
+    // Si se proporciona asesoriaId, verificar que existe
+    if (body.asesoriaId) {
+      const asesoria = await prisma.asesoria.findUnique({
+        where: { id: body.asesoriaId }
+      })
+      if (!asesoria) {
+        return NextResponse.json(
+          { error: 'Asesoría no encontrada' },
+          { status: 404 }
+        )
+      }
     }
 
     // Generar número automáticamente si no se proporciona o es temporal
@@ -144,8 +145,8 @@ export async function POST(request: NextRequest) {
         fechaSolicitud: body.fechaSolicitud || new Date(),
         fechaAudiencia: body.fechaAudiencia ? new Date(body.fechaAudiencia) : null,
         observaciones: body.observaciones,
-        asesoriaId: body.asesoriaId
-      },
+        ...(body.asesoriaId ? { asesoriaId: body.asesoriaId } : {}),
+      } as any,
       include: {
         asesoria: {
           include: {
