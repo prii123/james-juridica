@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 const DEFAULT_MODULES = [
   { name: 'Dashboard', href: '/dashboard', icon: 'Home', description: 'Vista general y métricas', permission: null, order: 1 },
   { name: 'Calendario', href: '/calendario', icon: 'Calendar', description: 'Eventos y agenda', permission: null, order: 2 },
@@ -36,9 +38,11 @@ export async function GET() {
       orderBy: { order: 'asc' },
     })
 
+    const noCacheHeaders = { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' }
+
     if (!session?.user?.id) {
       const publicModules = modules.filter(m => !m.permission)
-      return NextResponse.json({ modules: publicModules })
+      return NextResponse.json({ modules: publicModules }, { headers: noCacheHeaders })
     }
 
     const user = await prisma.user.findUnique({
@@ -55,7 +59,7 @@ export async function GET() {
     })
 
     if (!user) {
-      return NextResponse.json({ modules: modules.filter(m => !m.permission) })
+      return NextResponse.json({ modules: modules.filter(m => !m.permission) }, { headers: noCacheHeaders })
     }
 
     const userPermissions = user.role.permissions.map(p => p.permission.nombre)
@@ -65,9 +69,12 @@ export async function GET() {
       !m.permission || isAdmin || userPermissions.includes(m.permission)
     )
 
-    return NextResponse.json({ modules: filtered })
+    return NextResponse.json({ modules: filtered }, { headers: noCacheHeaders })
   } catch (error: any) {
     console.error('[API] Error fetching sidebar modules:', error)
-    return NextResponse.json({ modules: [] })
+    return NextResponse.json(
+      { modules: [] },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' } },
+    )
   }
 }
