@@ -18,12 +18,42 @@ const DEFAULT_MODULES = [
 ]
 
 async function ensureModulesSeeded() {
-  const count = await prisma.module.count()
-  if (count === 0) {
+  const existing = await prisma.module.findFirst({
+    where: { name: 'Dashboard' },
+    select: { id: true },
+  })
+
+  if (!existing) {
     await prisma.module.createMany({
       data: DEFAULT_MODULES,
-      skipDuplicates: true,
     })
+    return
+  }
+
+  const total = await prisma.module.count()
+  if (total > DEFAULT_MODULES.length) {
+    const names = DEFAULT_MODULES.map((m) => m.href)
+    const duplicates = await prisma.module.findMany({
+      where: { href: { in: names } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, href: true, createdAt: true },
+    })
+
+    const seen = new Map<string, string>()
+    const toDelete: string[] = []
+    for (const mod of duplicates) {
+      if (seen.has(mod.href)) {
+        toDelete.push(mod.id)
+      } else {
+        seen.set(mod.href, mod.id)
+      }
+    }
+
+    if (toDelete.length > 0) {
+      await prisma.module.deleteMany({
+        where: { id: { in: toDelete } },
+      })
+    }
   }
 }
 
