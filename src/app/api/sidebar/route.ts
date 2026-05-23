@@ -3,9 +3,33 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
+const DEFAULT_MODULES = [
+  { name: 'Dashboard', href: '/dashboard', icon: 'Home', description: 'Vista general y métricas', permission: null, order: 1 },
+  { name: 'Calendario', href: '/calendario', icon: 'Calendar', description: 'Eventos y agenda', permission: null, order: 2 },
+  { name: 'Leads', href: '/leads', icon: 'Users', description: 'Potenciales clientes', permission: 'leads.view', order: 3 },
+  { name: 'Asesorías', href: '/asesorias', icon: 'Scale', description: 'Consultas y asesorías jurídicas', permission: 'asesorias.view', order: 4 },
+  { name: 'Radicaciones', href: '/radicaciones', icon: 'FileText', description: 'Procesos de radicación', permission: 'radicaciones.view', order: 5 },
+  { name: 'Casos', href: '/casos', icon: 'Briefcase', description: 'Gestión de casos de insolvencia', permission: 'casos.view', order: 6 },
+  { name: 'Facturación', href: '/facturacion', icon: 'BarChart3', description: 'Facturación y reportes financieros', permission: 'facturacion.view', order: 7 },
+  { name: 'Cartera', href: '/cartera', icon: 'CreditCard', description: 'Gestión de cobros y pagos', permission: 'cartera.view', order: 8 },
+  { name: 'Usuarios', href: '/usuarios', icon: 'Users', description: 'Gestión de usuarios y permisos', permission: 'usuarios.view', order: 9 },
+]
+
+async function ensureModulesSeeded() {
+  const count = await prisma.module.count()
+  if (count === 0) {
+    await prisma.module.createMany({
+      data: DEFAULT_MODULES,
+      skipDuplicates: true,
+    })
+  }
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
+
+    await ensureModulesSeeded()
 
     const modules = await prisma.module.findMany({
       where: { active: true },
