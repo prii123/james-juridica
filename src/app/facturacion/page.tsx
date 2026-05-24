@@ -41,7 +41,14 @@ interface Factura {
         email: string
       }
     }
-  }
+  } | null
+  cliente?: {
+    id: string
+    nombre: string
+    apellido?: string
+    email: string
+  } | null
+  clienteNombre?: string | null
   creadoPor: {
     id: string
     nombre: string
@@ -278,13 +285,21 @@ export default function FacturacionPage() {
                         </td>
                         <td>
                           <div className="fw-semibold">
-                            {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}
+                            {factura.honorario 
+                              ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
+                              : factura.cliente 
+                                ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+                                : factura.clienteNombre || '—'}
                           </div>
-                          <div className="text-muted small">{factura.honorario.caso.cliente.email}</div>
+                          <div className="text-muted small">
+                            {factura.honorario?.caso.cliente.email 
+                              ?? factura.cliente?.email 
+                              ?? '—'}
+                          </div>
                         </td>
                         <td>
                           <span className="badge bg-light text-dark">
-                            {factura.honorario.caso.numeroCaso}
+                            {factura.honorario?.caso.numeroCaso ?? '—'}
                           </span>
                         </td>
                         <td>

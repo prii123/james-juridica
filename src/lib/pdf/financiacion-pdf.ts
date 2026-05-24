@@ -183,7 +183,7 @@ export async function generateFinanciacionPDF(data: FinanciacionData): Promise<U
   function newPage(): void {
     drawFooter(currentPage, pageWidth, font)
     currentPage = doc.addPage(PageSizes.Letter)
-    y = drawTableHeader(currentPage, pageWidth, MARGIN, font, fontBold)
+    y = drawTableHeader(currentPage, pageWidth, currentPage.getSize().height - MARGIN, font, fontBold)
     rowsOnPage = 0
   }
 

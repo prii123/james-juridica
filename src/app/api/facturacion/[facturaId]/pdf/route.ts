@@ -38,6 +38,15 @@ export async function GET(
             },
           },
         },
+        cliente: {
+          select: {
+            nombre: true,
+            apellido: true,
+            documento: true,
+            email: true,
+            telefono: true,
+          },
+        },
       },
     })
 
@@ -56,13 +65,21 @@ export async function GET(
       estado: factura.estado,
       ivaActivado: factura.ivaActivado,
       observaciones: factura.observaciones,
-      honorario: {
-        tipo: factura.honorario?.tipo ?? '',
+      clienteNombre: factura.clienteNombre,
+      honorario: factura.honorario ? {
+        tipo: factura.honorario.tipo,
         caso: {
-          numeroCaso: factura.honorario?.caso?.numeroCaso ?? '',
-          cliente: factura.honorario?.caso?.cliente ?? { nombre: '', apellido: '', documento: '', email: '', telefono: '' },
+          numeroCaso: factura.honorario.caso!.numeroCaso,
+          cliente: factura.honorario.caso!.cliente,
         },
-      },
+      } : null,
+      cliente: factura.cliente ? {
+        nombre: factura.cliente.nombre,
+        apellido: factura.cliente.apellido,
+        documento: factura.cliente.documento,
+        email: factura.cliente.email,
+        telefono: factura.cliente.telefono,
+      } : null,
       items: factura.items.map((item) => ({
         descripcion: item.descripcion,
         cantidad: item.cantidad,

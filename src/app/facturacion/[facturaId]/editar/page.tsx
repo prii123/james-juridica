@@ -41,7 +41,16 @@ interface Factura {
         email: string
       }
     }
-  }
+  } | null
+  cliente?: {
+    id: string
+    nombre: string
+    apellido?: string
+    email: string
+    telefono: string
+    documento: string
+  } | null
+  clienteNombre?: string | null
   items: {
     id: string
     descripcion: string
@@ -283,7 +292,11 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
         <div className="flex-grow-1">
           <h1 className="h3 fw-bold text-dark mb-1">Editar Factura</h1>
           <p className="text-secondary mb-0">
-            {factura.numero} - {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}
+            {factura.numero} - {factura.honorario 
+              ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
+              : factura.cliente 
+                ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+                : factura.clienteNombre || 'Sin cliente asociado'}
           </p>
         </div>
       </div>
@@ -415,17 +428,36 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
                 {/* Información del caso (solo lectura) */}
                 <div className="mt-3">
                   <div className="bg-light p-3 rounded">
-                    <h6 className="mb-2">Información del Caso</h6>
-                    <div className="row text-sm">
-                      <div className="col-md-6">
-                        <div><strong>Cliente:</strong> {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}</div>
-                        <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
+                    <h6 className="mb-2">Información del Cliente</h6>
+                    {factura.honorario ? (
+                      <div className="row text-sm">
+                        <div className="col-md-6">
+                          <div><strong>Cliente:</strong> {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}</div>
+                          <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
+                        </div>
+                        <div className="col-md-6">
+                          <div><strong>Caso:</strong> {factura.honorario.caso.numeroCaso}</div>
+                          <div><strong>Tipo Honorario:</strong> {factura.honorario.tipo}</div>
+                        </div>
                       </div>
-                      <div className="col-md-6">
-                        <div><strong>Caso:</strong> {factura.honorario.caso.numeroCaso}</div>
-                        <div><strong>Tipo Honorario:</strong> {factura.honorario.tipo}</div>
+                    ) : factura.cliente ? (
+                      <div className="row text-sm">
+                        <div className="col-md-6">
+                          <div><strong>Cliente:</strong> {factura.cliente.nombre} {factura.cliente.apellido || ''}</div>
+                          <div><strong>Email:</strong> {factura.cliente.email}</div>
+                        </div>
+                        <div className="col-md-6">
+                          <div><strong>Teléfono:</strong> {factura.cliente.telefono || '-'}</div>
+                          <div><strong>Documento:</strong> {factura.cliente.documento || '-'}</div>
+                        </div>
                       </div>
-                    </div>
+                    ) : factura.clienteNombre ? (
+                      <div>
+                        <strong>Cliente:</strong> {factura.clienteNombre}
+                      </div>
+                    ) : (
+                      <p className="text-muted mb-0">Sin cliente asociado</p>
+                    )}
                   </div>
                 </div>
               </div>

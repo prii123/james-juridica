@@ -3,55 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generateFinanciacionPDF } from '@/lib/pdf/financiacion-pdf'
-
-interface CuotaCalculada {
-  numeroCuota: number
-  fechaVencimiento: Date
-  valor: number
-  capital: number
-  interes: number
-  saldo: number
-}
-
-function calcularCuotas(
-  monto: number,
-  numeroCuotas: number,
-  tasaInteresMensual: number,
-  fechaInicio: Date,
-): CuotaCalculada[] {
-  const tasaMensual = tasaInteresMensual / 100
-
-  let valorCuota = 0
-  if (tasaMensual > 0) {
-    const factor = Math.pow(1 + tasaMensual, numeroCuotas)
-    valorCuota = (monto * tasaMensual * factor) / (factor - 1)
-  } else {
-    valorCuota = monto / numeroCuotas
-  }
-
-  const tabla: CuotaCalculada[] = []
-  let saldoPendiente = monto
-
-  for (let i = 1; i <= numeroCuotas; i++) {
-    const interes = saldoPendiente * tasaMensual
-    const capital = valorCuota - interes
-    saldoPendiente -= capital
-
-    const fechaVencimiento = new Date(fechaInicio)
-    fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i)
-
-    tabla.push({
-      numeroCuota: i,
-      fechaVencimiento,
-      valor: Math.round(valorCuota),
-      capital: Math.round(capital),
-      interes: Math.round(interes),
-      saldo: Math.round(Math.max(0, saldoPendiente)),
-    })
-  }
-
-  return tabla
-}
+import { calcularCuotas } from '@/lib/cartera/calcular-cuotas'
 
 export async function GET(
   _request: NextRequest,
@@ -87,6 +39,13 @@ export async function GET(
             },
           },
         },
+        cliente: {
+          select: {
+            nombre: true,
+            apellido: true,
+            documento: true,
+          },
+        },
       },
     })
 
@@ -112,12 +71,14 @@ export async function GET(
       cuotas = calcularCuotas(saldoPendiente, numeroCuotas, tasaInteresMensual, new Date())
     }
 
+    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+
     const pdfBytes = await generateFinanciacionPDF({
       numeroFactura: factura.numero,
       cliente: {
-        nombre: factura.honorario?.caso?.cliente?.nombre ?? '',
-        apellido: factura.honorario?.caso?.cliente?.apellido ?? '',
-        documento: factura.honorario?.caso?.cliente?.documento ?? '',
+        nombre: clienteData?.nombre ?? factura.clienteNombre ?? '',
+        apellido: clienteData?.apellido ?? '',
+        documento: clienteData?.documento ?? '',
       },
       caso: { numeroCaso: factura.honorario?.caso?.numeroCaso ?? '' },
       totalFinanciado: saldoPendiente,

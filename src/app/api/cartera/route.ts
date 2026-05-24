@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
         { numero: { contains: search, mode: 'insensitive' } },
         { honorario: { caso: { numeroCaso: { contains: search, mode: 'insensitive' } } } },
         { honorario: { caso: { cliente: { nombre: { contains: search, mode: 'insensitive' } } } } },
-        { honorario: { caso: { cliente: { apellido: { contains: search, mode: 'insensitive' } } } } }
+        { honorario: { caso: { cliente: { apellido: { contains: search, mode: 'insensitive' } } } } },
+        { cliente: { nombre: { contains: search, mode: 'insensitive' } } },
+        { cliente: { apellido: { contains: search, mode: 'insensitive' } } },
+        { clienteNombre: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -55,6 +58,14 @@ export async function GET(request: NextRequest) {
                 cliente: true
               }
             }
+          }
+        },
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
           }
         },
         pagos: true
@@ -84,15 +95,28 @@ export async function GET(request: NextRequest) {
         modalidadPago: factura.modalidadPago,
         numeroCuotas: factura.numeroCuotas ?? 1,
         valorCuota: factura.valorCuota ? Number(factura.valorCuota) : Number(factura.total),
-        cliente: {
+        cliente: factura.honorario?.caso?.cliente ? {
           id: factura.honorario.caso.cliente.id,
           nombre: factura.honorario.caso.cliente.nombre,
           apellido: factura.honorario.caso.cliente.apellido || '',
           email: factura.honorario.caso.cliente.email
+        } : factura.cliente ? {
+          id: factura.cliente.id,
+          nombre: factura.cliente.nombre,
+          apellido: factura.cliente.apellido || '',
+          email: factura.cliente.email
+        } : {
+          id: '',
+          nombre: factura.clienteNombre || 'Sin cliente',
+          apellido: '',
+          email: ''
         },
-        caso: {
+        caso: factura.honorario?.caso ? {
           id: factura.honorario.caso.id,
           numeroCaso: factura.honorario.caso.numeroCaso
+        } : {
+          id: '',
+          numeroCaso: 'N/A'
         }
       }
     })

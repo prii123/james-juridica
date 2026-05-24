@@ -40,6 +40,16 @@ export async function GET(
             }
           }
         },
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            telefono: true,
+            documento: true
+          }
+        },
         creadoPor: {
           select: {
             id: true,
@@ -150,6 +160,10 @@ export async function PATCH(
       updateData.ivaActivado = body.ivaActivado
     }
 
+    if (body.clienteNombre !== undefined) {
+      updateData.clienteNombre = body.clienteNombre || null
+    }
+
     // Manejar modalidad de pago y financiación
     if (body.modalidadPago !== undefined) {
       // Convertir CREDITO del frontend a FINANCIADO del backend
@@ -252,6 +266,16 @@ export async function PATCH(
                 cliente: true
               }
             }
+          }
+        },
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            telefono: true,
+            documento: true
           }
         },
         creadoPor: {

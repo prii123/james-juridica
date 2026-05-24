@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get('search') || ''
+
+    const clientes = await prisma.cliente.findMany({
+      where: search ? {
+        OR: [
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { apellido: { contains: search, mode: 'insensitive' } },
+          { documento: { contains: search } },
+          { email: { contains: search, mode: 'insensitive' } }
+        ]
+      } : {},
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        telefono: true,
+        documento: true
+      },
+      take: 20,
+      orderBy: { nombre: 'asc' }
+    })
+
+    return NextResponse.json({ clientes })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

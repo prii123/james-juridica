@@ -97,11 +97,11 @@ export default function FinanciacionPage() {
         valorCuota: data.valorCuota ? Number(data.valorCuota) : undefined,
         tasaInteres: data.tasaInteres ? Number(data.tasaInteres) : undefined,
         cliente: {
-          nombre: data.honorario.caso.cliente.nombre,
-          apellido: data.honorario.caso.cliente.apellido || ''
+          nombre: data.honorario?.caso?.cliente?.nombre ?? data.cliente?.nombre ?? data.clienteNombre ?? '',
+          apellido: data.honorario?.caso?.cliente?.apellido ?? data.cliente?.apellido ?? ''
         },
         caso: {
-          numeroCaso: data.honorario.caso.numeroCaso
+          numeroCaso: data.honorario?.caso?.numeroCaso ?? 'N/A'
         }
       }
       
@@ -193,23 +193,22 @@ export default function FinanciacionPage() {
       setSaving(true)
       setError('')
 
-      // Here you would make an API call to save the financing plan
-      // const response = await fetch(`/api/cartera/financiacion`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     facturaId,
-      //     numeroCuotas: formData.numeroCuotas,
-      //     tasaInteres: formData.tasaInteres,
-      //     fechaInicio: formData.fechaInicio,
-      //     cuotas: tablaCuotas
-      //   })
-      // })
+      const response = await fetch('/api/cartera/financiacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facturaId,
+          numeroCuotas: formData.numeroCuotas,
+          tasaInteres: formData.tasaInteres,
+          fechaInicio: formData.fechaInicio,
+        }),
+      })
 
-      // Mock success
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect back to cartera
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.error || 'Error al guardar la financiación')
+      }
+
       router.push('/cartera')
       
     } catch (error) {

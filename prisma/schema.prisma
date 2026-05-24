@@ -248,6 +248,7 @@ model Cliente {
   
   // Relaciones inversas
   casos           Caso[]
+  facturas        Factura[]
   
   @@map("clientes")
 }
@@ -460,6 +461,9 @@ model Factura {
   // Relaciones opcionales - Puede nacer de un honorario o crearse directamente
   honorarioId     String?
   honorario       Honorario? @relation(fields: [honorarioId], references: [id])
+  clienteId       String?
+  cliente         Cliente?   @relation(fields: [clienteId], references: [id])
+  clienteNombre   String?    // Nombre del cliente cuando no hay cliente registrado ni honorario
   creadoPorId     String
   creadoPor       User      @relation(fields: [creadoPorId], references: [id])
   

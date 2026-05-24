@@ -47,7 +47,16 @@ interface Factura {
         documento: string
       }
     }
-  }
+  } | null
+  cliente: {
+    id: string
+    nombre: string
+    apellido?: string
+    email: string
+    telefono: string
+    documento: string
+  } | null
+  clienteNombre?: string | null
   creadoPor: {
     id: string
     nombre: string
@@ -215,6 +224,20 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
     return diffDays
   }
 
+  const getClienteDisplay = () => {
+    if (!factura) return ''
+    if (factura.honorario) {
+      return `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido} - ${factura.honorario.caso.numeroCaso}`
+    }
+    if (factura.cliente) {
+      return `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+    }
+    if (factura.clienteNombre) {
+      return factura.clienteNombre
+    }
+    return 'Sin cliente asociado'
+  }
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -274,7 +297,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
             )}
           </div>
           <p className="text-secondary mb-0">
-            {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido} - {factura.honorario.caso.numeroCaso}
+            {getClienteDisplay()}
           </p>
         </div>
         <div className="d-flex gap-2">
@@ -456,22 +479,47 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
               <h5 className="mb-0">Información del Cliente</h5>
             </div>
             <div className="card-body">
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <User size={16} />
-                <span className="fw-semibold">
-                  {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}
-                </span>
-              </div>
-              <div className="small text-muted mb-1">
-                <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
-                <div><strong>Teléfono:</strong> {factura.honorario.caso.cliente.telefono}</div>
-                <div><strong>Documento:</strong> {factura.honorario.caso.cliente.documento}</div>
-              </div>
-              <div className="mt-3">
-                <span className="badge bg-light text-dark">
-                  Caso: {factura.honorario.caso.numeroCaso}
-                </span>
-              </div>
+              {factura.honorario ? (
+                <>
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <User size={16} />
+                    <span className="fw-semibold">
+                      {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}
+                    </span>
+                  </div>
+                  <div className="small text-muted mb-1">
+                    <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
+                    <div><strong>Teléfono:</strong> {factura.honorario.caso.cliente.telefono}</div>
+                    <div><strong>Documento:</strong> {factura.honorario.caso.cliente.documento}</div>
+                  </div>
+                  <div className="mt-3">
+                    <span className="badge bg-light text-dark">
+                      Caso: {factura.honorario.caso.numeroCaso}
+                    </span>
+                  </div>
+                </>
+              ) : factura.cliente ? (
+                <>
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <User size={16} />
+                    <span className="fw-semibold">
+                      {factura.cliente.nombre} {factura.cliente.apellido || ''}
+                    </span>
+                  </div>
+                  <div className="small text-muted mb-1">
+                    <div><strong>Email:</strong> {factura.cliente.email}</div>
+                    <div><strong>Teléfono:</strong> {factura.cliente.telefono}</div>
+                    <div><strong>Documento:</strong> {factura.cliente.documento}</div>
+                  </div>
+                </>
+              ) : factura.clienteNombre ? (
+                <div className="d-flex align-items-center gap-2">
+                  <User size={16} />
+                  <span className="fw-semibold">{factura.clienteNombre}</span>
+                </div>
+              ) : (
+                <p className="text-muted mb-0">Sin información de cliente asociada</p>
+              )}
             </div>
           </div>
 

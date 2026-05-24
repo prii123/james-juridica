@@ -2,8 +2,44 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { calcularCuotas } from '@/lib/cartera/calcular-cuotas'
 
-// POST /api/cartera/aplicar-pago - Aplicar pago a cuotas específicas
+async function ensureCuotasGeneradas(facturaId: string) {
+  const factura = await prisma.factura.findUnique({
+    where: { id: facturaId },
+    include: {
+      cuotasFactura: { select: { id: true } },
+      pagos: { select: { valor: true } },
+    },
+  })
+
+  if (!factura) return null
+
+  if (factura.cuotasFactura.length === 0 && factura.numeroCuotas && factura.numeroCuotas > 1) {
+    const totalPagos = factura.pagos.reduce((sum, p) => sum + Number(p.valor), 0)
+    const saldoPendiente = Math.max(0, Number(factura.total) - totalPagos)
+    const tasaInteres = factura.tasaInteres ? Number(factura.tasaInteres) : 0
+
+    const cuotas = calcularCuotas(saldoPendiente, factura.numeroCuotas, tasaInteres, new Date())
+
+    await prisma.cuotaFactura.createMany({
+      data: cuotas.map((c) => ({
+        facturaId,
+        numeroCuota: c.numeroCuota,
+        fechaVencimiento: c.fechaVencimiento,
+        valor: c.valor,
+        capital: c.capital,
+        interes: c.interes,
+        saldo: c.saldo,
+        valorPagado: 0,
+        saldoCuota: c.valor,
+      })),
+    })
+  }
+
+  return factura
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -33,7 +69,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que la factura existe y tiene cuotas
+    await ensureCuotasGeneradas(facturaId)
+
     const factura = await prisma.factura.findUnique({
       where: { id: facturaId },
       include: {

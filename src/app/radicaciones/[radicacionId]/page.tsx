@@ -387,7 +387,7 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
                   ) : (
                     <>
                       <CheckCircle size={16} />
-                      Aceptada por Juzgado
+                      Aceptada por centro de conciliación
                     </>
                   )}
                 </button>

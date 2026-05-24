@@ -14,7 +14,8 @@ import {
   DollarSign,
   FileText,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react'
 
 interface CuotaSeguimiento {
@@ -101,6 +102,7 @@ export default function SeguimientoCuotasPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [mostrarFormularioPago, setMostrarFormularioPago] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     if (facturaId) {
@@ -137,6 +139,27 @@ export default function SeguimientoCuotasPage() {
     // Recargar datos después de aplicar un pago
     await fetchDatosSeguimiento()
     setMostrarFormularioPago(false)
+  }
+
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloadingPdf(true)
+      const response = await fetch(`/api/cartera/cuotas/${facturaId}/pdf`)
+      if (!response.ok) throw new Error('Error al descargar el PDF')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `seguimiento-cuotas-${factura?.numero || facturaId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error: any) {
+      setError(error.message || 'Error al descargar el PDF')
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   const formatCurrency = (value: number) => {
@@ -201,6 +224,18 @@ export default function SeguimientoCuotasPage() {
             disabled={loading}
           >
             <RefreshCw size={16} className={loading ? 'spin' : ''} />
+          </button>
+          <button
+            className="btn btn-outline-primary d-flex align-items-center gap-1"
+            onClick={handleDownloadPDF}
+            disabled={downloadingPdf}
+          >
+            {downloadingPdf ? (
+              <span className="spinner-border spinner-border-sm" role="status" />
+            ) : (
+              <Download size={16} />
+            )}
+            {downloadingPdf ? 'Descargando...' : 'PDF'}
           </button>
           <button
             className="btn btn-success"

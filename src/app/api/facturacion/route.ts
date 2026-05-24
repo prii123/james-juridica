@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
         { numero: { contains: search, mode: 'insensitive' } },
         { honorario: { caso: { numeroCaso: { contains: search, mode: 'insensitive' } } } },
         { honorario: { caso: { cliente: { nombre: { contains: search, mode: 'insensitive' } } } } },
-        { honorario: { caso: { cliente: { apellido: { contains: search, mode: 'insensitive' } } } } }
+        { honorario: { caso: { cliente: { apellido: { contains: search, mode: 'insensitive' } } } } },
+        { cliente: { nombre: { contains: search, mode: 'insensitive' } } },
+        { cliente: { apellido: { contains: search, mode: 'insensitive' } } },
+        { clienteNombre: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -52,6 +55,14 @@ export async function GET(request: NextRequest) {
                 }
               }
             }
+          }
+        },
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
           }
         },
         creadoPor: {
@@ -89,7 +100,7 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.FACTURACION.CREATE)
 
     const body = await request.json()
-    const { honorarioId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
+    const { honorarioId, clienteId, clienteNombre, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
 
     // Validar datos requeridos
     if (!fechaVencimiento || !items || items.length === 0) {
@@ -106,6 +117,18 @@ export async function POST(request: NextRequest) {
       if (!honorario) {
         return NextResponse.json({ 
           error: 'Honorario no encontrado' 
+        }, { status: 404 })
+      }
+    }
+
+    // Si se proporciona clienteId, verificar que existe
+    if (clienteId) {
+      const cliente = await prisma.cliente.findUnique({
+        where: { id: clienteId }
+      })
+      if (!cliente) {
+        return NextResponse.json({ 
+          error: 'Cliente no encontrado' 
         }, { status: 404 })
       }
     }
@@ -148,6 +171,8 @@ export async function POST(request: NextRequest) {
         }),
         observaciones: observaciones || '',
         ...(honorarioId ? { honorarioId } : {}),
+        ...(clienteId ? { clienteId } : {}),
+        ...(clienteNombre ? { clienteNombre } : {}),
         creadoPorId: session.user.id,
         items: {
           create: items.map((item: any) => ({
@@ -167,6 +192,16 @@ export async function POST(request: NextRequest) {
                 cliente: true
               }
             }
+          }
+        },
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            telefono: true,
+            documento: true
           }
         },
         creadoPor: {

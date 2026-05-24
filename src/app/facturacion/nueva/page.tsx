@@ -14,7 +14,8 @@ import {
   FileText,
   Search,
   CreditCard,
-  Building
+  Building,
+  X
 } from 'lucide-react'
 
 interface Honorario {
@@ -33,6 +34,15 @@ interface Honorario {
   }
 }
 
+interface Cliente {
+  id: string
+  nombre: string
+  apellido?: string
+  email: string
+  documento: string
+  telefono: string
+}
+
 interface ItemFactura {
   descripcion: string
   cantidad: number
@@ -48,7 +58,13 @@ export default function NuevaFacturaPage() {
   const [loadingHonorarios, setLoadingHonorarios] = useState(true)
   
   const [searchTerm, setSearchTerm] = useState('')
+  const [clienteSearch, setClienteSearch] = useState('')
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [loadingClientes, setLoadingClientes] = useState(false)
+  const [showClientList, setShowClientList] = useState(false)
+  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   const [clienteNombre, setClienteNombre] = useState('')
+
   const [formData, setFormData] = useState({
     honorarioId: '',
     fechaVencimiento: '',
@@ -72,7 +88,6 @@ export default function NuevaFacturaPage() {
   }, [])
 
   useEffect(() => {
-    // Calcular totales cuando cambian los items
     const nuevosItems = items.map(item => ({
       ...item,
       valorTotal: item.cantidad * item.valorUnitario
@@ -81,6 +96,18 @@ export default function NuevaFacturaPage() {
       setItems(nuevosItems)
     }
   }, [items])
+
+  useEffect(() => {
+    if (clienteSearch.length < 2) {
+      setClientes([])
+      setShowClientList(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      fetchClientes(clienteSearch)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [clienteSearch])
 
   const fetchHonorariosDisponibles = async () => {
     try {
@@ -94,6 +121,35 @@ export default function NuevaFacturaPage() {
     } finally {
       setLoadingHonorarios(false)
     }
+  }
+
+  const fetchClientes = async (search: string) => {
+    try {
+      setLoadingClientes(true)
+      const response = await fetch(`/api/clientes?search=${encodeURIComponent(search)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setClientes(data.clientes || [])
+        setShowClientList(true)
+      }
+    } catch (error) {
+      console.error('Error al buscar clientes:', error)
+    } finally {
+      setLoadingClientes(false)
+    }
+  }
+
+  const selectCliente = (cliente: Cliente) => {
+    setSelectedCliente(cliente)
+    setClienteSearch('')
+    setClientes([])
+    setShowClientList(false)
+    setClienteNombre('')
+  }
+
+  const clearCliente = () => {
+    setSelectedCliente(null)
+    setClienteNombre('')
   }
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -154,6 +210,12 @@ export default function NuevaFacturaPage() {
         body.numeroCuotas = numeroCuotas
         body.tasaInteres = tasaInteres
       }
+      if (selectedCliente) {
+        body.clienteId = selectedCliente.id
+      }
+      if (clienteNombre.trim()) {
+        body.clienteNombre = clienteNombre.trim()
+      }
       const response = await fetch('/api/facturacion', {
         method: 'POST',
         headers: {
@@ -185,7 +247,7 @@ export default function NuevaFacturaPage() {
   }
 
   const subtotal = items.reduce((sum, item) => sum + item.valorTotal, 0)
-  const impuestos = subtotal * 0.19 // IVA 19%
+  const impuestos = subtotal * 0.19
   const total = subtotal + impuestos
 
   const honorarioSeleccionado = honorarios.find(h => h.id === formData.honorarioId)
@@ -206,7 +268,7 @@ export default function NuevaFacturaPage() {
         <div className="flex-grow-1">
           <h1 className="h3 fw-bold text-dark mb-1">Nueva Factura</h1>
           <p className="text-secondary mb-0">
-            Crear una nueva factura para honorarios pendiente
+            Crear una nueva factura para honorarios pendientes o clientes
           </p>
         </div>
       </div>
@@ -228,18 +290,95 @@ export default function NuevaFacturaPage() {
               <div className="card-body">
                 <div className="row">
                   <div className="col-md-6">
-                    <label className="form-label">Buscar Cliente</label>
+                    {/* Selección de Cliente */}
+                    <label className="form-label">Cliente</label>
+                    {selectedCliente ? (
+                      <div className="d-flex align-items-center gap-2 p-2 border rounded bg-light mb-3">
+                        <User size={16} />
+                        <div className="flex-grow-1">
+                          <div className="fw-semibold small">
+                            {selectedCliente.nombre} {selectedCliente.apellido || ''}
+                          </div>
+                          <div className="text-muted small">{selectedCliente.documento}</div>
+                        </div>
+                        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={clearCliente}>
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="position-relative mb-3">
+                        <div className="input-group">
+                          <span className="input-group-text"><Search size={16} /></span>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Buscar cliente por nombre, apellido o documento..."
+                            value={clienteSearch}
+                            onChange={(e) => setClienteSearch(e.target.value)}
+                            onFocus={() => clientes.length > 0 && setShowClientList(true)}
+                          />
+                        </div>
+                        {loadingClientes && (
+                          <div className="position-absolute w-100 bg-white border rounded-bottom shadow-sm p-2 text-center" style={{ zIndex: 10 }}>
+                            <div className="spinner-border spinner-border-sm" role="status" />
+                          </div>
+                        )}
+                        {showClientList && clientes.length > 0 && (
+                          <div className="position-absolute w-100 bg-white border rounded-bottom shadow-sm" style={{ zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
+                            {clientes.map((cliente) => (
+                              <button
+                                key={cliente.id}
+                                type="button"
+                                className="w-100 text-start p-2 border-0 bg-transparent hover-bg-light"
+                                onClick={() => selectCliente(cliente)}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                <div className="fw-semibold small">
+                                  {cliente.nombre} {cliente.apellido || ''}
+                                </div>
+                                <div className="text-muted small">
+                                  {cliente.documento} | {cliente.email}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {showClientList && clientes.length === 0 && clienteSearch.length >= 2 && !loadingClientes && (
+                          <div className="position-absolute w-100 bg-white border rounded-bottom shadow-sm p-2" style={{ zIndex: 10 }}>
+                            <small className="text-muted">No se encontraron clientes. Puedes crear la factura igual.</small>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Nombre libre si no hay cliente registrado */}
+                    {!selectedCliente && (
+                      <div className="mb-3">
+                        <label className="form-label">O escribe el nombre del cliente</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Nombre del cliente (opcional)"
+                          value={clienteNombre}
+                          onChange={(e) => setClienteNombre(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Honorario */}
+                    <label className="form-label">
+                      Honorario a Facturar <span className="text-muted">(opcional)</span>
+                    </label>
                     <div className="input-group mb-2">
                       <span className="input-group-text"><Search size={16} /></span>
                       <input
                         type="text"
                         className="form-control"
-                        placeholder="Nombre del cliente o número de caso..."
+                        placeholder="Filtrar por nombre o número de caso..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <label className="form-label">Honorario a Facturar (opcional)</label>
                     {loadingHonorarios ? (
                       <div className="text-center py-3">
                         <div className="spinner-border spinner-border-sm" role="status">
@@ -286,13 +425,6 @@ export default function NuevaFacturaPage() {
                     }).length === 0 && searchTerm && (
                       <div className="alert alert-info py-2 mt-2 small">
                         No se encontraron honorarios con ese criterio de búsqueda.
-                      </div>
-                    )}
-                    {!formData.honorarioId && (
-                      <div className="mt-2">
-                        <label className="form-label">Cliente para la factura (si no hay honorario)</label>
-                        <input type="text" className="form-control" placeholder="Nombre del cliente"
-                          value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} />
                       </div>
                     )}
                   </div>
@@ -488,6 +620,17 @@ export default function NuevaFacturaPage() {
                 </h5>
               </div>
               <div className="card-body">
+                {/* Cliente en resumen */}
+                {(selectedCliente || clienteNombre) && (
+                  <div className="mb-3 p-2 border rounded bg-light">
+                    <div className="small text-muted">Cliente</div>
+                    <div className="fw-semibold">
+                      {selectedCliente 
+                        ? `${selectedCliente.nombre} ${selectedCliente.apellido || ''}`
+                        : clienteNombre}
+                    </div>
+                  </div>
+                )}
                 <div className="d-flex justify-content-between mb-2">
                   <span>Subtotal:</span>
                   <span>{formatCurrency(subtotal)}</span>

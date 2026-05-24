@@ -1,8 +1,7 @@
-'use server'
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { calcularCuotas } from '@/lib/cartera/calcular-cuotas'
+import { generateSeguimientoCuotasPDF } from '@/lib/pdf/seguimiento-cuotas-pdf'
 
 async function ensureCuotasGeneradas(facturaId: string) {
   const factura = await prisma.factura.findUnique({
@@ -12,16 +11,12 @@ async function ensureCuotasGeneradas(facturaId: string) {
       pagos: { select: { valor: true } },
     },
   })
-
   if (!factura) return null
-
   if (factura.cuotasFactura.length === 0 && factura.numeroCuotas && factura.numeroCuotas > 1) {
     const totalPagos = factura.pagos.reduce((sum, p) => sum + Number(p.valor), 0)
     const saldoPendiente = Math.max(0, Number(factura.total) - totalPagos)
     const tasaInteres = factura.tasaInteres ? Number(factura.tasaInteres) : 0
-
     const cuotas = calcularCuotas(saldoPendiente, factura.numeroCuotas, tasaInteres, new Date())
-
     await prisma.cuotaFactura.createMany({
       data: cuotas.map((c) => ({
         facturaId,
@@ -36,12 +31,11 @@ async function ensureCuotasGeneradas(facturaId: string) {
       })),
     })
   }
-
   return factura
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { facturaId: string } }
 ) {
   try {
@@ -55,72 +49,45 @@ export async function GET(
         honorario: {
           include: {
             caso: {
-              include: {
-                cliente: true
-              }
+              include: { cliente: true }
             }
           }
         },
         cliente: {
-          select: {
-            nombre: true,
-            apellido: true
-          }
+          select: { nombre: true, apellido: true }
         },
         cuotasFactura: {
           include: {
             abonosPagos: {
-              include: {
-                pago: true
-              }
+              include: { pago: true }
             }
           },
-          orderBy: {
-            numeroCuota: 'asc'
-          }
+          orderBy: { numeroCuota: 'asc' }
         },
         pagos: {
           include: {
             aplicadoCuotas: {
-              include: {
-                cuota: true
-              }
+              include: { cuota: true }
             }
           },
-          orderBy: {
-            fecha: 'desc'
-          }
+          orderBy: { fecha: 'desc' }
         }
       }
     })
 
     if (!factura) {
-      return NextResponse.json(
-        { error: 'Factura no encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
     }
 
-    // Procesar datos para el frontend
     const cuotasConSeguimiento = factura.cuotasFactura.map(cuota => {
-      const totalPagado = cuota.abonosPagos.reduce((sum, abono) => 
-        sum + Number(abono.valorAplicado), 0
-      )
-      
+      const totalPagado = cuota.abonosPagos.reduce((sum, abono) => sum + Number(abono.valorAplicado), 0)
       const saldoCuota = Number(cuota.valor) - totalPagado
-      
-      // Determinar estado actual de la cuota
       let estado = cuota.estado
-      if (totalPagado >= Number(cuota.valor)) {
-        estado = 'PAGADA'
-      } else if (totalPagado > 0) {
-        estado = 'PARCIAL'
-      } else if (new Date(cuota.fechaVencimiento) < new Date() && estado !== 'PAGADA') {
-        estado = 'VENCIDA'
-      }
+      if (totalPagado >= Number(cuota.valor)) estado = 'PAGADA'
+      else if (totalPagado > 0) estado = 'PARCIAL'
+      else if (new Date(cuota.fechaVencimiento) < new Date() && estado !== 'PAGADA') estado = 'VENCIDA'
 
       return {
-        id: cuota.id,
         numeroCuota: cuota.numeroCuota,
         valor: Number(cuota.valor),
         capital: Number(cuota.capital),
@@ -128,18 +95,15 @@ export async function GET(
         saldo: Number(cuota.saldo),
         fechaVencimiento: cuota.fechaVencimiento.toISOString(),
         fechaPago: cuota.fechaPago?.toISOString(),
-        estado: estado,
-        observaciones: cuota.observaciones,
+        estado,
         valorPagado: totalPagado,
         saldoCuota: Math.max(0, saldoCuota),
-        diasVencido: estado === 'VENCIDA' 
+        diasVencido: estado === 'VENCIDA'
           ? Math.ceil((new Date().getTime() - new Date(cuota.fechaVencimiento).getTime()) / (1000 * 60 * 60 * 24))
           : 0,
         pagosAplicados: cuota.abonosPagos.map(abono => ({
-          id: abono.id,
           valorAplicado: Number(abono.valorAplicado),
           fechaAplicacion: abono.fechaAplicacion.toISOString(),
-          observaciones: abono.observaciones,
           pago: {
             id: abono.pago.id,
             valor: Number(abono.pago.valor),
@@ -152,31 +116,31 @@ export async function GET(
       }
     })
 
-    // Calcular resumen general
     const totalFactura = Number(factura.total)
     const totalPagado = factura.pagos.reduce((sum, pago) => sum + Number(pago.valor), 0)
     const saldoPendiente = Math.max(0, totalFactura - totalPagado)
-    
     const cuotasPagadas = cuotasConSeguimiento.filter(c => c.estado === 'PAGADA').length
     const cuotasVencidas = cuotasConSeguimiento.filter(c => c.estado === 'VENCIDA').length
     const cuotasParciales = cuotasConSeguimiento.filter(c => c.estado === 'PARCIAL').length
+    const cuotasPendientes = cuotasConSeguimiento.length - cuotasPagadas - cuotasVencidas - cuotasParciales
 
-    const responseData = {
+    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+
+    const pdfData = {
       factura: {
-        id: factura.id,
         numero: factura.numero,
         fecha: factura.fecha.toISOString(),
         total: totalFactura,
         modalidadPago: factura.modalidadPago,
-        numeroCuotas: factura.numeroCuotas,
-        valorCuota: factura.valorCuota ? Number(factura.valorCuota) : null,
-        tasaInteres: factura.tasaInteres ? Number(factura.tasaInteres) : null,
+        numeroCuotas: factura.numeroCuotas ?? undefined,
+        valorCuota: factura.valorCuota ? Number(factura.valorCuota) : undefined,
+        tasaInteres: factura.tasaInteres ? Number(factura.tasaInteres) : undefined,
         cliente: {
-          nombre: factura.honorario?.caso?.cliente?.nombre ?? factura.cliente?.nombre ?? factura.clienteNombre ?? '',
-          apellido: factura.honorario?.caso?.cliente?.apellido ?? factura.cliente?.apellido ?? ''
+          nombre: clienteData?.nombre ?? factura.clienteNombre ?? '',
+          apellido: clienteData?.apellido ?? ''
         },
         caso: {
-          numeroCaso: factura.honorario?.caso?.numeroCaso ?? ''
+          numeroCaso: factura.honorario?.caso?.numeroCaso ?? 'N/A'
         }
       },
       resumen: {
@@ -185,7 +149,7 @@ export async function GET(
         cuotasPagadas,
         cuotasVencidas,
         cuotasParciales,
-        cuotasPendientes: cuotasConSeguimiento.length - cuotasPagadas - cuotasVencidas - cuotasParciales,
+        cuotasPendientes,
         progresoPago: totalFactura > 0 ? (totalPagado / totalFactura) * 100 : 0
       },
       cuotas: cuotasConSeguimiento,
@@ -204,13 +168,21 @@ export async function GET(
       }))
     }
 
-    return NextResponse.json(responseData)
+    const pdfBytes = await generateSeguimientoCuotasPDF(pdfData)
 
-  } catch (error) {
-    console.error('Error al obtener cuotas:', error)
+    return new NextResponse(Buffer.from(pdfBytes), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="seguimiento-cuotas-${factura.numero}.pdf"`,
+        'Content-Length': String(pdfBytes.length),
+      },
+    })
+  } catch (error: any) {
+    console.error('Error al generar PDF de seguimiento:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+      { error: error.message || 'Error interno del servidor' },
+      { status: 500 },
     )
   }
 }
