@@ -3,29 +3,27 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  Scale, 
-  Plus, 
-  Calendar, 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit, 
+import {
+  Scale,
+  Plus,
+  Calendar,
+  Search,
+  Filter,
+  Eye,
   Clock,
-  User,
   Phone,
   Video,
   Users,
   CheckCircle,
-  AlertCircle,
-  XCircle
+  AlertCircle
 } from 'lucide-react'
 import { TipoAsesoria, EstadoAsesoria, ModalidadAsesoria, ResultadoAsesoria } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Spinner, Alert, type BadgeProps } from '@/components/ui'
 
 interface Asesoria {
   id: string
   tipo: TipoAsesoria
-  estado: EstadoAsesoria  
+  estado: EstadoAsesoria
   fecha: Date
   duracion?: number | null
   modalidad: ModalidadAsesoria
@@ -57,13 +55,20 @@ interface AsesoriaFilters {
   fechaFin?: string
 }
 
+const ESTADO_BADGE: Record<EstadoAsesoria, BadgeProps['variant']> = {
+  PENDIENTE: 'secondary',
+  PROGRAMADA: 'warning',
+  REALIZADA: 'success',
+  CANCELADA: 'danger',
+  REPROGRAMADA: 'info',
+}
+
 export default function AsesoriaPage() {
   const [asesorias, setAsesorias] = useState<Asesoria[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<AsesoriaFilters>({})
   const [showFilters, setShowFilters] = useState(false)
-  const [view, setView] = useState<'list' | 'calendar'>('list')
 
   // Estadísticas
   const [stats, setStats] = useState({
@@ -82,9 +87,9 @@ export default function AsesoriaPage() {
     try {
       setLoading(true)
       setError(null)
-      
+
       const queryParams = new URLSearchParams()
-      
+
       if (filters.estado) queryParams.append('estado', filters.estado)
       if (filters.tipo) queryParams.append('tipo', filters.tipo)
       if (filters.modalidad) queryParams.append('modalidad', filters.modalidad)
@@ -92,24 +97,24 @@ export default function AsesoriaPage() {
       if (filters.search) queryParams.append('search', filters.search)
       if (filters.fechaInicio) queryParams.append('fechaInicio', filters.fechaInicio)
       if (filters.fechaFin) queryParams.append('fechaFin', filters.fechaFin)
-      
+
       const response = await fetch(`/api/asesorias?${queryParams.toString()}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setAsesorias(data.asesorias || data)
-        
-        // Calcular estadísticas
-        const total = data.asesorias?.length || data.length || 0
-        const programadas = (data.asesorias || data).filter((a: Asesoria) => a.estado === 'PROGRAMADA').length
-        const realizadas = (data.asesorias || data).filter((a: Asesoria) => a.estado === 'REALIZADA').length
-        const canceladas = (data.asesorias || data).filter((a: Asesoria) => a.estado === 'CANCELADA').length
-        
+
+        const list: Asesoria[] = data.asesorias || data
+        const total = list.length
+        const programadas = list.filter((a) => a.estado === 'PROGRAMADA').length
+        const realizadas = list.filter((a) => a.estado === 'REALIZADA').length
+        const canceladas = list.filter((a) => a.estado === 'CANCELADA').length
+
         const hoy = new Date().toDateString()
-        const pendientesHoy = (data.asesorias || data).filter((a: Asesoria) => 
+        const pendientesHoy = list.filter((a) =>
           new Date(a.fecha).toDateString() === hoy && a.estado === 'PROGRAMADA'
         ).length
-        
+
         setStats({ total, programadas, realizadas, canceladas, pendientesHoy })
       } else {
         const errorData = await response.json()
@@ -122,16 +127,6 @@ export default function AsesoriaPage() {
       setAsesorias([])
     } finally {
       setLoading(false)
-    }
-  }
-
-  const getEstadoBadgeClass = (estado: EstadoAsesoria) => {
-    switch (estado) {
-      case 'PROGRAMADA': return 'badge bg-warning'
-      case 'REALIZADA': return 'badge bg-success'  
-      case 'CANCELADA': return 'badge bg-danger'
-      case 'REPROGRAMADA': return 'badge bg-info'
-      default: return 'badge bg-secondary'
     }
   }
 
@@ -153,279 +148,198 @@ export default function AsesoriaPage() {
     }
   }
 
+  const statCards: Array<{ icon: typeof Scale; value: number; label: string; bg: string }> = [
+    { icon: Scale, value: stats.total, label: 'Total Asesorías', bg: 'bg-blue-800' },
+    { icon: Clock, value: stats.programadas, label: 'Programadas', bg: 'bg-amber-500' },
+    { icon: CheckCircle, value: stats.realizadas, label: 'Realizadas', bg: 'bg-teal-700' },
+    { icon: AlertCircle, value: stats.pendientesHoy, label: 'Pendientes Hoy', bg: 'bg-sky-600' },
+  ]
+
   return (
     <>
-      <Breadcrumb 
-        items={[
-          { label: 'Asesorías' }
-        ]} 
-      />
-      
+      <Breadcrumb items={[{ label: 'Asesorías' }]} />
+
       {/* Header */}
       <div className="mb-4">
-        <div className="d-flex align-items-center justify-content-between mb-3">
+        <div className="mb-3 flex items-center justify-between">
           <div>
-            <h1 className="h2 fw-bold text-dark mb-2">Asesorías</h1>
-            <p className="text-secondary mb-0">Gestión de asesorías y consultas jurídicas</p>
+            <h1 className="mb-2 text-2xl font-bold text-slate-800">Asesorías</h1>
+            <p className="mb-0 text-slate-500">Gestión de asesorías y consultas jurídicas</p>
           </div>
-          <div className="d-flex align-items-center gap-2">
-            <Link href="/asesorias/nueva" className="btn btn-primary d-flex align-items-center gap-2">
-              <Plus size={16} />
-              Nueva Asesoría
+          <div className="flex items-center gap-2">
+            <Link href="/asesorias/nueva">
+              <Button>
+                <Plus size={16} />
+                Nueva Asesoría
+              </Button>
             </Link>
-            <Link href="/calendario" className="btn btn-outline-secondary d-flex align-items-center gap-2">
-              <Calendar size={16} />
-              Calendario
+            <Link href="/calendario">
+              <Button variant="outline">
+                <Calendar size={16} />
+                Calendario
+              </Button>
             </Link>
           </div>
         </div>
 
         {/* Estadísticas */}
-        <div className="row mb-4">
-          <div className="col-md-3">
-            <div className="card bg-primary text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {statCards.map((stat) => (
+            <Card key={stat.label} className={`${stat.bg} border-0 text-white`}>
+              <CardBody>
+                <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="mb-1">{stats.total}</h4>
-                    <small>Total Asesorías</small>
+                    <h4 className="mb-1 text-2xl font-bold">{stat.value}</h4>
+                    <small>{stat.label}</small>
                   </div>
-                  <Scale size={32} />
+                  <stat.icon size={32} />
                 </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="card bg-warning text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h4 className="mb-1">{stats.programadas}</h4>
-                    <small>Programadas</small>
-                  </div>
-                  <Clock size={32} />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="card bg-success text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h4 className="mb-1">{stats.realizadas}</h4>
-                    <small>Realizadas</small>
-                  </div>
-                  <CheckCircle size={32} />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="card bg-info text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h4 className="mb-1">{stats.pendientesHoy}</h4>
-                    <small>Pendientes Hoy</small>
-                  </div>
-                  <AlertCircle size={32} />
-                </div>
-              </div>
-            </div>
-          </div>
+              </CardBody>
+            </Card>
+          ))}
         </div>
 
         {/* Filtros */}
-        <div className="card">
-          <div className="card-body p-3">
-            <div className="row align-items-center">
-              <div className="col-md-6">
-                <div className="input-group">
-                  <span className="input-group-text">
-                    <Search size={16} />
-                  </span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Buscar por tema, lead o asesor..."
-                    value={filters.search || ''}
-                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  />
-                </div>
+        <Card>
+          <CardBody className="p-3">
+            <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
+              <div className="relative flex-1">
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type="text"
+                  className="pl-9"
+                  placeholder="Buscar por tema, lead o asesor..."
+                  value={filters.search || ''}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                />
               </div>
-              <div className="col-md-6 text-end">
-                <button 
-                  className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <Filter size={16} />
-                  Filtros
-                </button>
-              </div>
+              <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="md:self-end">
+                <Filter size={16} />
+                Filtros
+              </Button>
             </div>
-            
+
             {showFilters && (
-              <div className="row mt-3">
-                <div className="col-md-3">
-                  <select 
-                    className="form-select"
-                    value={filters.estado || ''}
-                    onChange={(e) => setFilters({ ...filters, estado: e.target.value as EstadoAsesoria || undefined })}
-                  >
-                    <option value="">Todos los estados</option>
-                    <option value="PROGRAMADA">Programada</option>
-                    <option value="REALIZADA">Realizada</option>
-                    <option value="CANCELADA">Cancelada</option>
-                    <option value="REPROGRAMADA">Reprogramada</option>
-                  </select>
-                </div>
-                <div className="col-md-3">
-                  <select 
-                    className="form-select"
-                    value={filters.tipo || ''}
-                    onChange={(e) => setFilters({ ...filters, tipo: e.target.value as TipoAsesoria || undefined })}
-                  >
-                    <option value="">Todos los tipos</option>
-                    <option value="INICIAL">Inicial</option>
-                    <option value="SEGUIMIENTO">Seguimiento</option>
-                    <option value="ESPECIALIZADA">Especializada</option>
-                  </select>
-                </div>
-                <div className="col-md-3">
-                  <select 
-                    className="form-select"
-                    value={filters.modalidad || ''}
-                    onChange={(e) => setFilters({ ...filters, modalidad: e.target.value as ModalidadAsesoria || undefined })}
-                  >
-                    <option value="">Todas las modalidades</option>
-                    <option value="PRESENCIAL">Presencial</option>
-                    <option value="VIRTUAL">Virtual</option>
-                    <option value="TELEFONICA">Telefónica</option>
-                  </select>
-                </div>
-                <div className="col-md-3">
-                  <button 
-                    className="btn btn-outline-danger w-100"
-                    onClick={() => setFilters({})}
-                  >
-                    Limpiar Filtros
-                  </button>
-                </div>
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+                <Select
+                  value={filters.estado || ''}
+                  onChange={(e) => setFilters({ ...filters, estado: (e.target.value as EstadoAsesoria) || undefined })}
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="PROGRAMADA">Programada</option>
+                  <option value="REALIZADA">Realizada</option>
+                  <option value="CANCELADA">Cancelada</option>
+                  <option value="REPROGRAMADA">Reprogramada</option>
+                </Select>
+                <Select
+                  value={filters.tipo || ''}
+                  onChange={(e) => setFilters({ ...filters, tipo: (e.target.value as TipoAsesoria) || undefined })}
+                >
+                  <option value="">Todos los tipos</option>
+                  <option value="INICIAL">Inicial</option>
+                  <option value="SEGUIMIENTO">Seguimiento</option>
+                  <option value="ESPECIALIZADA">Especializada</option>
+                </Select>
+                <Select
+                  value={filters.modalidad || ''}
+                  onChange={(e) => setFilters({ ...filters, modalidad: (e.target.value as ModalidadAsesoria) || undefined })}
+                >
+                  <option value="">Todas las modalidades</option>
+                  <option value="PRESENCIAL">Presencial</option>
+                  <option value="VIRTUAL">Virtual</option>
+                  <option value="TELEFONICA">Telefónica</option>
+                </Select>
+                <Button variant="outlineDanger" onClick={() => setFilters({})}>
+                  Limpiar Filtros
+                </Button>
               </div>
             )}
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Lista de Asesorías */}
-      <div className="card">
-        <div className="card-header bg-light">
-          <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Lista de Asesorías</h5>
-            <span className="badge bg-primary">{asesorias.length} asesorías</span>
-          </div>
-        </div>
-        <div className="card-body p-0">
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Asesorías</CardTitle>
+          <Badge variant="primary">{asesorias.length} asesorías</Badge>
+        </CardHeader>
+        <CardBody className="p-0">
           {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
-              </div>
-            </div>
+            <Spinner />
           ) : error ? (
-            <div className="text-center py-5">
-              <div className="alert alert-danger mx-4" role="alert">
-                <h6 className="alert-heading">Error al cargar asesorías</h6>
+            <div className="py-5 text-center">
+              <Alert variant="danger" title="Error al cargar asesorías" className="mx-4 mb-4 text-left">
                 {error}
-              </div>
-              <button 
-                className="btn btn-primary"
+              </Alert>
+              <Button
                 onClick={() => {
                   setError(null)
                   fetchAsesorias()
                 }}
               >
                 Reintentar
-              </button>
+              </Button>
             </div>
           ) : asesorias.length === 0 ? (
-            <div className="text-center py-5">
-              <div className="mb-3">
-                <Scale size={48} className="text-muted" />
-              </div>
-              <h5>No hay asesorías</h5>
-              <p className="text-muted">No se encontraron asesorías que coincidan con los filtros.</p>
-              <Link href="/asesorias/nueva" className="btn btn-primary">
-                Crear primera asesoría
+            <div className="py-5 text-center">
+              <Scale size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-700">No hay asesorías</h5>
+              <p className="mb-3 text-slate-500">No se encontraron asesorías que coincidan con los filtros.</p>
+              <Link href="/asesorias/nueva">
+                <Button>Crear primera asesoría</Button>
               </Link>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Tema</th>
-                    <th>Lead</th>
-                    <th>Asesor</th>
-                    <th>Tipo</th>
-                    <th>Modalidad</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Tema</th>
+                    <th className="px-4 py-3 font-semibold">Lead</th>
+                    <th className="px-4 py-3 font-semibold">Asesor</th>
+                    <th className="px-4 py-3 font-semibold">Tipo</th>
+                    <th className="px-4 py-3 font-semibold">Modalidad</th>
+                    <th className="px-4 py-3 font-semibold">Fecha</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {asesorias.map((asesoria) => (
-                    <tr key={asesoria.id}>
-                      <td>
-                        <div className="fw-semibold">{asesoria.tema}</div>
+                    <tr key={asesoria.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="font-semibold text-slate-800">{asesoria.tema}</div>
                         {asesoria.descripcion && (
-                          <small className="text-muted">{asesoria.descripcion.substring(0, 50)}...</small>
+                          <small className="text-slate-500">{asesoria.descripcion.substring(0, 50)}...</small>
                         )}
                       </td>
-                      <td>
-                        <Link href={`/leads/${asesoria.lead.id}`} className="text-decoration-none">
+                      <td className="px-4 py-3 align-middle">
+                        <Link href={`/leads/${asesoria.lead.id}`} className="text-blue-800 no-underline hover:underline">
                           {asesoria.lead.nombre}
                         </Link>
                       </td>
-                      <td>{asesoria.asesor.nombre} {asesoria.asesor.apellido}</td>
-                      <td>{getTipoText(asesoria.tipo)}</td>
-                      <td>
-                        <div className="d-flex align-items-center gap-1">
+                      <td className="px-4 py-3 align-middle">{asesoria.asesor.nombre} {asesoria.asesor.apellido}</td>
+                      <td className="px-4 py-3 align-middle">{getTipoText(asesoria.tipo)}</td>
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-1">
                           {getModalidadIcon(asesoria.modalidad)}
                           <small>{asesoria.modalidad}</small>
                         </div>
                       </td>
-                      <td>
-                        <small>
-                          {new Date(asesoria.fecha).toLocaleDateString()}
-                          <br />
-                          {new Date(asesoria.fecha).toLocaleTimeString()}
-                        </small>
+                      <td className="px-4 py-3 align-middle text-xs">
+                        <div>{new Date(asesoria.fecha).toLocaleDateString()}</div>
+                        <div className="text-slate-500">{new Date(asesoria.fecha).toLocaleTimeString()}</div>
                       </td>
-                      <td>
-                        <span className={getEstadoBadgeClass(asesoria.estado)}>
-                          {asesoria.estado}
-                        </span>
+                      <td className="px-4 py-3 align-middle">
+                        <Badge variant={ESTADO_BADGE[asesoria.estado]}>{asesoria.estado}</Badge>
                       </td>
-                      <td>
-                        <div className="d-flex gap-1">
-                          <Link 
-                            href={`/asesorias/${asesoria.id}`}
-                            className="btn btn-outline-primary btn-sm"
-                            title="Ver detalles"
-                          >
+                      <td className="px-4 py-3 align-middle">
+                        <Link href={`/asesorias/${asesoria.id}`}>
+                          <Button variant="outlinePrimary" size="icon" title="Ver detalles">
                             <Eye size={14} />
-                          </Link>
-                          {/* <Link 
-                            href={`/asesorias/${asesoria.id}/editar`}
-                            className="btn btn-outline-secondary btn-sm"
-                            title="Editar"
-                          >
-                            <Edit size={14} />
-                          </Link> */}
-                        </div>
+                          </Button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -433,8 +347,8 @@ export default function AsesoriaPage() {
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     </>
   )
 }

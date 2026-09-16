@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import {
@@ -19,10 +18,10 @@ import {
   RotateCcw,
   FileText,
   ArrowRight,
-  Building,
   Scale
 } from 'lucide-react'
 import { EstadoAsesoria, TipoAsesoria, ModalidadAsesoria } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
 
 interface Asesoria {
   id: string
@@ -57,48 +56,27 @@ interface Asesoria {
   }>
 }
 
-const ESTADO_CONFIG = {
-  PENDIENTE: {
-    color: 'secondary',
-    icon: Clock3,
-    label: 'Pendiente'
-  },
-  PROGRAMADA: {
-    color: 'primary',
-    icon: Clock3,
-    label: 'Programada'
-  },
-  REALIZADA: {
-    color: 'success',
-    icon: CheckCircle,
-    label: 'Realizada'
-  },
-  CANCELADA: {
-    color: 'danger',
-    icon: XCircle,
-    label: 'Cancelada'
-  },
-  REPROGRAMADA: {
-    color: 'warning',
-    icon: RotateCcw,
-    label: 'Reprogramada'
-  }
+const ESTADO_CONFIG: Record<EstadoAsesoria, { badge: BadgeProps['variant']; icon: typeof Clock3; label: string }> = {
+  PENDIENTE: { badge: 'secondary', icon: Clock3, label: 'Pendiente' },
+  PROGRAMADA: { badge: 'primary', icon: Clock3, label: 'Programada' },
+  REALIZADA: { badge: 'success', icon: CheckCircle, label: 'Realizada' },
+  CANCELADA: { badge: 'danger', icon: XCircle, label: 'Cancelada' },
+  REPROGRAMADA: { badge: 'warning', icon: RotateCcw, label: 'Reprogramada' },
 }
 
-const TIPO_LABELS = {
+const TIPO_LABELS: Record<TipoAsesoria, string> = {
   INICIAL: 'Consulta Inicial',
   SEGUIMIENTO: 'Seguimiento',
   ESPECIALIZADA: 'Asesoría Especializada'
 }
 
-const MODALIDAD_LABELS = {
+const MODALIDAD_LABELS: Record<ModalidadAsesoria, string> = {
   PRESENCIAL: 'Presencial',
   VIRTUAL: 'Virtual',
   TELEFONICA: 'Telefónica'
 }
 
 export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: string } }) {
-  const router = useRouter()
   const [asesoria, setAsesoria] = useState<Asesoria | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -162,11 +140,9 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
       setError('')
       setSuccessMessage('')
 
-      // Generar número de radicación temporal (se validará en el servidor)
       const year = new Date().getFullYear()
       const tempNumero = `RAD-${year}-TEMP-${Date.now()}`
 
-      // Crear la radicación con datos por defecto
       const response = await fetch('/api/radicaciones', {
         method: 'POST',
         headers: {
@@ -186,7 +162,6 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
       if (response.ok) {
         setSuccessMessage('✓ Asesoría en estado de radicación')
-        // Recargar los datos de la asesoría para mostrar la radicación
         await fetchAsesoria()
       } else {
         const errorData = await response.json()
@@ -218,24 +193,14 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !asesoria) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Asesoría no encontrada'}
-        </div>
-        <Link href="/asesorias" className="btn btn-primary">
-          Volver a Asesorías
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Asesoría no encontrada'}</Alert>
+        <Link href="/asesorias"><Button>Volver a Asesorías</Button></Link>
       </div>
     )
   }
@@ -252,63 +217,59 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
         ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/asesorias" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/asesorias">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center gap-2 mb-1">
-            <h1 className="h3 fw-bold text-dark mb-0">{asesoria.tema}</h1>
-            <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`}>
+        <div className="flex-1">
+          <div className="mb-1 flex items-center gap-2">
+            <h1 className="mb-0 text-xl font-bold text-slate-800">{asesoria.tema}</h1>
+            <Badge variant={estadoConfig.badge}>
               <IconoEstado size={12} />
               {estadoConfig.label}
-            </span>
+            </Badge>
           </div>
-          <p className="text-secondary mb-0">
+          <p className="mb-0 text-slate-500">
             {TIPO_LABELS[asesoria.tipo]} • {formatDate(asesoria.fecha)} • {formatTime(asesoria.fecha)}
           </p>
         </div>
-        <Link
-          href={`/asesorias/${params.asesoriaId}/editar`}
-          className="btn btn-outline-primary d-flex align-items-center gap-2"
-        >
-          <Edit3 size={16} />
-          Editar
+        <Link href={`/asesorias/${params.asesoriaId}/editar`}>
+          <Button variant="outlinePrimary">
+            <Edit3 size={16} />
+            Editar
+          </Button>
         </Link>
       </div>
 
       {/* Mensajes de éxito y error */}
       {successMessage && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
+        <Alert variant="success" className="mb-4 flex items-center justify-between">
           {successMessage}
-          <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
-        </div>
+        </Alert>
       )}
 
-      <div className="row">
-        <div className="col-lg-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-8">
           {/* Información Principal */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Detalles de la Asesoría</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <h6 className="text-muted mb-1">Fecha y Hora</h6>
-                  <div className="d-flex align-items-center gap-2 mb-3">
-                    <Calendar size={16} />
+          <Card>
+            <CardHeader><CardTitle>Detalles de la Asesoría</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <h6 className="mb-1 text-sm text-slate-500">Fecha y Hora</h6>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Calendar size={16} className="text-slate-400" />
                     <span>{formatDate(asesoria.fecha)}</span>
                   </div>
-                  <div className="d-flex align-items-center gap-2 mb-3">
-                    <Clock size={16} />
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-slate-400" />
                     <span>{formatTime(asesoria.fecha)} ({asesoria.duracion} minutos)</span>
                   </div>
                 </div>
-                <div className="col-md-6">
-                  <h6 className="text-muted mb-1">Modalidad</h6>
-                  <div className="d-flex align-items-center gap-2 mb-3">
-                    <MapPin size={16} />
+                <div>
+                  <h6 className="mb-1 text-sm text-slate-500">Modalidad</h6>
+                  <div className="flex items-center gap-2">
+                    <MapPin size={16} className="text-slate-400" />
                     <span>{MODALIDAD_LABELS[asesoria.modalidad]}</span>
                   </div>
                 </div>
@@ -316,207 +277,169 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
 
               {asesoria.descripcion && (
                 <div className="mt-3">
-                  <h6 className="text-muted mb-2">Descripción</h6>
+                  <h6 className="mb-2 text-sm text-slate-500">Descripción</h6>
                   <p className="mb-0">{asesoria.descripcion}</p>
                 </div>
               )}
 
               {asesoria.notas && (
                 <div className="mt-3">
-                  <h6 className="text-muted mb-2">Notas</h6>
-                  <div className="bg-light p-3 rounded">
+                  <h6 className="mb-2 text-sm text-slate-500">Notas</h6>
+                  <div className="rounded-lg bg-slate-50 p-3">
                     <p className="mb-0">{asesoria.notas}</p>
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Histórico y Seguimiento */}
           {asesoria.radicaciones && asesoria.radicaciones.length > 0 ? (
-            <div className="card mb-4">
-              <div className="card-header">
-                <h5 className="mb-0">Seguimiento del Proceso</h5>
-              </div>
-              <div className="card-body">
-                <div className="mb-3">
-                  <h6 className="text-muted mb-2">Radicaciones</h6>
+            <Card>
+              <CardHeader><CardTitle>Seguimiento del Proceso</CardTitle></CardHeader>
+              <CardBody>
+                <h6 className="mb-2 text-sm text-slate-500">Radicaciones</h6>
+                <div className="space-y-1">
                   {asesoria.radicaciones.map((radicacion) => (
-                    <div key={radicacion.id} className="d-flex align-items-center gap-2 mb-1">
-                      <Scale size={14} />
-                      <Link href={`/radicaciones/${radicacion.id}`} className="text-decoration-none">
+                    <div key={radicacion.id} className="flex items-center gap-2">
+                      <Scale size={14} className="text-slate-400" />
+                      <Link href={`/radicaciones/${radicacion.id}`} className="text-blue-800 no-underline hover:underline">
                         Radicación del {new Date(radicacion.fechaAudiencia || radicacion.fechaSolicitud).toLocaleDateString('es-CO')}
                       </Link>
-                      <span className="badge bg-primary">{radicacion.estado}</span>
+                      <Badge variant="primary">{radicacion.estado}</Badge>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           ) : (
-            /* Acciones de Workflow */
             asesoria.estado === 'REALIZADA' && (
-              <div className="card mb-4">
-                <div className="card-header">
-                  <h5 className="mb-0">Siguiente Paso</h5>
-                </div>
-                <div className="card-body">
-                  <p className="text-muted mb-3">
+              <Card>
+                <CardHeader><CardTitle>Siguiente Paso</CardTitle></CardHeader>
+                <CardBody>
+                  <p className="mb-3 text-slate-500">
                     La asesoría fue completada. ¿Cuál es el siguiente paso en el proceso?
                   </p>
-                  <div className="d-flex gap-2">
-                    <button
-                      onClick={handleCrearRadicacion}
-                      className="btn btn-outline-primary d-flex align-items-center gap-2"
-                      disabled={creandoRadicacion}
-                    >
-                      {creandoRadicacion ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                          Creando radicación...
-                        </>
-                      ) : (
-                        <>
-                          Estado Radicación
-                          <ArrowRight size={16} />
-                        </>
-                      )}
-                    </button>
-                    {/* <Link 
-                      href={`/casos/nuevo?asesoriaId=${asesoria.id}`}
-                      className="btn btn-outline-success d-flex align-items-center gap-2"
-                    >
-                      Crear Caso
-                      <ArrowRight size={16} />
-                    </Link> */}
-                  </div>
-                </div>
-              </div>
+                  <Button variant="outlinePrimary" onClick={handleCrearRadicacion} loading={creandoRadicacion}>
+                    {!creandoRadicacion && <>Estado Radicación <ArrowRight size={16} /></>}
+                    {creandoRadicacion && 'Creando radicación...'}
+                  </Button>
+                </CardBody>
+              </Card>
             )
           )}
         </div>
 
-        <div className="col-lg-4">
+        <div className="space-y-4 lg:col-span-4">
           {/* Acciones */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Acciones</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-grid gap-2">
-                {asesoria.estado === 'PROGRAMADA' && (
-                  <>
-                    <button
-                      onClick={() => handleStatusUpdate('REALIZADA')}
-                      className="btn btn-success d-flex align-items-center justify-content-center gap-2"
-                      disabled={updating}
-                    >
-                      <CheckCircle size={16} />
-                      Marcar como Realizada
-                    </button>
-                    <button
-                      onClick={() => handleStatusUpdate('REPROGRAMADA')}
-                      className="btn btn-warning d-flex align-items-center justify-content-center gap-2"
-                      disabled={updating}
-                    >
-                      <RotateCcw size={16} />
-                      Reprogramar
-                    </button>
-                    <button
-                      onClick={() => handleStatusUpdate('CANCELADA')}
-                      className="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2"
-                      disabled={updating}
-                    >
-                      <XCircle size={16} />
-                      Cancelar
-                    </button>
-                  </>
-                )}
-
-                {asesoria.estado !== 'PROGRAMADA' && (
-                  <button
-                    onClick={() => handleStatusUpdate('PROGRAMADA')}
-                    className="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2"
+          <Card>
+            <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+            <CardBody className="grid gap-2">
+              {asesoria.estado === 'PROGRAMADA' && (
+                <>
+                  <Button
+                    variant="success"
+                    className="justify-center"
+                    onClick={() => handleStatusUpdate('REALIZADA')}
                     disabled={updating}
                   >
-                    <Clock3 size={16} />
+                    <CheckCircle size={16} />
+                    Marcar como Realizada
+                  </Button>
+                  <Button
+                    className="justify-center bg-amber-500 hover:bg-amber-600"
+                    onClick={() => handleStatusUpdate('REPROGRAMADA')}
+                    disabled={updating}
+                  >
+                    <RotateCcw size={16} />
                     Reprogramar
-                  </button>
-                )}
+                  </Button>
+                  <Button
+                    variant="outlineDanger"
+                    className="justify-center"
+                    onClick={() => handleStatusUpdate('CANCELADA')}
+                    disabled={updating}
+                  >
+                    <XCircle size={16} />
+                    Cancelar
+                  </Button>
+                </>
+              )}
 
-                <Link
-                  href={`/asesorias/${params.asesoriaId}/editar`}
-                  className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
+              {asesoria.estado !== 'PROGRAMADA' && (
+                <Button
+                  variant="outlinePrimary"
+                  className="justify-center"
+                  onClick={() => handleStatusUpdate('PROGRAMADA')}
+                  disabled={updating}
                 >
+                  <Clock3 size={16} />
+                  Reprogramar
+                </Button>
+              )}
+
+              <Link href={`/asesorias/${params.asesoriaId}/editar`}>
+                <Button variant="outline" className="w-full justify-center">
                   <Edit3 size={16} />
                   Editar Detalles
-                </Link>
+                </Button>
+              </Link>
 
-                {/* Sistema de archivos - Solo disponible si la asesoría está realizada */}
-                {asesoria.estado === 'REALIZADA' && (
-                  <Link
-                    href={`/leads/${asesoria.lead.id}/archivos`}
-                    className="btn btn-info d-flex align-items-center justify-content-center gap-2"
-                  >
+              {asesoria.estado === 'REALIZADA' && (
+                <Link href={`/leads/${asesoria.lead.id}/archivos`}>
+                  <Button className="w-full justify-center bg-sky-600 hover:bg-sky-700">
                     <FileText size={16} />
                     Ver Archivos
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
+                  </Button>
+                </Link>
+              )}
+            </CardBody>
+          </Card>
 
           {/* Información del Cliente */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Cliente</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <User size={16} />
-                <span className="fw-semibold">{asesoria.lead.nombre}</span>
+          <Card>
+            <CardHeader><CardTitle>Cliente</CardTitle></CardHeader>
+            <CardBody>
+              <div className="mb-2 flex items-center gap-2">
+                <User size={16} className="text-slate-400" />
+                <span className="font-semibold text-slate-800">{asesoria.lead.nombre}</span>
               </div>
-              <div className="d-flex align-items-center gap-2 mb-2 text-muted small">
+              <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
                 <Mail size={14} />
                 <span>{asesoria.lead.email}</span>
               </div>
-              <div className="d-flex align-items-center gap-2 mb-3 text-muted small">
+              <div className="mb-3 flex items-center gap-2 text-sm text-slate-500">
                 <Phone size={14} />
                 <span>{asesoria.lead.telefono}</span>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <span className="small text-muted">Estado del Lead:</span>
-                <span className="badge bg-secondary">{asesoria.lead.estado}</span>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm text-slate-500">Estado del Lead:</span>
+                <Badge variant="secondary">{asesoria.lead.estado}</Badge>
               </div>
-              <div className="mt-3">
-                <Link
-                  href={`/leads/${asesoria.lead.id}`}
-                  className="btn btn-outline-primary btn-sm w-100"
-                >
+              <Link href={`/leads/${asesoria.lead.id}`}>
+                <Button variant="outlinePrimary" size="sm" className="w-full justify-center">
                   Ver Perfil del Cliente
-                </Link>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </Link>
+            </CardBody>
+          </Card>
 
           {/* Información del Asesor */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Asesor Asignado</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <User size={16} />
-                <span className="fw-semibold">
+          <Card>
+            <CardHeader><CardTitle>Asesor Asignado</CardTitle></CardHeader>
+            <CardBody>
+              <div className="mb-2 flex items-center gap-2">
+                <User size={16} className="text-slate-400" />
+                <span className="font-semibold text-slate-800">
                   {asesoria.asesor.nombre} {asesoria.asesor.apellido}
                 </span>
               </div>
-              <div className="d-flex align-items-center gap-2 text-muted small">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Mail size={14} />
                 <span>{asesoria.asesor.email}</span>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     </>
