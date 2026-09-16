@@ -4,18 +4,20 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Plus, 
-  MessageSquare, 
-  Phone, 
-  Mail, 
+import {
+  ArrowLeft,
+  Plus,
+  MessageSquare,
+  Phone,
+  Mail,
   Calendar,
   User,
   Clock,
   Edit,
   Trash2
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface SeguimientoItem {
   id: string
@@ -50,10 +52,18 @@ interface NewSeguimientoForm {
   proximoSeguimiento: string
 }
 
+const TIPO_STYLES: Record<TipoSeguimiento, { icon: string; border: string }> = {
+  LLAMADA: { icon: 'text-teal-700', border: 'border-l-teal-600' },
+  EMAIL: { icon: 'text-blue-800', border: 'border-l-blue-800' },
+  REUNION: { icon: 'text-amber-500', border: 'border-l-amber-500' },
+  WHATSAPP: { icon: 'text-sky-700', border: 'border-l-sky-600' },
+  NOTA: { icon: 'text-slate-500', border: 'border-l-slate-400' },
+}
+
 export default function LeadSeguimientoPage() {
   const params = useParams()
   const leadId = params.leadId as string
-  
+
   const [seguimientos, setSeguimientos] = useState<SeguimientoItem[]>([])
   const [lead, setLead] = useState<Lead | null>(null)
   const [loading, setLoading] = useState(true)
@@ -76,7 +86,7 @@ export default function LeadSeguimientoPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      
+
       // Fetch lead data
       const leadResponse = await fetch(`/api/leads/${leadId}`)
       if (leadResponse.ok) {
@@ -99,7 +109,7 @@ export default function LeadSeguimientoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const seguimientoData = {
       tipo: newSeguimiento.tipo,
       descripcion: newSeguimiento.descripcion,
@@ -143,7 +153,7 @@ export default function LeadSeguimientoPage() {
       descripcion: seguimiento.descripcion,
       duracion: seguimiento.duracion?.toString() || '',
       resultado: seguimiento.resultado || '',
-      proximoSeguimiento: seguimiento.proximoSeguimiento ? 
+      proximoSeguimiento: seguimiento.proximoSeguimiento ?
         new Date(seguimiento.proximoSeguimiento).toISOString().slice(0, 16) : ''
     })
     setShowForm(true)
@@ -151,7 +161,7 @@ export default function LeadSeguimientoPage() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!editingSeguimiento) return
 
     const seguimientoData = {
@@ -227,43 +237,27 @@ export default function LeadSeguimientoPage() {
   }
 
   const getTipoIcon = (tipo: TipoSeguimiento) => {
+    const cls = TIPO_STYLES[tipo].icon
     switch (tipo) {
-      case 'LLAMADA': return <Phone size={16} className="text-success" />
-      case 'EMAIL': return <Mail size={16} className="text-primary" />
-      case 'REUNION': return <Calendar size={16} className="text-warning" />
-      case 'WHATSAPP': return <MessageSquare size={16} className="text-info" />
-      case 'NOTA': return <Edit size={16} className="text-secondary" />
-      default: return <MessageSquare size={16} className="text-secondary" />
-    }
-  }
-
-  const getTipoColor = (tipo: TipoSeguimiento) => {
-    switch (tipo) {
-      case 'LLAMADA': return 'border-success'
-      case 'EMAIL': return 'border-primary'
-      case 'REUNION': return 'border-warning'
-      case 'WHATSAPP': return 'border-info'
-      case 'NOTA': return 'border-secondary'
-      default: return 'border-secondary'
+      case 'LLAMADA': return <Phone size={16} className={cls} />
+      case 'EMAIL': return <Mail size={16} className={cls} />
+      case 'REUNION': return <Calendar size={16} className={cls} />
+      case 'WHATSAPP': return <MessageSquare size={16} className={cls} />
+      case 'NOTA': return <Edit size={16} className={cls} />
+      default: return <MessageSquare size={16} className={cls} />
     }
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (!lead) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger">Lead no encontrado</div>
-        <Link href="/leads" className="btn btn-primary">
-          Volver a Leads
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">Lead no encontrado</Alert>
+        <Link href="/leads">
+          <Button>Volver a Leads</Button>
         </Link>
       </div>
     )
@@ -271,89 +265,79 @@ export default function LeadSeguimientoPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Leads', href: '/leads' },
           { label: lead.nombre, href: `/leads/${leadId}` },
           { label: 'Seguimiento' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Link href={`/leads/${leadId}`} className="btn btn-outline-secondary">
-            <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href={`/leads/${leadId}`}>
+            <Button variant="outline" size="icon">
+              <ArrowLeft size={16} />
+            </Button>
           </Link>
           <div>
-            <h1 className="h2 fw-bold text-dark mb-1">Seguimiento</h1>
-            <p className="text-secondary mb-0">
+            <h1 className="mb-1 text-2xl font-bold text-slate-800">Seguimiento</h1>
+            <p className="mb-0 text-slate-500">
               Historial de interacciones con {lead.nombre}
             </p>
           </div>
         </div>
-        <button 
-          className="btn btn-primary d-flex align-items-center gap-2"
-          onClick={() => setShowForm(true)}
-        >
+        <Button onClick={() => setShowForm(true)}>
           <Plus size={16} />
           Nuevo Seguimiento
-        </button>
+        </Button>
       </div>
 
       {/* Formulario de nuevo seguimiento */}
       {showForm && (
-        <div className="card mb-4">
-          <div className="card-header">
-            <h5 className="mb-0">
-              {editingSeguimiento ? 'Editar Seguimiento' : 'Nuevo Seguimiento'}
-            </h5>
-          </div>
-          <div className="card-body">
-            <form onSubmit={editingSeguimiento ? handleUpdate : handleSubmit}>
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="mb-3">
-                    <label className="form-label">Tipo de Seguimiento</label>
-                    <select
-                      className="form-select"
-                      value={newSeguimiento.tipo}
-                      onChange={(e) => setNewSeguimiento({
-                        ...newSeguimiento,
-                        tipo: e.target.value as TipoSeguimiento
-                      })}
-                      required
-                    >
-                      <option value="NOTA">Nota</option>
-                      <option value="LLAMADA">Llamada</option>
-                      <option value="EMAIL">Email</option>
-                      <option value="REUNION">Reunión</option>
-                      <option value="WHATSAPP">WhatsApp</option>
-                    </select>
-                  </div>
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>{editingSeguimiento ? 'Editar Seguimiento' : 'Nuevo Seguimiento'}</CardTitle>
+          </CardHeader>
+          <CardBody>
+            <form onSubmit={editingSeguimiento ? handleUpdate : handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <Label>Tipo de Seguimiento</Label>
+                  <Select
+                    value={newSeguimiento.tipo}
+                    onChange={(e) => setNewSeguimiento({
+                      ...newSeguimiento,
+                      tipo: e.target.value as TipoSeguimiento
+                    })}
+                    required
+                  >
+                    <option value="NOTA">Nota</option>
+                    <option value="LLAMADA">Llamada</option>
+                    <option value="EMAIL">Email</option>
+                    <option value="REUNION">Reunión</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                  </Select>
                 </div>
                 {(newSeguimiento.tipo === 'LLAMADA' || newSeguimiento.tipo === 'REUNION') && (
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label">Duración (minutos)</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={newSeguimiento.duracion}
-                        onChange={(e) => setNewSeguimiento({
-                          ...newSeguimiento,
-                          duracion: e.target.value
-                        })}
-                        placeholder="15"
-                      />
-                    </div>
+                  <div>
+                    <Label>Duración (minutos)</Label>
+                    <Input
+                      type="number"
+                      value={newSeguimiento.duracion}
+                      onChange={(e) => setNewSeguimiento({
+                        ...newSeguimiento,
+                        duracion: e.target.value
+                      })}
+                      placeholder="15"
+                    />
                   </div>
                 )}
               </div>
-              
-              <div className="mb-3">
-                <label className="form-label">Descripción *</label>
-                <textarea
-                  className="form-control"
+
+              <div>
+                <Label>Descripción *</Label>
+                <Textarea
                   rows={3}
                   value={newSeguimiento.descripcion}
                   onChange={(e) => setNewSeguimiento({
@@ -365,201 +349,185 @@ export default function LeadSeguimientoPage() {
                 />
               </div>
 
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="mb-3">
-                    <label className="form-label">Resultado</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={newSeguimiento.resultado}
-                      onChange={(e) => setNewSeguimiento({
-                        ...newSeguimiento,
-                        resultado: e.target.value
-                      })}
-                      placeholder="Resultado de la interacción"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <Label>Resultado</Label>
+                  <Input
+                    type="text"
+                    value={newSeguimiento.resultado}
+                    onChange={(e) => setNewSeguimiento({
+                      ...newSeguimiento,
+                      resultado: e.target.value
+                    })}
+                    placeholder="Resultado de la interacción"
+                  />
                 </div>
-                <div className="col-md-6">
-                  <div className="mb-3">
-                    <label className="form-label">Próximo Seguimiento</label>
-                    <input
-                      type="datetime-local"
-                      className="form-control"
-                      value={newSeguimiento.proximoSeguimiento}
-                      onChange={(e) => setNewSeguimiento({
-                        ...newSeguimiento,
-                        proximoSeguimiento: e.target.value
-                      })}
-                    />
-                  </div>
+                <div>
+                  <Label>Próximo Seguimiento</Label>
+                  <Input
+                    type="datetime-local"
+                    value={newSeguimiento.proximoSeguimiento}
+                    onChange={(e) => setNewSeguimiento({
+                      ...newSeguimiento,
+                      proximoSeguimiento: e.target.value
+                    })}
+                  />
                 </div>
               </div>
 
-              <div className="d-flex gap-2">
-                <button type="submit" className="btn btn-primary">
+              <div className="flex gap-2">
+                <Button type="submit">
                   {editingSeguimiento ? 'Actualizar' : 'Guardar'}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-outline-secondary"
-                  onClick={handleCancelForm}
-                >
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancelForm}>
                   Cancelar
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       )}
 
       {/* Timeline de seguimientos */}
-      <div className="row">
-        <div className="col-lg-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
           {seguimientos.length === 0 ? (
-            <div className="card">
-              <div className="card-body text-center py-5">
-                <MessageSquare size={64} className="text-muted mb-3" />
-                <h4>No hay seguimientos registrados</h4>
-                <p className="text-muted mb-4">
+            <Card>
+              <CardBody className="py-5 text-center">
+                <MessageSquare size={64} className="mx-auto mb-3 text-slate-300" />
+                <h4 className="text-lg font-semibold text-slate-800">No hay seguimientos registrados</h4>
+                <p className="mb-4 text-slate-500">
                   Comienza a registrar las interacciones con este lead.
                 </p>
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => setShowForm(true)}
-                >
+                <Button onClick={() => setShowForm(true)}>
                   Crear Primer Seguimiento
-                </button>
-              </div>
-            </div>
+                </Button>
+              </CardBody>
+            </Card>
           ) : (
-            <div className="timeline">
-              {seguimientos.map((seguimiento, index) => (
-                <div key={seguimiento.id} className={`card mb-3 border-start border-3 ${getTipoColor(seguimiento.tipo)}`}>
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                      <div className="d-flex align-items-center gap-2">
+            <div>
+              {seguimientos.map((seguimiento) => (
+                <Card key={seguimiento.id} className={cn('mb-3 border-l-4', TIPO_STYLES[seguimiento.tipo].border)}>
+                  <CardBody>
+                    <div className="mb-2 flex items-start justify-between">
+                      <div className="flex items-center gap-2">
                         {getTipoIcon(seguimiento.tipo)}
                         <strong>{seguimiento.tipo}</strong>
                         {seguimiento.duracion && (
-                          <small className="text-muted">
+                          <small className="text-slate-500">
                             ({seguimiento.duracion} min)
                           </small>
                         )}
                       </div>
-                      <div className="d-flex align-items-center gap-2">
-                        <small className="text-muted">
+                      <div className="flex items-center gap-2">
+                        <small className="text-slate-500">
                           {new Date(seguimiento.fecha).toLocaleString()}
                         </small>
-                        <button 
-                          className="btn btn-sm btn-outline-secondary"
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => handleEdit(seguimiento)}
                           title="Editar seguimiento"
                         >
                           <Edit size={12} />
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-outline-danger"
+                        </Button>
+                        <Button
+                          variant="outlineDanger"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => handleDelete(seguimiento.id)}
                           title="Eliminar seguimiento"
                         >
                           <Trash2 size={12} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
-                    
+
                     <p className="mb-2">{seguimiento.descripcion}</p>
-                    
+
                     {seguimiento.resultado && (
                       <div className="mb-2">
-                        <small className="text-success">
+                        <small className="text-teal-700">
                           <strong>Resultado:</strong> {seguimiento.resultado}
                         </small>
                       </div>
                     )}
-                    
+
                     {seguimiento.proximoSeguimiento && (
-                      <div className="mb-2">
-                        <small className="text-warning">
-                          <Clock size={12} className="me-1" />
+                      <div className="mb-2 flex items-center gap-1">
+                        <Clock size={12} className="text-amber-500" />
+                        <small className="text-amber-600">
                           <strong>Próximo seguimiento:</strong> {new Date(seguimiento.proximoSeguimiento).toLocaleString()}
                         </small>
                       </div>
                     )}
-                    
-                    <div className="d-flex align-items-center gap-1">
-                      <User size={12} />
-                      <small className="text-muted">
+
+                    <div className="flex items-center gap-1">
+                      <User size={12} className="text-slate-400" />
+                      <small className="text-slate-500">
                         {seguimiento.usuario.nombre} {seguimiento.usuario.apellido}
                       </small>
                     </div>
-                  </div>
-                </div>
+                  </CardBody>
+                </Card>
               ))}
             </div>
           )}
         </div>
 
-        <div className="col-lg-4">
+        <div className="space-y-4 lg:col-span-4">
           {/* Acciones rápidas */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h6 className="mb-0">Acciones Rápidas</h6>
-            </div>
-            <div className="card-body">
-              <div className="d-grid gap-2">
-                <a 
-                  href={`tel:${lead.telefono}`}
-                  className="btn btn-outline-success btn-sm d-flex align-items-center gap-2"
-                >
+          <Card>
+            <CardHeader>
+              <CardTitle>Acciones Rápidas</CardTitle>
+            </CardHeader>
+            <CardBody className="grid gap-2">
+              <a href={`tel:${lead.telefono}`}>
+                <Button variant="outline" size="sm" className="w-full justify-center border-teal-700 text-teal-700 hover:bg-teal-50">
                   <Phone size={14} />
                   Llamar
-                </a>
-                <a 
-                  href={`mailto:${lead.email}`}
-                  className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
-                >
+                </Button>
+              </a>
+              <a href={`mailto:${lead.email}`}>
+                <Button variant="outlinePrimary" size="sm" className="w-full justify-center">
                   <Mail size={14} />
                   Enviar Email
-                </a>
-                <a 
-                  href={`https://wa.me/${lead.telefono.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-outline-info btn-sm d-flex align-items-center gap-2"
-                >
+                </Button>
+              </a>
+              <a href={`https://wa.me/${lead.telefono.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="w-full justify-center border-sky-700 text-sky-700 hover:bg-sky-50">
                   <MessageSquare size={14} />
                   WhatsApp
-                </a>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </a>
+            </CardBody>
+          </Card>
 
           {/* Resumen */}
-          <div className="card">
-            <div className="card-header">
-              <h6 className="mb-0">Resumen</h6>
-            </div>
-            <div className="card-body">
-              <div className="text-center mb-3">
-                <div className="h4 text-primary">{seguimientos.length}</div>
-                <small className="text-muted">Total Interacciones</small>
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumen</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="mb-3 text-center">
+                <div className="text-2xl font-bold text-blue-800">{seguimientos.length}</div>
+                <small className="text-slate-500">Total Interacciones</small>
               </div>
-              <hr />
-              <div className="small">
+              <hr className="mb-3 border-slate-200" />
+              <div className="space-y-1 text-sm">
                 {Object.entries(seguimientos.reduce((acc, s) => {
                   acc[s.tipo] = (acc[s.tipo] || 0) + 1
                   return acc
                 }, {} as Record<string, number>)).map(([tipo, count]) => (
-                  <div key={tipo} className="d-flex justify-content-between">
+                  <div key={tipo} className="flex justify-between">
                     <span>{tipo}:</span>
                     <strong>{count}</strong>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     </>

@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Save, Calendar, User, FileText } from 'lucide-react'
+import { ArrowLeft, Save, User } from 'lucide-react'
 import { TipoAsesoria, EstadoAsesoria, ModalidadAsesoria } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface CreateAsesoriaData {
   descripcion: string
@@ -30,7 +32,7 @@ export default function NuevaAsesoriaLeadPage() {
   const params = useParams()
   const router = useRouter()
   const leadId = params.leadId as string
-  
+
   const [loading, setLoading] = useState(false)
   const [loadingAsesores, setLoadingAsesores] = useState(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -57,11 +59,11 @@ export default function NuevaAsesoriaLeadPage() {
   const fetchAsesores = async () => {
     try {
       console.log('Iniciando carga de asesores...')
-      
+
       // Primero intentamos con el endpoint de usuarios
       let response = await fetch('/api/usuarios?role=Asesor')
       console.log('Respuesta usuarios:', response.status, response.statusText)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('Datos usuarios recibidos:', data)
@@ -71,12 +73,12 @@ export default function NuevaAsesoriaLeadPage() {
           return
         }
       }
-      
+
       // Si no funciona, intentamos con el endpoint específico de asesores
       console.log('Intentando con endpoint de asesores...')
       response = await fetch('/api/asesores')
       console.log('Respuesta asesores:', response.status, response.statusText)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('Datos asesores recibidos:', data)
@@ -119,7 +121,7 @@ export default function NuevaAsesoriaLeadPage() {
     try {
       // Combinar fecha y hora
       const fechaHora = new Date(`${formData.fecha}T${formData.hora}:00`)
-      
+
       const asesoriaData = {
         ...formData,
         fecha: fechaHora.toISOString(),
@@ -163,171 +165,155 @@ export default function NuevaAsesoriaLeadPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Leads', href: '/leads' },
           { label: leadName, href: `/leads/${leadId}` },
           { label: 'Asesorías', href: `/leads/${leadId}/asesorias` },
           { label: 'Nueva Asesoría' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href={`/leads/${leadId}/asesorias`} className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href={`/leads/${leadId}/asesorias`}>
+          <Button variant="outline" size="icon">
+            <ArrowLeft size={16} />
+          </Button>
         </Link>
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Nueva Asesoría</h1>
-          <p className="text-secondary mb-0">Crear asesoría para el lead: {leadName}</p>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Nueva Asesoría</h1>
+          <p className="mb-0 text-slate-500">Crear asesoría para el lead: {leadName}</p>
         </div>
       </div>
 
       {errors.general && (
-        <div className="alert alert-danger" role="alert">
-          {errors.general}
-        </div>
+        <Alert variant="danger" className="mb-4">{errors.general}</Alert>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Información de la Asesoría</h5>
-              </div>
-              <div className="card-body">
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Descripción *</label>
-                  <textarea
-                    className={`form-control ${errors.descripcion ? 'is-invalid' : ''}`}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Información de la Asesoría</CardTitle>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div>
+                  <Label className="font-semibold">Descripción *</Label>
+                  <Textarea
+                    className={cn(errors.descripcion && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                     rows={4}
                     value={formData.descripcion}
                     onChange={(e) => handleInputChange('descripcion', e.target.value)}
                     placeholder="Descripción detallada de la asesoría..."
                     required
                   />
-                  {errors.descripcion && <div className="invalid-feedback">{errors.descripcion}</div>}
+                  {errors.descripcion && <p className="mt-1 text-xs text-red-600">{errors.descripcion}</p>}
                 </div>
 
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Tema *</label>
-                  <input
+                <div>
+                  <Label className="font-semibold">Tema *</Label>
+                  <Input
                     type="text"
-                    className={`form-control ${errors.tema ? 'is-invalid' : ''}`}
+                    className={cn(errors.tema && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                     value={formData.tema}
                     onChange={(e) => handleInputChange('tema', e.target.value)}
                     placeholder="Tema principal de la asesoría"
                     required
                   />
-                  {errors.tema && <div className="invalid-feedback">{errors.tema}</div>}
+                  {errors.tema && <p className="mt-1 text-xs text-red-600">{errors.tema}</p>}
                 </div>
 
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Fecha *</label>
-                      <input
-                        type="date"
-                        className={`form-control ${errors.fecha ? 'is-invalid' : ''}`}
-                        value={formData.fecha}
-                        onChange={(e) => handleInputChange('fecha', e.target.value)}
-                        required
-                      />
-                      {errors.fecha && <div className="invalid-feedback">{errors.fecha}</div>}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <Label className="font-semibold">Fecha *</Label>
+                    <Input
+                      type="date"
+                      className={cn(errors.fecha && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.fecha}
+                      onChange={(e) => handleInputChange('fecha', e.target.value)}
+                      required
+                    />
+                    {errors.fecha && <p className="mt-1 text-xs text-red-600">{errors.fecha}</p>}
                   </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Hora *</label>
-                      <input
-                        type="time"
-                        className={`form-control ${errors.hora ? 'is-invalid' : ''}`}
-                        value={formData.hora}
-                        onChange={(e) => handleInputChange('hora', e.target.value)}
-                        required
-                      />
-                      {errors.hora && <div className="invalid-feedback">{errors.hora}</div>}
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Hora *</Label>
+                    <Input
+                      type="time"
+                      className={cn(errors.hora && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.hora}
+                      onChange={(e) => handleInputChange('hora', e.target.value)}
+                      required
+                    />
+                    {errors.hora && <p className="mt-1 text-xs text-red-600">{errors.hora}</p>}
                   </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Duración (minutos)</label>
-                      <select
-                        className="form-select"
-                        value={formData.duracion}
-                        onChange={(e) => handleInputChange('duracion', parseInt(e.target.value))}
-                      >
-                        <option value={30}>30 minutos</option>
-                        <option value={60}>1 hora</option>
-                        <option value={90}>1.5 horas</option>
-                        <option value={120}>2 horas</option>
-                      </select>
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Duración (minutos)</Label>
+                    <Select
+                      value={formData.duracion}
+                      onChange={(e) => handleInputChange('duracion', parseInt(e.target.value))}
+                    >
+                      <option value={30}>30 minutos</option>
+                      <option value={60}>1 hora</option>
+                      <option value={90}>1.5 horas</option>
+                      <option value={120}>2 horas</option>
+                    </Select>
                   </div>
                 </div>
 
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Tipo de Asesoría *</label>
-                      <select
-                        className={`form-select ${errors.tipo ? 'is-invalid' : ''}`}
-                        value={formData.tipo}
-                        onChange={(e) => handleInputChange('tipo', e.target.value as TipoAsesoria)}
-                        required
-                      >
-                        <option value="INICIAL">Inicial</option>
-                        <option value="SEGUIMIENTO">Seguimiento</option>
-                        <option value="ESPECIALIZADA">Especializada</option>
-                      </select>
-                      {errors.tipo && <div className="invalid-feedback">{errors.tipo}</div>}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <Label className="font-semibold">Tipo de Asesoría *</Label>
+                    <Select
+                      className={cn(errors.tipo && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.tipo}
+                      onChange={(e) => handleInputChange('tipo', e.target.value as TipoAsesoria)}
+                      required
+                    >
+                      <option value="INICIAL">Inicial</option>
+                      <option value="SEGUIMIENTO">Seguimiento</option>
+                      <option value="ESPECIALIZADA">Especializada</option>
+                    </Select>
+                    {errors.tipo && <p className="mt-1 text-xs text-red-600">{errors.tipo}</p>}
                   </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Modalidad *</label>
-                      <select
-                        className={`form-select ${errors.modalidad ? 'is-invalid' : ''}`}
-                        value={formData.modalidad}
-                        onChange={(e) => handleInputChange('modalidad', e.target.value as ModalidadAsesoria)}
-                        required
-                      >
-                        <option value="PRESENCIAL">Presencial</option>
-                        <option value="VIRTUAL">Virtual</option>
-                        <option value="TELEFONICA">Telefónica</option>
-                      </select>
-                      {errors.modalidad && <div className="invalid-feedback">{errors.modalidad}</div>}
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Modalidad *</Label>
+                    <Select
+                      className={cn(errors.modalidad && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.modalidad}
+                      onChange={(e) => handleInputChange('modalidad', e.target.value as ModalidadAsesoria)}
+                      required
+                    >
+                      <option value="PRESENCIAL">Presencial</option>
+                      <option value="VIRTUAL">Virtual</option>
+                      <option value="TELEFONICA">Telefónica</option>
+                    </Select>
+                    {errors.modalidad && <p className="mt-1 text-xs text-red-600">{errors.modalidad}</p>}
                   </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Estado</label>
-                      <select
-                        className="form-select"
-                        value={formData.estado}
-                        onChange={(e) => handleInputChange('estado', e.target.value as EstadoAsesoria)}
-                      >
-                        <option value="PROGRAMADA">Programada</option>
-                        <option value="REALIZADA">Realizada</option>
-                        <option value="CANCELADA">Cancelada</option>
-                        <option value="REPROGRAMADA">Reprogramada</option>
-                      </select>
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Estado</Label>
+                    <Select
+                      value={formData.estado}
+                      onChange={(e) => handleInputChange('estado', e.target.value as EstadoAsesoria)}
+                    >
+                      <option value="PROGRAMADA">Programada</option>
+                      <option value="REALIZADA">Realizada</option>
+                      <option value="CANCELADA">Cancelada</option>
+                      <option value="REPROGRAMADA">Reprogramada</option>
+                    </Select>
                   </div>
                 </div>
 
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Asesor Asignado *</label>
+                <div>
+                  <Label className="font-semibold">Asesor Asignado *</Label>
                   {loadingAsesores ? (
-                    <div className="text-center py-2">
-                      <div className="spinner-border spinner-border-sm" role="status">
-                        <span className="visually-hidden">Cargando asesores...</span>
-                      </div>
+                    <div className="py-2 text-center">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-800 border-t-transparent" />
                     </div>
                   ) : (
                     <>
-                      <select
-                        className={`form-select ${errors.asesorId ? 'is-invalid' : ''}`}
+                      <Select
+                        className={cn(errors.asesorId && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                         value={formData.asesorId}
                         onChange={(e) => handleInputChange('asesorId', e.target.value)}
                         required
@@ -338,85 +324,74 @@ export default function NuevaAsesoriaLeadPage() {
                             {asesor.nombre} {asesor.apellido}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       {Array.isArray(asesores) && asesores.length === 0 && (
-                        <div className="form-text text-warning">
+                        <p className="mt-1 text-xs text-amber-600">
                           No se encontraron asesores disponibles. Asegúrate de que haya usuarios creados con rol ASESOR.
-                        </div>
+                        </p>
                       )}
                     </>
                   )}
-                  {errors.asesorId && <div className="invalid-feedback">{errors.asesorId}</div>}
+                  {errors.asesorId && <p className="mt-1 text-xs text-red-600">{errors.asesorId}</p>}
                 </div>
 
-                <div className="mb-3">  
-                  <label className="form-label fw-semibold">Notas</label>
-                  <textarea
-                    className={`form-control ${errors.notas ? 'is-invalid' : ''}`}
+                <div>
+                  <Label className="font-semibold">Notas</Label>
+                  <Textarea
+                    className={cn(errors.notas && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                     rows={3}
                     value={formData.notas}
                     onChange={(e) => handleInputChange('notas', e.target.value)}
                     placeholder="Notas adicionales..."
                   />
-                  {errors.notas && <div className="invalid-feedback">{errors.notas}</div>}
+                  {errors.notas && <p className="mt-1 text-xs text-red-600">{errors.notas}</p>}
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Acciones</h5>
-              </div>
-              <div className="card-body">
-                <div className="d-grid gap-2">
-                  <button
-                    type="submit"
-                    className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                    disabled={loading || loadingAsesores}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Creando...
-                      </>
-                    ) : (
-                      <>
-                        <Save size={16} />
-                        Crear Asesoría
-                      </>
-                    )}
-                  </button>
-                  <Link href={`/leads/${leadId}/asesorias`} className="btn btn-outline-secondary">
-                    Cancelar
+          <div className="space-y-4 lg:col-span-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Acciones</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="grid gap-2">
+                  <Button type="submit" loading={loading} disabled={loadingAsesores} className="justify-center">
+                    {!loading && <Save size={16} />}
+                    {loading ? 'Creando...' : 'Crear Asesoría'}
+                  </Button>
+                  <Link href={`/leads/${leadId}/asesorias`}>
+                    <Button type="button" variant="outline" className="w-full justify-center">
+                      Cancelar
+                    </Button>
                   </Link>
                 </div>
 
-                <hr />
+                <hr className="my-4 border-slate-200" />
 
-                <div className="text-muted small">
-                  <h6>Información:</h6>
-                  <ul className="list-unstyled">
+                <div className="text-sm text-slate-500">
+                  <h6 className="mb-2 font-semibold text-slate-700">Información:</h6>
+                  <ul className="list-none space-y-1 p-0">
                     <li>• Los campos marcados con * son obligatorios</li>
                     <li>• La asesoría será asignada automáticamente al lead seleccionado</li>
                     <li>• Se notificará al asesor asignado por email</li>
                   </ul>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
-            <div className="card mt-3">
-              <div className="card-header">
-                <h6 className="mb-0">Lead Asociado</h6>
-              </div>
-              <div className="card-body">
-                <div className="d-flex align-items-center gap-2 text-muted mb-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lead Asociado</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="flex items-center gap-2 text-slate-500">
                   <User size={16} />
                   <span>{leadName}</span>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

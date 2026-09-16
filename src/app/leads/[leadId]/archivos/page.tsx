@@ -5,12 +5,11 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import FileViewerModal from '@/components/FileViewerModal'
-import { 
-  ArrowLeft, 
-  Upload, 
-  FileText, 
-  Download, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Upload,
+  Download,
+  Trash2,
   Eye,
   Calendar,
   User,
@@ -18,6 +17,7 @@ import {
   Filter,
   FolderOpen
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Alert, Spinner } from '@/components/ui'
 
 interface Archivo {
   id: string
@@ -43,7 +43,7 @@ interface Lead {
 export default function ArchivosLeadPage() {
   const params = useParams()
   const leadId = params.leadId as string
-  
+
   const [lead, setLead] = useState<Lead | null>(null)
   const [archivos, setArchivos] = useState<Archivo[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,7 +51,7 @@ export default function ArchivosLeadPage() {
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [error, setError] = useState('')
-  
+
   // Estados para el modal de visualización
   const [showModal, setShowModal] = useState(false)
   const [selectedFile, setSelectedFile] = useState<Archivo | null>(null)
@@ -79,7 +79,7 @@ export default function ArchivosLeadPage() {
       const params = new URLSearchParams()
       if (search) params.append('search', search)
       if (filterType) params.append('type', filterType)
-      
+
       const response = await fetch(`/api/leads/${leadId}/archivos?${params}`)
       if (response.ok) {
         const data = await response.json()
@@ -105,7 +105,7 @@ export default function ArchivosLeadPage() {
       for (const file of Array.from(files)) {
         const formData = new FormData()
         formData.append('file', file)
-        
+
         const response = await fetch(`/api/leads/${leadId}/archivos`, {
           method: 'POST',
           body: formData
@@ -119,10 +119,10 @@ export default function ArchivosLeadPage() {
 
       // Recargar la lista de archivos
       await fetchArchivos()
-      
+
       // Limpiar el input
       event.target.value = ''
-      
+
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Error al subir archivos')
     } finally {
@@ -192,212 +192,178 @@ export default function ArchivosLeadPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Leads', href: '/leads' },
           { label: lead?.nombre || 'Lead', href: `/leads/${leadId}` },
           { label: 'Archivos' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href={`/leads/${leadId}`} className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href={`/leads/${leadId}`}>
+          <Button variant="outline" size="icon">
+            <ArrowLeft size={16} />
+          </Button>
         </Link>
-        <div className="flex-grow-1">
-          <h1 className="h3 fw-bold text-dark mb-1">
-            <FolderOpen size={24} className="me-2" />
+        <div className="flex-1">
+          <h1 className="mb-1 flex items-center gap-2 text-xl font-bold text-slate-800">
+            <FolderOpen size={24} />
             Archivos de {lead?.nombre}
           </h1>
-          <p className="text-secondary mb-0">
+          <p className="mb-0 text-slate-500">
             Gestiona todos los documentos y archivos del cliente
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
+        <Alert variant="danger" className="mb-4">{error}</Alert>
       )}
 
       {/* Subir archivos */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row align-items-center">
-            <div className="col-md-8">
-              <h6 className="mb-2">Subir nuevos archivos</h6>
-              <p className="text-muted small mb-0">
+      <Card className="mb-4">
+        <CardBody>
+          <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h6 className="mb-1 font-semibold text-slate-800">Subir nuevos archivos</h6>
+              <p className="mb-0 text-sm text-slate-500">
                 Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF (Máximo 10MB por archivo)
               </p>
             </div>
-            <div className="col-md-4">
-              <div className="input-group">
+            <div className="w-full md:w-auto">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-blue-800 px-4 py-2 text-sm font-medium text-white hover:bg-blue-900">
+                {uploading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Subiendo...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={16} />
+                    Subir archivos
+                  </>
+                )}
                 <input
                   type="file"
-                  className="form-control"
+                  className="hidden"
                   multiple
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
                   onChange={handleFileUpload}
                   disabled={uploading}
                 />
-                <button 
-                  className="btn btn-primary" 
-                  type="button"
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" />
-                      Subiendo...
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={16} className="me-2" />
-                      Subir
-                    </>
-                  )}
-                </button>
-              </div>
+              </label>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Filtros */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-6">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Buscar archivos..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-3">
+            <div className="relative">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                className="pl-9"
+                placeholder="Buscar archivos..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <div className="col-md-3">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Filter size={16} />
-                </span>
-                <select
-                  className="form-select"
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                >
-                  <option value="">Todos los tipos</option>
-                  <option value="pdf">PDF</option>
-                  <option value="word">Word</option>
-                  <option value="excel">Excel</option>
-                  <option value="image">Imágenes</option>
-                </select>
-              </div>
+            <div className="relative">
+              <Filter size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Select
+                className="pl-9"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="">Todos los tipos</option>
+                <option value="pdf">PDF</option>
+                <option value="word">Word</option>
+                <option value="excel">Excel</option>
+                <option value="image">Imágenes</option>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <div className="text-muted small">
-                Total: {filteredArchivos.length} archivo{filteredArchivos.length !== 1 ? 's' : ''}
-              </div>
+            <div className="text-sm text-slate-500">
+              Total: {filteredArchivos.length} archivo{filteredArchivos.length !== 1 ? 's' : ''}
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de archivos */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">Documentos</h5>
-        </div>
-        <div className="card-body">
+      <Card>
+        <CardHeader>
+          <CardTitle>Documentos</CardTitle>
+        </CardHeader>
+        <CardBody className="p-0">
           {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
-              </div>
-            </div>
+            <Spinner />
           ) : filteredArchivos.length === 0 ? (
-            <div className="text-center py-5">
-              <FolderOpen size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay archivos</h5>
-              <p className="text-muted">
-                {search || filterType 
+            <div className="py-5 text-center">
+              <FolderOpen size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">No hay archivos</h5>
+              <p className="text-slate-500">
+                {search || filterType
                   ? 'No se encontraron archivos con los criterios de búsqueda.'
                   : 'Aún no se han subido archivos para este cliente.'
                 }
               </p>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Archivo</th>
-                    <th>Tamaño</th>
-                    <th>Fecha de subida</th>
-                    <th>Subido por</th>
-                    <th>Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Archivo</th>
+                    <th className="px-4 py-3 font-semibold">Tamaño</th>
+                    <th className="px-4 py-3 font-semibold">Fecha de subida</th>
+                    <th className="px-4 py-3 font-semibold">Subido por</th>
+                    <th className="px-4 py-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {filteredArchivos.map((archivo) => (
-                    <tr key={archivo.id}>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <span className="fs-4">{getFileIcon(archivo.tipoMime)}</span>
+                    <tr key={archivo.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{getFileIcon(archivo.tipoMime)}</span>
                           <div>
-                            <div className="fw-semibold">{archivo.nombreOriginal}</div>
-                            <div className="text-muted small">{archivo.tipoMime}</div>
+                            <div className="font-semibold text-slate-800">{archivo.nombreOriginal}</div>
+                            <div className="text-xs text-slate-500">{archivo.tipoMime}</div>
                           </div>
                         </div>
                       </td>
-                      <td>
-                        <span className="text-muted small">
-                          {formatFileSize(archivo.tamano)}
-                        </span>
+                      <td className="px-4 py-3 align-middle text-xs text-slate-500">
+                        {formatFileSize(archivo.tamano)}
                       </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-1 text-muted small">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
                           <Calendar size={14} />
                           {formatDate(archivo.fechaSubida)}
                         </div>
                       </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-1 text-muted small">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
                           <User size={14} />
                           {archivo.subidoPor.nombre} {archivo.subidoPor.apellido}
                         </div>
                       </td>
-                      <td>
-                        <div className="btn-group" role="group">
-                          <button
-                            onClick={() => handleViewFile(archivo)}
-                            className="btn btn-outline-primary btn-sm"
-                            title="Vista previa"
-                          >
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex gap-1">
+                          <Button variant="outlinePrimary" size="icon" onClick={() => handleViewFile(archivo)} title="Vista previa">
                             <Eye size={14} />
-                          </button>
-                          <a
-                            href={archivo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-outline-success btn-sm"
-                            title="Descargar archivo"
-                          >
-                            <Download size={14} />
+                          </Button>
+                          <a href={archivo.url} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="icon" className="border-teal-700 text-teal-700 hover:bg-teal-50" title="Descargar archivo">
+                              <Download size={14} />
+                            </Button>
                           </a>
-                          <button
-                            onClick={() => handleDeleteFile(archivo.id)}
-                            className="btn btn-outline-danger btn-sm"
-                            title="Eliminar"
-                          >
+                          <Button variant="outlineDanger" size="icon" onClick={() => handleDeleteFile(archivo.id)} title="Eliminar">
                             <Trash2 size={14} />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -406,11 +372,11 @@ export default function ArchivosLeadPage() {
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Modal de visualización de archivos */}
-      <FileViewerModal 
+      <FileViewerModal
         isOpen={showModal}
         onClose={handleCloseModal}
         archivo={selectedFile}

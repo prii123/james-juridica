@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Activity, Search, User, FileText, Loader2 } from 'lucide-react'
+import { Card } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface SearchResult {
   id: string
@@ -165,173 +167,133 @@ export default function TimelineLiquidacion() {
   const hasData = displayedPasos.some(p => p.completado || p.active)
 
   return (
-    <>
-      <div className="card mb-4">
-        <div className="card-header" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid #e2e8f0'}}>
-          <div className="d-flex align-items-center">
-            <div className="p-2 rounded me-3" style={{backgroundColor: '#f0fdfa'}}>
-              <Activity style={{color: '#0f766e'}} />
-            </div>
-            <div>
-              <h5 className="card-title mb-0" style={{color: '#1e293b'}}>Proceso en Fracaso</h5>
-              <p className="card-subtitle text-muted small mb-0">Etapas del proceso concursal</p>
-            </div>
+    <Card className="mb-4">
+      <div className="rounded-t-xl border-b border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-3">
+        <div className="flex items-center">
+          <div className="mr-3 rounded-lg bg-teal-50 p-2">
+            <Activity className="text-teal-700" />
           </div>
-        </div>
-        <div className="card-body">
-          {/* Buscador */}
-          <div className="position-relative mb-3" ref={dropdownRef}>
-            <div className="input-group">
-              <span className="input-group-text bg-white" style={{borderRight: 'none'}}>
-                {isSearching ? <Loader2 size={16} className="spinner" /> : <Search size={16} style={{color: '#94a3b8'}} />}
-              </span>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Buscar cliente por nombre, cédula o correo..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-                style={{borderLeft: 'none', fontSize: '0.875rem'}}
-              />
-            </div>
-
-            {showDropdown && searchResults.length > 0 && (
-              <div className="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" style={{zIndex: 1000, maxHeight: '240px', overflowY: 'auto'}}>
-                {searchResults.map((result, i) => (
-                  <button
-                    key={`${result.tipo}-${result.id}-${i}`}
-                    className="d-flex align-items-center w-100 px-3 py-2 border-0 bg-transparent text-start"
-                    style={{cursor: 'pointer', fontSize: '0.875rem'}}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    onClick={() => handleSelectResult(result)}
-                  >
-                    <div className="rounded-circle p-1 me-2 d-flex align-items-center justify-content-center" style={{
-                      width: '28px', height: '28px',
-                      backgroundColor: result.tipo === 'cliente' ? '#f0fdfa' : '#eff6ff'
-                    }}>
-                      {result.tipo === 'cliente' ? <User size={14} style={{color: '#0f766e'}} /> : <FileText size={14} style={{color: '#1e40af'}} />}
-                    </div>
-                    <div className="flex-grow-1">
-                      <div className="fw-medium" style={{color: '#1e293b', lineHeight: 1.3}}>{result.titulo}</div>
-                      <div className="small" style={{color: '#64748b'}}>{result.subtitulo} • {result.detalles}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {showDropdown && searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
-              <div className="position-absolute w-100 mt-1 bg-white border rounded shadow-sm p-3 text-center" style={{zIndex: 1000}}>
-                <small className="text-muted">No se encontraron clientes</small>
-              </div>
-            )}
+          <div>
+            <h5 className="m-0 font-semibold text-slate-800">Proceso en Fracaso</h5>
+            <p className="m-0 text-sm text-slate-500">Etapas del proceso concursal</p>
           </div>
-
-          {/* Info del cliente seleccionado */}
-          {selectedClient && (
-            <div className="rounded p-2 mb-3" style={{backgroundColor: '#f8fafc', border: '1px solid #e2e8f0'}}>
-              <div className="d-flex align-items-center gap-2">
-                <User size={14} style={{color: '#0f766e'}} />
-                <span className="small fw-medium" style={{color: '#1e293b'}}>{selectedClient.nombre}</span>
-                <span className="small text-muted">{selectedClient.documento}</span>
-                {selectedCaso && (
-                  <span className="small text-muted ms-auto">Caso: {selectedCaso.numeroCaso}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Timeline */}
-          {isLoading ? (
-            <div className="text-center py-4">
-              <Loader2 size={24} className="spinner mb-2" style={{color: '#94a3b8'}} />
-              <div className="small text-muted">Cargando proceso de liquidación...</div>
-            </div>
-          ) : noData ? (
-            <div className="text-center py-4">
-              <Activity size={32} style={{color: '#cbd5e1'}} />
-              <p className="small text-muted mt-2 mb-0">
-                Este cliente no tiene un proceso de liquidación activo.
-              </p>
-            </div>
-          ) : selectedClient && !hasData ? (
-            <div className="text-center py-4">
-              <Activity size={32} style={{color: '#cbd5e1'}} />
-              <p className="small text-muted mt-2 mb-0">
-                No hay etapas registradas en el proceso de liquidación.
-              </p>
-            </div>
-          ) : selectedClient ? (
-            <div className="timeline">
-              {displayedPasos.map((item, i) => (
-                <div key={i} className="timeline-item">
-                  <div className={`timeline-marker ${item.completado ? 'bg-success' : item.active ? 'bg-info' : 'bg-light border'}`}></div>
-                  <div className="timeline-content">
-                    <h6 className="mb-1" style={{color: item.completado ? '#0f766e' : item.active ? '#0369a1' : '#94a3b8', fontSize: '0.875rem'}}>
-                      {item.nombre}
-                    </h6>
-                    <small className="text-muted">{item.descripcion}</small>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <Search size={32} style={{color: '#cbd5e1'}} />
-              <p className="small text-muted mt-2 mb-0">
-                Busque un cliente para visualizar las etapas de su proceso de liquidación.
-              </p>
-            </div>
-          )}
         </div>
       </div>
+      <div className="p-4">
+        {/* Buscador */}
+        <div className="relative mb-3" ref={dropdownRef}>
+          <div className="relative flex items-center">
+            <span className="pointer-events-none absolute left-3 text-slate-400">
+              {isSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+            </span>
+            <input
+              type="text"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20"
+              placeholder="Buscar cliente por nombre, cédula o correo..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+            />
+          </div>
 
-      <style jsx>{`
-        .timeline {
-          position: relative;
-          padding-left: 2rem;
-        }
-        .timeline::before {
-          content: '';
-          position: absolute;
-          left: 0.5rem;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: #e9ecef;
-        }
-        .timeline-item {
-          position: relative;
-          margin-bottom: 1.25rem;
-        }
-        .timeline-item:last-child {
-          margin-bottom: 0;
-        }
-        .timeline-marker {
-          position: absolute;
-          left: -2rem;
-          top: 0.25rem;
-          width: 1rem;
-          height: 1rem;
-          border-radius: 50%;
-          border: 2px solid #fff;
-        }
-        .timeline-marker.border {
-          border-color: #cbd5e1;
-        }
-        .timeline-content {
-          margin-left: 0.5rem;
-        }
-        :global(.spinner) {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </>
+          {showDropdown && searchResults.length > 0 && (
+            <div className="absolute z-[1000] mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+              {searchResults.map((result, i) => (
+                <button
+                  key={`${result.tipo}-${result.id}-${i}`}
+                  className="flex w-full items-center px-3 py-2 text-left text-sm hover:bg-slate-50"
+                  onClick={() => handleSelectResult(result)}
+                >
+                  <div className={cn(
+                    'mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                    result.tipo === 'cliente' ? 'bg-teal-50' : 'bg-blue-50'
+                  )}>
+                    {result.tipo === 'cliente' ? <User size={14} className="text-teal-700" /> : <FileText size={14} className="text-blue-800" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium leading-tight text-slate-800">{result.titulo}</div>
+                    <div className="truncate text-xs text-slate-500">{result.subtitulo} • {result.detalles}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showDropdown && searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
+            <div className="absolute z-[1000] mt-1 w-full rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm">
+              <small className="text-slate-500">No se encontraron clientes</small>
+            </div>
+          )}
+        </div>
+
+        {/* Info del cliente seleccionado */}
+        {selectedClient && (
+          <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
+            <div className="flex items-center gap-2">
+              <User size={14} className="text-teal-700" />
+              <span className="text-sm font-medium text-slate-800">{selectedClient.nombre}</span>
+              <span className="text-sm text-slate-500">{selectedClient.documento}</span>
+              {selectedCaso && (
+                <span className="ml-auto text-sm text-slate-500">Caso: {selectedCaso.numeroCaso}</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Timeline */}
+        {isLoading ? (
+          <div className="py-4 text-center">
+            <Loader2 size={24} className="mx-auto mb-2 animate-spin text-slate-400" />
+            <div className="text-sm text-slate-500">Cargando proceso de liquidación...</div>
+          </div>
+        ) : noData ? (
+          <div className="py-4 text-center">
+            <Activity size={32} className="mx-auto text-slate-300" />
+            <p className="mb-0 mt-2 text-sm text-slate-500">
+              Este cliente no tiene un proceso de liquidación activo.
+            </p>
+          </div>
+        ) : selectedClient && !hasData ? (
+          <div className="py-4 text-center">
+            <Activity size={32} className="mx-auto text-slate-300" />
+            <p className="mb-0 mt-2 text-sm text-slate-500">
+              No hay etapas registradas en el proceso de liquidación.
+            </p>
+          </div>
+        ) : selectedClient ? (
+          <div className="relative pl-8">
+            <div className="absolute bottom-0 left-2 top-0 w-0.5 bg-slate-200" />
+            {displayedPasos.map((item, i) => (
+              <div key={i} className={cn('relative', i < displayedPasos.length - 1 && 'mb-5')}>
+                <div
+                  className={cn(
+                    'absolute -left-6 top-1 h-4 w-4 rounded-full border-2 border-white',
+                    item.completado ? 'bg-teal-600' : item.active ? 'bg-sky-600' : 'border-slate-300 bg-slate-100'
+                  )}
+                />
+                <div className="ml-2">
+                  <h6
+                    className={cn(
+                      'mb-1 text-sm font-medium',
+                      item.completado ? 'text-teal-700' : item.active ? 'text-sky-700' : 'text-slate-400'
+                    )}
+                  >
+                    {item.nombre}
+                  </h6>
+                  <small className="text-slate-500">{item.descripcion}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-4 text-center">
+            <Search size={32} className="mx-auto text-slate-300" />
+            <p className="mb-0 mt-2 text-sm text-slate-500">
+              Busque un cliente para visualizar las etapas de su proceso de liquidación.
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
   )
 }

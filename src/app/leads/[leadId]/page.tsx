@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Edit, 
-  Phone, 
-  Mail, 
-  User, 
-  Building2, 
+import {
+  ArrowLeft,
+  Edit,
+  Phone,
+  Mail,
+  User,
+  Building2,
   Calendar,
   FileText,
   MessageSquare,
@@ -18,6 +18,7 @@ import {
   Eye
 } from 'lucide-react'
 import { EstadoLead, TipoPersona } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
 
 interface Lead {
   id: string
@@ -52,10 +53,18 @@ interface Lead {
   }>
 }
 
+const ESTADO_BADGE_VARIANT: Record<EstadoLead, BadgeProps['variant']> = {
+  NUEVO: 'primary',
+  CONTACTADO: 'info',
+  CALIFICADO: 'warning',
+  CONVERTIDO: 'success',
+  PERDIDO: 'danger',
+}
+
 export default function LeadDetailPage() {
   const params = useParams()
   const leadId = params.leadId as string
-  
+
   const [lead, setLead] = useState<Lead | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,17 +94,6 @@ export default function LeadDetailPage() {
     }
   }
 
-  const getEstadoBadgeClass = (estado: EstadoLead) => {
-    switch (estado) {
-      case 'NUEVO': return 'badge bg-primary'
-      case 'CONTACTADO': return 'badge bg-info'
-      case 'CALIFICADO': return 'badge bg-warning'
-      case 'CONVERTIDO': return 'badge bg-success'
-      case 'PERDIDO': return 'badge bg-danger'
-      default: return 'badge bg-secondary'
-    }
-  }
-
   const getTipoPersonaIcon = (tipo: TipoPersona) => {
     return tipo === 'NATURAL' ? <User size={16} /> : <Building2 size={16} />
   }
@@ -112,11 +110,9 @@ export default function LeadDetailPage() {
 
       if (response.ok) {
         // Update only the estado field, preserve other data including asesorias
-        setLead(prevLead => 
+        setLead(prevLead =>
           prevLead ? { ...prevLead, estado: nuevoEstado } : null
         )
-        // Optionally refresh the full lead data to ensure consistency
-        // fetchLead()
       } else {
         console.error('Error al actualizar estado del lead')
       }
@@ -126,23 +122,17 @@ export default function LeadDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !lead) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger">
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4 justify-center text-center">
           {error || 'Lead no encontrado'}
-        </div>
-        <Link href="/leads" className="btn btn-primary">
-          Volver a Leads
+        </Alert>
+        <Link href="/leads">
+          <Button>Volver a Leads</Button>
         </Link>
       </div>
     )
@@ -150,82 +140,80 @@ export default function LeadDetailPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Leads', href: '/leads' },
           { label: lead.nombre }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Link href="/leads" className="btn btn-outline-secondary">
-            <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/leads">
+            <Button variant="outline" size="icon">
+              <ArrowLeft size={16} />
+            </Button>
           </Link>
           <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               {getTipoPersonaIcon(lead.tipoPersona)}
-              <h1 className="h2 fw-bold text-dark mb-0">{lead.nombre}</h1>
-              <span className={getEstadoBadgeClass(lead.estado)}>
-                {lead.estado}
-              </span>
+              <h1 className="mb-0 text-2xl font-bold text-slate-800">{lead.nombre}</h1>
+              <Badge variant={ESTADO_BADGE_VARIANT[lead.estado]}>{lead.estado}</Badge>
             </div>
-            <p className="text-secondary mb-0">{lead.empresa || 'Sin empresa'}</p>
+            <p className="mb-0 text-slate-500">{lead.empresa || 'Sin empresa'}</p>
           </div>
         </div>
-        <div className="d-flex gap-2">
-          <Link 
-            href={`/leads/${leadId}/asesorias/nueva`}
-            className="btn btn-success d-flex align-items-center gap-2"
-          >
-            <Plus size={16} />
-            Nueva Asesoría
+        <div className="flex gap-2">
+          <Link href={`/leads/${leadId}/asesorias/nueva`}>
+            <Button variant="success">
+              <Plus size={16} />
+              Nueva Asesoría
+            </Button>
           </Link>
-          <Link 
-            href={`/leads/${leadId}/editar`}
-            className="btn btn-outline-primary d-flex align-items-center gap-2"
-          >
-            <Edit size={16} />
-            Editar
+          <Link href={`/leads/${leadId}/editar`}>
+            <Button variant="outlinePrimary">
+              <Edit size={16} />
+              Editar
+            </Button>
           </Link>
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-lg-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-8">
           {/* Información del Lead */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Información del Lead</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del Lead</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
                   <div className="mb-3">
-                    <div className="d-flex align-items-center gap-2 mb-1">
-                      <Mail size={16} className="text-primary" />
+                    <div className="mb-1 flex items-center gap-2">
+                      <Mail size={16} className="text-blue-800" />
                       <strong>Email:</strong>
                     </div>
                     <p className="mb-0">{lead.email}</p>
                   </div>
                   <div className="mb-3">
-                    <div className="d-flex align-items-center gap-2 mb-1">
-                      <Phone size={16} className="text-primary" />
+                    <div className="mb-1 flex items-center gap-2">
+                      <Phone size={16} className="text-blue-800" />
                       <strong>Teléfono:</strong>
                     </div>
                     <p className="mb-0">{lead.telefono}</p>
                   </div>
                   {lead.documento && (
                     <div className="mb-3">
-                      <div className="d-flex align-items-center gap-2 mb-1">
-                        <FileText size={16} className="text-primary" />
+                      <div className="mb-1 flex items-center gap-2">
+                        <FileText size={16} className="text-blue-800" />
                         <strong>Documento:</strong>
                       </div>
                       <p className="mb-0">{lead.documento}</p>
                     </div>
                   )}
                 </div>
-                <div className="col-md-6">
+                <div>
                   {lead.origen && (
                     <div className="mb-3">
                       <strong>Origen:</strong>
@@ -246,155 +234,150 @@ export default function LeadDetailPage() {
               </div>
               {lead.observaciones && (
                 <div className="mt-3">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <MessageSquare size={16} className="text-primary" />
+                  <div className="mb-1 flex items-center gap-2">
+                    <MessageSquare size={16} className="text-blue-800" />
                     <strong>Observaciones:</strong>
                   </div>
                   <p className="mb-0">{lead.observaciones}</p>
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Asesorías */}
-          <div className="card mb-4">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Asesorías</h5>
-              <Link 
-                href={`/leads/${leadId}/asesorias/nueva`}
-                className="btn btn-sm btn-primary"
-              >
-                <Plus size={14} /> Nueva
+          <Card>
+            <CardHeader>
+              <CardTitle>Asesorías</CardTitle>
+              <Link href={`/leads/${leadId}/asesorias/nueva`}>
+                <Button size="sm">
+                  <Plus size={14} /> Nueva
+                </Button>
               </Link>
-            </div>
-            <div className="card-body">
+            </CardHeader>
+            <CardBody>
               {!lead.asesorias || lead.asesorias.length === 0 ? (
-                <div className="text-center py-4">
-                  <Calendar size={32} className="text-muted mb-2" />
-                  <p className="text-muted mb-3">No hay asesorías registradas</p>
-                  <Link 
-                    href={`/leads/${leadId}/asesorias/nueva`}
-                    className="btn btn-primary btn-sm"
-                  >
-                    Programar Primera Asesoría
+                <div className="py-4 text-center">
+                  <Calendar size={32} className="mx-auto mb-2 text-slate-300" />
+                  <p className="mb-3 text-slate-500">No hay asesorías registradas</p>
+                  <Link href={`/leads/${leadId}/asesorias/nueva`}>
+                    <Button size="sm">Programar Primera Asesoría</Button>
                   </Link>
                 </div>
               ) : (
-                <div className="list-group list-group-flush">
+                <div className="divide-y divide-slate-100">
                   {lead.asesorias.map((asesoria) => (
-                    <div key={asesoria.id} className="list-group-item d-flex justify-content-between align-items-start">
+                    <div key={asesoria.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
                       <div>
-                        <h6 className="mb-1">{asesoria.tema}</h6>
-                        <p className="mb-1 text-muted small">
-                          <strong>Tipo:</strong> {asesoria.tipo} | 
-                          <strong>Estado:</strong> {asesoria.estado} |
+                        <h6 className="mb-1 font-semibold text-slate-800">{asesoria.tema}</h6>
+                        <p className="mb-1 text-sm text-slate-500">
+                          <strong>Tipo:</strong> {asesoria.tipo} |{' '}
+                          <strong>Estado:</strong> {asesoria.estado} |{' '}
                           <strong>Asesor:</strong> {asesoria.asesor.nombre} {asesoria.asesor.apellido}
                         </p>
-                        <small className="text-muted">
+                        <small className="text-slate-500">
                           {new Date(asesoria.fecha).toLocaleString()}
                         </small>
                       </div>
-                      <Link 
-                        href={`/asesorias/${asesoria.id}`}
-                        className="btn btn-outline-primary btn-sm"
-                      >
-                        <Eye size={14} />
+                      <Link href={`/asesorias/${asesoria.id}`}>
+                        <Button variant="outlinePrimary" size="icon">
+                          <Eye size={14} />
+                        </Button>
                       </Link>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
-        <div className="col-lg-4">
+        <div className="space-y-4 lg:col-span-4">
           {/* Acciones Rápidas */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Acciones</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-grid gap-2">
-                <Link 
-                  href={`/leads/${leadId}/asesorias`}
-                  className="btn btn-outline-primary"
-                >
-                  <Calendar className="me-2" size={16} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Acciones</CardTitle>
+            </CardHeader>
+            <CardBody className="grid gap-2">
+              <Link href={`/leads/${leadId}/asesorias`}>
+                <Button variant="outlinePrimary" className="w-full justify-center">
+                  <Calendar size={16} />
                   Ver Asesorías
-                </Link>
-                <Link 
-                  href={`/leads/${leadId}/seguimiento`}
-                  className="btn btn-outline-info"
-                >
-                  <MessageSquare className="me-2" size={16} />
+                </Button>
+              </Link>
+              <Link href={`/leads/${leadId}/seguimiento`}>
+                <Button variant="outline" className="w-full justify-center border-sky-700 text-sky-700 hover:bg-sky-50">
+                  <MessageSquare size={16} />
                   Seguimiento
-                </Link>
-                <a 
-                  href={`tel:${lead.telefono}`}
-                  className="btn btn-outline-success"
-                >
-                  <Phone className="me-2" size={16} />
+                </Button>
+              </Link>
+              <a href={`tel:${lead.telefono}`}>
+                <Button variant="outline" className="w-full justify-center border-teal-700 text-teal-700 hover:bg-teal-50">
+                  <Phone size={16} />
                   Llamar
-                </a>
-                <a 
-                  href={`mailto:${lead.email}`}
-                  className="btn btn-outline-warning"
-                >
-                  <Mail className="me-2" size={16} />
+                </Button>
+              </a>
+              <a href={`mailto:${lead.email}`}>
+                <Button variant="outline" className="w-full justify-center border-amber-500 text-amber-600 hover:bg-amber-50">
+                  <Mail size={16} />
                   Enviar Email
-                </a>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </a>
+            </CardBody>
+          </Card>
 
           {/* Cambiar Estado */}
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">Estado del Lead</h5>
-            </div>
-            <div className="card-body">
+          <Card>
+            <CardHeader>
+              <CardTitle>Estado del Lead</CardTitle>
+            </CardHeader>
+            <CardBody>
               <div className="mb-3">
-                <span className={`badge ${getEstadoBadgeClass(lead.estado)} fs-6`}>
+                <Badge variant={ESTADO_BADGE_VARIANT[lead.estado]} className="text-sm">
                   {lead.estado}
-                </span>
+                </Badge>
               </div>
-              <div className="d-grid gap-1">
+              <div className="grid gap-1.5">
                 {lead.estado !== 'CONTACTADO' && (
-                  <button
-                    className="btn btn-sm btn-info"
+                  <Button
+                    size="sm"
+                    className="justify-center bg-sky-600 hover:bg-sky-700"
                     onClick={() => updateEstado('CONTACTADO')}
                   >
                     Marcar como Contactado
-                  </button>
+                  </Button>
                 )}
                 {lead.estado !== 'CALIFICADO' && (
-                  <button
-                    className="btn btn-sm btn-warning"
+                  <Button
+                    size="sm"
+                    className="justify-center bg-amber-500 hover:bg-amber-600"
                     onClick={() => updateEstado('CALIFICADO')}
                   >
                     Marcar como Calificado
-                  </button>
+                  </Button>
                 )}
                 {lead.estado !== 'CONVERTIDO' && (
-                  <button
-                    className="btn btn-sm btn-success"
+                  <Button
+                    variant="success"
+                    size="sm"
+                    className="justify-center"
                     onClick={() => updateEstado('CONVERTIDO')}
                   >
                     Convertir a Cliente
-                  </button>
+                  </Button>
                 )}
                 {lead.estado !== 'PERDIDO' && (
-                  <button
-                    className="btn btn-sm btn-outline-danger"
+                  <Button
+                    variant="outlineDanger"
+                    size="sm"
+                    className="justify-center"
                     onClick={() => updateEstado('PERDIDO')}
                   >
                     Marcar como Perdido
-                  </button>
+                  </Button>
                 )}
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     </>

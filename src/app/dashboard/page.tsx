@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import CasosRecientes from '@/components/CasosRecientes'
 import TimelineLiquidacion from '@/components/TimelineLiquidacion'
+import { Card, CardBody } from '@/components/ui'
 import {
   TrendingUp,
   Users,
@@ -249,112 +250,92 @@ export default async function DashboardPage() {
 
   return (
     <>
-      {/* Ya no necesitamos espaciador aquí, se maneja globalmente en AppLayout */}
       <div className="page-header-spacing">
-        <h1 className="h2 fw-bold text-dark">Dashboard</h1>
-        <p className="text-muted">Resumen ejecutivo de tu firma jurídica</p>
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p className="text-slate-500">Resumen ejecutivo de tu firma jurídica</p>
       </div>
 
-
-
       {/* Métricas Principales */}
-      <div className="row g-4 mb-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Casos Activos */}
-        <div className="col-12 col-md-6 col-lg-3">
-          <div className="card h-100" style={{borderLeft: '4px solid #1e40af'}}>
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="p-2 rounded" style={{backgroundColor: '#eff6ff'}}>
-                  <Briefcase style={{color: '#1e40af'}} />
-                </div>
-                <div className="d-flex align-items-center fw-medium small" style={{color: stats.casos.growthDirection === 'up' ? '#0f766e' : '#dc2626'}}>
-                  {stats.casos.growthDirection === 'up' ? <ArrowUpRight className="me-1" /> : <ArrowDownRight className="me-1" />}
-                  {stats.casos.growthDirection === 'up' ? '+' : ''}{stats.casos.growth}%
-                </div>
+        <Card className="h-full border-l-4 border-l-blue-800">
+          <CardBody>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="rounded-lg bg-blue-50 p-2">
+                <Briefcase className="text-blue-800" />
               </div>
-              <h6 className="card-title text-muted text-uppercase small mb-1">Casos Activos</h6>
-              <h2 className="card-text fw-bold mb-1" style={{color: '#1e40af'}}>{stats.casos.activos}</h2>
-              <p className="card-text text-muted small">+{stats.casos.thisMonth} este mes</p>
+              <div className={`flex items-center text-sm font-medium ${stats.casos.growthDirection === 'up' ? 'text-teal-700' : 'text-red-600'}`}>
+                {stats.casos.growthDirection === 'up' ? <ArrowUpRight size={16} className="mr-1" /> : <ArrowDownRight size={16} className="mr-1" />}
+                {stats.casos.growthDirection === 'up' ? '+' : ''}{stats.casos.growth}%
+              </div>
             </div>
-          </div>
-        </div>
+            <h6 className="mb-1 text-xs font-semibold uppercase text-slate-500">Casos Activos</h6>
+            <h2 className="mb-1 text-3xl font-bold text-blue-800">{stats.casos.activos}</h2>
+            <p className="text-sm text-slate-500">+{stats.casos.thisMonth} este mes</p>
+          </CardBody>
+        </Card>
 
         {/* Leads Nuevos */}
-        <div className="col-12 col-md-6 col-lg-3">
-          <div className="card h-100" style={{borderLeft: '4px solid #0f766e'}}>
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="p-2 rounded" style={{backgroundColor: '#f0fdfa'}}>
-                  <Users style={{color: '#0f766e'}} />
-                </div>
-                <div className="d-flex align-items-center fw-medium small" style={{color: stats.leads.growthDirection === 'up' ? '#0f766e' : '#dc2626'}}>
-                  {stats.leads.growthDirection === 'up' ? <ArrowUpRight className="me-1" /> : <ArrowDownRight className="me-1" />}
-                  {stats.leads.growthDirection === 'up' ? '+' : ''}{stats.leads.growth}%
-                </div>
+        <Card className="h-full border-l-4 border-l-teal-700">
+          <CardBody>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="rounded-lg bg-teal-50 p-2">
+                <Users className="text-teal-700" />
               </div>
-              <h6 className="card-title text-muted text-uppercase small mb-1">Leads Nuevos</h6>
-              <h2 className="card-text fw-bold mb-1" style={{color: '#0f766e'}}>{stats.leads.total}</h2>
-              <p className="card-text text-muted small">+{stats.leads.thisWeek} esta semana</p>
+              <div className={`flex items-center text-sm font-medium ${stats.leads.growthDirection === 'up' ? 'text-teal-700' : 'text-red-600'}`}>
+                {stats.leads.growthDirection === 'up' ? <ArrowUpRight size={16} className="mr-1" /> : <ArrowDownRight size={16} className="mr-1" />}
+                {stats.leads.growthDirection === 'up' ? '+' : ''}{stats.leads.growth}%
+              </div>
             </div>
-          </div>
-        </div>
+            <h6 className="mb-1 text-xs font-semibold uppercase text-slate-500">Leads Nuevos</h6>
+            <h2 className="mb-1 text-3xl font-bold text-teal-700">{stats.leads.total}</h2>
+            <p className="text-sm text-slate-500">+{stats.leads.thisWeek} esta semana</p>
+          </CardBody>
+        </Card>
 
         {/* Audiencias Próximas */}
-        <div className="col-12 col-md-6 col-lg-3">
-          <div className="card h-100" style={{borderLeft: '4px solid #0369a1'}}>
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="p-2 rounded" style={{backgroundColor: '#f0f9ff'}}>
-                  <Calendar style={{color: '#0369a1'}} />
-                </div>
-                <div className="d-flex align-items-center fw-medium small" style={{color: '#64748b'}}>
-                  <Clock className="me-1" />
-                  {stats.audiencias.thisWeekLabel}
-                </div>
+        <Card className="h-full border-l-4 border-l-sky-700">
+          <CardBody>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="rounded-lg bg-sky-50 p-2">
+                <Calendar className="text-sky-700" />
               </div>
-              <h6 className="card-title text-muted text-uppercase small mb-1">Audiencias Próximas</h6>
-              <h2 className="card-text fw-bold mb-1" style={{color: '#0369a1'}}>{stats.audiencias.proximas}</h2>
-              <p className="card-text text-muted small">{stats.audiencias.hoy} programadas hoy</p>
+              <div className="flex items-center text-sm font-medium text-slate-500">
+                <Clock size={16} className="mr-1" />
+                {stats.audiencias.thisWeekLabel}
+              </div>
             </div>
-          </div>
-        </div>
-
-
+            <h6 className="mb-1 text-xs font-semibold uppercase text-slate-500">Audiencias Próximas</h6>
+            <h2 className="mb-1 text-3xl font-bold text-sky-700">{stats.audiencias.proximas}</h2>
+            <p className="text-sm text-slate-500">{stats.audiencias.hoy} programadas hoy</p>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Secciones Principales */}
-      <div className="row g-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Casos Recientes */}
-        <div className="col-12 col-xl-6">
-          <div className="card">
-            <div className="card-header" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid #e2e8f0'}}>
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="d-flex align-items-center">
-                  <div className="p-2 rounded me-3" style={{backgroundColor: '#eff6ff'}}>
-                    <Briefcase style={{color: '#1e40af'}} />
-                  </div>
-                  <div>
-                    <h5 className="card-title mb-0" style={{color: '#1e293b'}}>Casos Recientes</h5>
-                    <p className="card-subtitle text-muted small mb-0">Últimos casos actualizados</p>
-                  </div>
-                </div>
-                <button className="btn btn-link p-0" style={{color: '#1e40af', textDecoration: 'none'}}>
-                  <span>Ver todos</span>
-                  <Eye className="ms-1" />
-                </button>
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between rounded-t-xl border-b border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-3">
+            <div className="flex items-center">
+              <div className="mr-3 rounded-lg bg-blue-50 p-2">
+                <Briefcase className="text-blue-800" />
+              </div>
+              <div>
+                <h5 className="m-0 font-semibold text-slate-800">Casos Recientes</h5>
+                <p className="m-0 text-sm text-slate-500">Últimos casos actualizados</p>
               </div>
             </div>
-            <div className="list-group list-group-flush">
-              <CasosRecientes casosIniciales={casosRecientes} />
-            </div>
+            <button className="flex items-center text-sm text-blue-800 hover:underline">
+              <span>Ver todos</span>
+              <Eye size={16} className="ml-1" />
+            </button>
           </div>
-        </div>
+          <CasosRecientes casosIniciales={casosRecientes} />
+        </Card>
 
         {/* Proceso de Liquidación */}
-        <div className="col-12 col-xl-6">
-          <TimelineLiquidacion />
-
-        </div>
+        <TimelineLiquidacion />
       </div>
     </>
   )

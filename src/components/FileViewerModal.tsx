@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Download, ExternalLink, FileText, Image } from 'lucide-react'
+import { Button, Spinner } from '@/components/ui'
 
 interface FileViewerModalProps {
   isOpen: boolean
@@ -31,8 +32,8 @@ export default function FileViewerModal({ isOpen, onClose, archivo }: FileViewer
 
   const isPDF = archivo.tipoMime === 'application/pdf'
   const isImage = archivo.tipoMime.startsWith('image/')
-  const isOfficeDoc = archivo.tipoMime.includes('word') || 
-                      archivo.tipoMime.includes('excel') || 
+  const isOfficeDoc = archivo.tipoMime.includes('word') ||
+                      archivo.tipoMime.includes('excel') ||
                       archivo.tipoMime.includes('powerpoint') ||
                       archivo.tipoMime.includes('officedocument')
 
@@ -51,146 +52,108 @@ export default function FileViewerModal({ isOpen, onClose, archivo }: FileViewer
   }
 
   return (
-    <div 
-      className="modal fade show d-block" 
-      tabIndex={-1} 
-      style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
+    <div
+      className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/80 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="modal-dialog modal-xl modal-dialog-centered">
-        <div className="modal-content" style={{ height: '90vh' }}>
-          {/* Header */}
-          <div className="modal-header border-bottom">
-            <div className="d-flex align-items-center gap-3 flex-grow-1">
-              <div>
-                {isImage && <Image size={24} className="text-info" />}
-                {isPDF && <FileText size={24} className="text-danger" />}
-                {isOfficeDoc && <FileText size={24} className="text-primary" />}
-                {!isImage && !isPDF && !isOfficeDoc && <FileText size={24} className="text-secondary" />}
-              </div>
-              <div>
-                <h5 className="modal-title mb-0">{archivo.nombreOriginal}</h5>
-                <small className="text-muted">
-                  {archivo.tipoMime} • {formatFileSize(archivo.tamano)}
-                </small>
-              </div>
+      <div className="flex w-full max-w-5xl flex-col rounded-xl bg-white shadow-xl" style={{ height: '90vh' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+          <div className="flex flex-1 items-center gap-3">
+            <div>
+              {isImage && <Image size={24} className="text-sky-700" />}
+              {isPDF && <FileText size={24} className="text-red-600" />}
+              {isOfficeDoc && <FileText size={24} className="text-blue-800" />}
+              {!isImage && !isPDF && !isOfficeDoc && <FileText size={24} className="text-slate-500" />}
             </div>
-            
-            <div className="d-flex gap-2">
-              {/* <a
-                href={archivo.url}
-                download={archivo.nombreOriginal}
-                className="btn btn-outline-success btn-sm"
-                title="Descargar archivo"
-              >
-                <Download size={16} className="me-1" />
-                Descargar
-              </a> */}
-              <a
-                href={archivo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-outline-primary btn-sm"
-                title="Abrir en nueva pestaña"
-              >
-                <ExternalLink size={16} />
-              </a>
-              <button 
-                type="button" 
-                className="btn btn-outline-secondary btn-sm"
-                onClick={onClose}
-                aria-label="Cerrar"
-              >
-                <X size={16} />
-              </button>
+            <div>
+              <h5 className="m-0 font-semibold text-slate-800">{archivo.nombreOriginal}</h5>
+              <small className="text-slate-500">
+                {archivo.tipoMime} • {formatFileSize(archivo.tamano)}
+              </small>
             </div>
           </div>
 
-          {/* Body */}
-          <div className="modal-body p-0" style={{ height: 'calc(90vh - 120px)', overflow: 'hidden' }}>
-            {loading ? (
-              <div className="d-flex align-items-center justify-content-center h-100">
-                <div className="text-center">
-                  <div className="spinner-border text-primary mb-3" role="status">
-                    <span className="visually-hidden">Cargando...</span>
-                  </div>
-                  <p className="text-muted">Cargando archivo...</p>
-                </div>
+          <div className="flex gap-2">
+            <a href={archivo.url} target="_blank" rel="noopener noreferrer">
+              <Button variant="outlinePrimary" size="icon" title="Abrir en nueva pestaña">
+                <ExternalLink size={16} />
+              </Button>
+            </a>
+            <Button variant="outline" size="icon" onClick={onClose} aria-label="Cerrar">
+              <X size={16} />
+            </Button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-hidden">
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <Spinner />
+                <p className="text-slate-500">Cargando archivo...</p>
               </div>
-            ) : (
-              <>
-                {/* PDF Viewer */}
-                {isPDF && (
-                  <iframe
-                    src={`${archivo.url}#toolbar=1&navpanes=1&scrollbar=1&page=1&view=FitH`}
-                    className="w-100 h-100"
-                    style={{ border: 'none' }}
-                    title={archivo.nombreOriginal}
+            </div>
+          ) : (
+            <>
+              {/* PDF Viewer */}
+              {isPDF && (
+                <iframe
+                  src={`${archivo.url}#toolbar=1&navpanes=1&scrollbar=1&page=1&view=FitH`}
+                  className="h-full w-full border-0"
+                  title={archivo.nombreOriginal}
+                />
+              )}
+
+              {/* Image Viewer */}
+              {isImage && (
+                <div className="flex h-full items-center justify-center bg-slate-50 p-3">
+                  <img
+                    src={archivo.url}
+                    alt={archivo.nombreOriginal}
+                    className="max-h-full max-w-full rounded-lg object-contain shadow-md"
                   />
-                )}
+                </div>
+              )}
 
-                {/* Image Viewer */}
-                {isImage && (
-                  <div className="h-100 d-flex align-items-center justify-content-center p-3" style={{backgroundColor: '#f8f9fa'}}>
-                    <img
-                      src={archivo.url}
-                      alt={archivo.nombreOriginal}
-                      className="img-fluid"
-                      style={{ 
-                        maxHeight: '100%', 
-                        maxWidth: '100%',
-                        objectFit: 'contain',
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </div>
-                )}
+              {/* Office Documents */}
+              {isOfficeDoc && (
+                <iframe
+                  src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(archivo.url)}`}
+                  className="h-full w-full border-0"
+                  title={archivo.nombreOriginal}
+                />
+              )}
 
-                {/* Office Documents */}
-                {isOfficeDoc && (
-                  <iframe
-                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(archivo.url)}`}
-                    className="w-100 h-100"
-                    style={{ border: 'none' }}
-                    title={archivo.nombreOriginal}
-                  />
-                )}
-
-                {/* Unsupported file types */}
-                {!isPDF && !isImage && !isOfficeDoc && (
-                  <div className="d-flex align-items-center justify-content-center h-100">
-                    <div className="text-center">
-                      <FileText size={64} className="text-muted mb-3" />
-                      <h5 className="text-muted">Vista previa no disponible</h5>
-                      <p className="text-muted mb-4">
-                        No se puede mostrar una vista previa de este tipo de archivo.
-                      </p>
-                      <div className="d-flex gap-2 justify-content-center">
-                        <a
-                          href={archivo.url}
-                          download={archivo.nombreOriginal}
-                          className="btn btn-primary"
-                        >
-                          <Download size={16} className="me-2" />
+              {/* Unsupported file types */}
+              {!isPDF && !isImage && !isOfficeDoc && (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <FileText size={64} className="mx-auto mb-3 text-slate-300" />
+                    <h5 className="font-semibold text-slate-600">Vista previa no disponible</h5>
+                    <p className="mb-4 text-slate-500">
+                      No se puede mostrar una vista previa de este tipo de archivo.
+                    </p>
+                    <div className="flex justify-center gap-2">
+                      <a href={archivo.url} download={archivo.nombreOriginal}>
+                        <Button>
+                          <Download size={16} />
                           Descargar archivo
-                        </a>
-                        <a
-                          href={archivo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline-primary"
-                        >
-                          <ExternalLink size={16} className="me-2" />
+                        </Button>
+                      </a>
+                      <a href={archivo.url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outlinePrimary">
+                          <ExternalLink size={16} />
                           Abrir externamente
-                        </a>
-                      </div>
+                        </Button>
+                      </a>
                     </div>
                   </div>
-                )}
-              </>
-            )}
-          </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
