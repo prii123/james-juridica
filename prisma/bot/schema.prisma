@@ -1,0 +1,102 @@
+// Esquema de la base de datos del chatbot de WhatsApp (solo lectura/seguimiento).
+// Cliente generado en src/generated/bot-client. Regenerar con: npm run db:generate:bot
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/generated/bot-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_BOT")
+}
+
+model contactos {
+  id                      String               @id @db.Uuid
+  telefono                String               @unique
+  nombre_perfil           String?
+  nombre                  String?
+  email                   String?
+  tipo_persona            String?
+  ciudad                  String?
+  documento               String?
+  estado_conversacion     String               @default("BIENVENIDA")
+  consentimiento_datos    Boolean              @default(false)
+  consentimiento_at       DateTime?
+  origen                  String?
+  ultimo_mensaje_at       DateTime?
+  recordatorio_enviado_at DateTime?
+  created_at              DateTime             @default(now())
+  updated_at              DateTime
+  wa_phone_number_id      String?
+  casos                   casos[]
+  mensajes                mensajes[]
+  respuestas_captura      respuestas_captura[]
+
+  @@index([estado_conversacion])
+}
+
+model casos {
+  id                   String    @id @db.Uuid
+  contacto_id          String    @db.Uuid
+  situacion            String?
+  rango_deuda          String?
+  num_acreedores       String?
+  tipos_acreedores     Json      @default("[]")
+  tiene_bienes         Boolean?
+  bienes               Json?
+  rango_ingresos       String?
+  procesos_judiciales  String?
+  preferencia_contacto String?
+  horario_contacto     String?
+  notas                String?
+  etapa_comercial      String    @default("nuevo")
+  abogado_asignado     String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime
+  contactos            contactos @relation(fields: [contacto_id], references: [id], onDelete: Cascade)
+
+  @@index([contacto_id])
+  @@index([etapa_comercial])
+}
+
+model mensajes {
+  id             String    @id @db.Uuid
+  contacto_id    String    @db.Uuid
+  direccion      String
+  wa_message_id  String?   @unique
+  tipo           String
+  contenido      String?
+  media_id       String?
+  media_url      String?
+  mime_type      String?
+  payload_raw    Json?
+  estado_entrega String?
+  created_at     DateTime  @default(now())
+  contactos      contactos @relation(fields: [contacto_id], references: [id], onDelete: Cascade)
+
+  @@index([contacto_id, created_at])
+}
+
+model respuestas_captura {
+  id                    String    @id @db.Uuid
+  contacto_id           String    @db.Uuid
+  paso                  String
+  pregunta              String
+  respuesta_raw         String
+  respuesta_normalizada String?
+  valida                Boolean   @default(true)
+  created_at            DateTime  @default(now())
+  contactos             contactos @relation(fields: [contacto_id], references: [id], onDelete: Cascade)
+
+  @@index([contacto_id, paso])
+}
+
+model eventos_webhook {
+  id            String   @id @db.Uuid
+  wa_message_id String   @unique
+  payload       Json
+  procesado     Boolean  @default(false)
+  error         String?
+  created_at    DateTime @default(now())
+}

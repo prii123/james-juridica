@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
+import EnviarFacturaModal from '@/components/EnviarFacturaModal'
 import { 
   ArrowLeft, 
   Edit3, 
@@ -115,6 +116,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [showSendModal, setShowSendModal] = useState(false)
 
   useEffect(() => {
     fetchFactura()
@@ -325,6 +327,13 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
               <Download size={16} />
             )}
             {downloadingPdf ? 'Descargando...' : 'Descargar PDF'}
+          </button>
+          <button
+            onClick={() => setShowSendModal(true)}
+            className="btn btn-success d-flex align-items-center gap-2"
+          >
+            <Send size={16} />
+            Enviar
           </button>
         </div>
       </div>
@@ -631,6 +640,21 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
           margin-left: 0.5rem;
         }
       `}</style>
+
+      {showSendModal && factura && (
+        <EnviarFacturaModal
+          facturaId={params.facturaId}
+          tipo="factura"
+          clienteNombre={factura.honorario 
+            ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
+            : factura.cliente 
+              ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+              : factura.clienteNombre || 'Sin cliente'}
+          email={factura.honorario?.caso?.cliente?.email || factura.cliente?.email || ''}
+          telefono={factura.honorario?.caso?.cliente?.telefono || factura.cliente?.telefono || ''}
+          onClose={() => setShowSendModal(false)}
+        />
+      )}
     </>
   )
 }

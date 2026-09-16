@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
+import EnviarFacturaModal from '@/components/EnviarFacturaModal'
 import TimelineCuotas from './components/TimelineCuotas'
 import ResumenCuotas from './components/ResumenCuotas'
 import AplicarPago from './components/AplicarPago'
@@ -15,7 +16,8 @@ import {
   FileText,
   Plus,
   RefreshCw,
-  Download
+  Download,
+  Send
 } from 'lucide-react'
 
 interface CuotaSeguimiento {
@@ -60,6 +62,8 @@ interface FacturaSeguimiento {
   cliente: {
     nombre: string
     apellido?: string
+    email?: string
+    telefono?: string
   }
   caso: {
     numeroCaso: string
@@ -103,6 +107,7 @@ export default function SeguimientoCuotasPage() {
   const [error, setError] = useState('')
   const [mostrarFormularioPago, setMostrarFormularioPago] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [showSendModal, setShowSendModal] = useState(false)
 
   useEffect(() => {
     if (facturaId) {
@@ -238,6 +243,13 @@ export default function SeguimientoCuotasPage() {
             {downloadingPdf ? 'Descargando...' : 'PDF'}
           </button>
           <button
+            className="btn btn-outline-success d-flex align-items-center gap-1"
+            onClick={() => setShowSendModal(true)}
+          >
+            <Send size={16} />
+            Enviar
+          </button>
+          <button
             className="btn btn-success"
             onClick={() => setMostrarFormularioPago(true)}
           >
@@ -295,6 +307,17 @@ export default function SeguimientoCuotasPage() {
           onPagoAplicado={handlePagoAplicado}
           onCancel={() => setMostrarFormularioPago(false)}
           formatCurrency={formatCurrency}
+        />
+      )}
+
+      {showSendModal && factura && (
+        <EnviarFacturaModal
+          facturaId={factura.id}
+          tipo="cuotas"
+          clienteNombre={`${factura.cliente.nombre} ${factura.cliente.apellido || ''}`}
+          email={factura.cliente.email || ''}
+          telefono={factura.cliente.telefono || ''}
+          onClose={() => setShowSendModal(false)}
         />
       )}
     </>

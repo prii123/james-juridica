@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
+import EnviarFacturaModal from '@/components/EnviarFacturaModal'
 import { 
   ArrowLeft, 
   Calculator, 
@@ -12,7 +13,8 @@ import {
   Calendar,
   Percent,
   FileText,
-  Download
+  Download,
+  Send
 } from 'lucide-react'
 
 interface Factura {
@@ -26,6 +28,8 @@ interface Factura {
   cliente: {
     nombre: string
     apellido?: string
+    email?: string
+    telefono?: string
   }
   caso: {
     numeroCaso: string
@@ -50,6 +54,7 @@ export default function FinanciacionPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [showSendModal, setShowSendModal] = useState(false)
   const [error, setError] = useState('')
   
   const [formData, setFormData] = useState({
@@ -98,7 +103,9 @@ export default function FinanciacionPage() {
         tasaInteres: data.tasaInteres ? Number(data.tasaInteres) : undefined,
         cliente: {
           nombre: data.honorario?.caso?.cliente?.nombre ?? data.cliente?.nombre ?? data.clienteNombre ?? '',
-          apellido: data.honorario?.caso?.cliente?.apellido ?? data.cliente?.apellido ?? ''
+          apellido: data.honorario?.caso?.cliente?.apellido ?? data.cliente?.apellido ?? '',
+          email: data.honorario?.caso?.cliente?.email ?? data.cliente?.email ?? '',
+          telefono: data.honorario?.caso?.cliente?.telefono ?? data.cliente?.telefono ?? ''
         },
         caso: {
           numeroCaso: data.honorario?.caso?.numeroCaso ?? 'N/A'
@@ -314,6 +321,15 @@ export default function FinanciacionPage() {
               <Download size={16} />
             )}
             {downloadingPdf ? 'Descargando...' : 'Descargar PDF'}
+          </button>
+        )}
+        {tablaCuotas.length > 0 && (
+          <button
+            onClick={() => setShowSendModal(true)}
+            className="btn btn-success d-flex align-items-center gap-2"
+          >
+            <Send size={16} />
+            Enviar
           </button>
         )}
       </div>
@@ -535,6 +551,17 @@ export default function FinanciacionPage() {
           </div>
         </div>
       </div>
+
+      {showSendModal && factura && (
+        <EnviarFacturaModal
+          facturaId={factura.id}
+          tipo="financiacion"
+          clienteNombre={`${factura.cliente.nombre} ${factura.cliente.apellido || ''}`}
+          email={factura.cliente.email || ''}
+          telefono={factura.cliente.telefono || ''}
+          onClose={() => setShowSendModal(false)}
+        />
+      )}
     </>
   )
 }

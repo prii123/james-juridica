@@ -64,7 +64,9 @@ export async function GET(
         cliente: {
           select: {
             nombre: true,
-            apellido: true
+            apellido: true,
+            email: true,
+            telefono: true
           }
         },
         cuotasFactura: {
@@ -173,7 +175,9 @@ export async function GET(
         tasaInteres: factura.tasaInteres ? Number(factura.tasaInteres) : null,
         cliente: {
           nombre: factura.honorario?.caso?.cliente?.nombre ?? factura.cliente?.nombre ?? factura.clienteNombre ?? '',
-          apellido: factura.honorario?.caso?.cliente?.apellido ?? factura.cliente?.apellido ?? ''
+          apellido: factura.honorario?.caso?.cliente?.apellido ?? factura.cliente?.apellido ?? '',
+          email: factura.honorario?.caso?.cliente?.email ?? factura.cliente?.email ?? '',
+          telefono: factura.honorario?.caso?.cliente?.telefono ?? factura.cliente?.telefono ?? ''
         },
         caso: {
           numeroCaso: factura.honorario?.caso?.numeroCaso ?? ''

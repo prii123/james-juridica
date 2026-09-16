@@ -9,12 +9,13 @@ const DEFAULT_MODULES = [
   { name: 'Dashboard', href: '/dashboard', icon: 'Home', description: 'Vista general y métricas', permission: null, order: 1 },
   { name: 'Calendario', href: '/calendario', icon: 'Calendar', description: 'Eventos y agenda', permission: null, order: 2 },
   { name: 'Leads', href: '/leads', icon: 'Users', description: 'Potenciales clientes', permission: 'leads.view', order: 3 },
-  { name: 'Asesorías', href: '/asesorias', icon: 'Scale', description: 'Consultas y asesorías jurídicas', permission: 'asesorias.view', order: 4 },
-  { name: 'Radicaciones', href: '/radicaciones', icon: 'FileText', description: 'Procesos de radicación', permission: 'radicaciones.view', order: 5 },
-  { name: 'Casos', href: '/casos', icon: 'Briefcase', description: 'Gestión de casos de insolvencia', permission: 'casos.view', order: 6 },
-  { name: 'Facturación', href: '/facturacion', icon: 'BarChart3', description: 'Facturación y reportes financieros', permission: 'facturacion.view', order: 7 },
-  { name: 'Cartera', href: '/cartera', icon: 'CreditCard', description: 'Gestión de cobros y pagos', permission: 'cartera.view', order: 8 },
-  { name: 'Usuarios', href: '/usuarios', icon: 'Users', description: 'Gestión de usuarios y permisos', permission: 'usuarios.view', order: 9 },
+  { name: 'Bot', href: '/bot', icon: 'Bot', description: 'Contactos del chatbot de WhatsApp', permission: 'leads.view', order: 4 },
+  { name: 'Asesorías', href: '/asesorias', icon: 'Scale', description: 'Consultas y asesorías jurídicas', permission: 'asesorias.view', order: 5 },
+  { name: 'Radicaciones', href: '/radicaciones', icon: 'FileText', description: 'Procesos de radicación', permission: 'radicaciones.view', order: 6 },
+  { name: 'Casos', href: '/casos', icon: 'Briefcase', description: 'Gestión de casos de insolvencia', permission: 'casos.view', order: 7 },
+  { name: 'Facturación', href: '/facturacion', icon: 'BarChart3', description: 'Facturación y reportes financieros', permission: 'facturacion.view', order: 8 },
+  { name: 'Cartera', href: '/cartera', icon: 'CreditCard', description: 'Gestión de cobros y pagos', permission: 'cartera.view', order: 9 },
+  { name: 'Usuarios', href: '/usuarios', icon: 'Users', description: 'Gestión de usuarios y permisos', permission: 'usuarios.view', order: 10 },
 ]
 
 async function ensureModulesSeeded() {
@@ -54,6 +55,24 @@ async function ensureModulesSeeded() {
         where: { id: { in: toDelete } },
       })
     }
+  }
+
+  // Insertar módulos nuevos que aún no existan en la BD y sincronizar su orden
+  const existingModules = await prisma.module.findMany({
+    select: { id: true, href: true, order: true },
+  })
+  const existingByHref = new Map(existingModules.map((m) => [m.href, m]))
+
+  const missing = DEFAULT_MODULES.filter((m) => !existingByHref.has(m.href))
+  if (missing.length > 0) {
+    await prisma.module.createMany({ data: missing })
+  }
+
+  const orderUpdates = DEFAULT_MODULES
+    .filter((m) => existingByHref.has(m.href) && existingByHref.get(m.href)!.order !== m.order)
+    .map((m) => prisma.module.update({ where: { id: existingByHref.get(m.href)!.id }, data: { order: m.order } }))
+  if (orderUpdates.length > 0) {
+    await prisma.$transaction(orderUpdates)
   }
 }
 
