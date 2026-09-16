@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import Sidebar from './Sidebar'
+import { cn } from '@/lib/utils'
 
 export default function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -12,38 +11,39 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="d-lg-none position-fixed" style={{top: '1rem', left: '1rem', zIndex: 50}}>
+      <div className="fixed left-4 top-4 z-50 lg:hidden">
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 bg-white rounded-3 shadow border border-secondary"
+          className="rounded-lg border border-slate-200 bg-white p-2 shadow"
         >
-          <Menu style={{width: '20px', height: '20px'}} className="text-secondary" />
+          <Menu size={20} className="text-slate-600" />
         </button>
       </div>
 
       {/* Overlay */}
       {isOpen && (
         <div
-          className="d-lg-none position-fixed bg-dark opacity-50"
-          style={{top: 0, left: 0, right: 0, bottom: 0, zIndex: 40}}
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
-      <div className={`d-lg-none position-fixed bg-white transition-all ${isOpen ? 'start-0' : ''}`} style={{top: 0, bottom: 0, width: '16rem', zIndex: 50, transform: isOpen ? 'translateX(0)' : 'translateX(-100%)'}}>
-        <div className="d-flex align-items-center justify-content-between p-3 border-bottom border-secondary">
-          <h2 className="fs-5 fw-semibold text-dark">ERP Jurídico</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-1 btn btn-light rounded"
-          >
-            <X style={{width: '20px', height: '20px'}} className="text-secondary" />
+      <div
+        className={cn(
+          'fixed bottom-0 top-0 z-50 w-64 bg-white transition-transform lg:hidden',
+          isOpen ? 'left-0 translate-x-0' : 'left-0 -translate-x-full'
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 p-3">
+          <h2 className="text-lg font-semibold text-slate-800">ERP Jurídico</h2>
+          <button onClick={() => setIsOpen(false)} className="rounded-lg bg-slate-100 p-1 hover:bg-slate-200">
+            <X size={20} className="text-slate-600" />
           </button>
         </div>
-        
-        <div className="h-100 overflow-auto">
-          <Sidebar className="border-end-0" />
+
+        <div className="h-full overflow-auto">
+          <Sidebar />
         </div>
       </div>
     </>

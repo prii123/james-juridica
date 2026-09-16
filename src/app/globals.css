@@ -1,5 +1,17 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
+/*
+ * Migración de Bootstrap a Tailwind en curso (módulo por módulo).
+ * Ambos frameworks conviven por ahora: Tailwind tiene el "preflight"
+ * desactivado (ver tailwind.config.ts) para no alterar el estilado de las
+ * páginas que todavía usan clases de Bootstrap. Cuando se termine de migrar
+ * todo el proyecto, quitar el import de arriba, el <Script> de bootstrap en
+ * src/app/layout.tsx, reactivar `preflight` y desinstalar `bootstrap`.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Variables CSS para consistencia */
 :root {
   --topbar-height: 80px; /* altura fija del topbar */
@@ -64,4 +76,28 @@
 .spinner-border-sm {
   width: 1rem;
   height: 1rem;
+}
+
+/* Scrollbar del dropdown de búsqueda global (TopBar) */
+.search-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.search-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-dropdown::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

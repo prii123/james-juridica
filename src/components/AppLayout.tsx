@@ -14,64 +14,49 @@ interface AppLayoutProps {
 const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const pathname = usePathname()
 
   // Determinar si debe mostrar el sidebar
   const showSidebar = session && !authRoutes.includes(pathname) && pathname !== '/'
-  
+
   // Si no debe mostrar sidebar, renderizar solo el contenido
   if (!showSidebar) {
-    return (
-      <div className="min-vh-100">
-        {children}
-      </div>
-    )
+    return <div className="min-h-screen">{children}</div>
   }
 
   // Renderizar con sidebar para usuarios autenticados en rutas protegidas
   return (
-    <div className="min-vh-100 bg-light">
+    <div className="min-h-screen bg-slate-50">
       {/* TopBar fijo global */}
       <TopBar />
-      
-      <div className="d-flex vh-100">
+
+      <div className="flex h-screen">
         {/* Desktop Sidebar */}
-        <aside 
-          className="d-none d-lg-block position-fixed h-100" 
-          style={{width: '16rem', zIndex: 10}}
-        >
+        <aside className="fixed hidden h-full w-64 lg:block" style={{ zIndex: 10 }}>
           <Sidebar />
         </aside>
-        
+
         {/* Mobile Sidebar */}
         <MobileSidebar />
-        
+
         {/* Main content area */}
-        <div className="flex-fill d-flex flex-column d-lg-block" style={{marginLeft: '0'}}>
+        <div className="flex flex-1 flex-col lg:block">
           {/* Desktop: apply margin */}
-          <div className="d-none d-lg-block" style={{marginLeft: '16rem'}}>
-            {/* Page content */}
-            <main className="main-content overflow-auto p-3 p-lg-4 bg-light" style={{minHeight: '100vh'}}>
+          <div className="hidden lg:ml-64 lg:block">
+            <main className="main-content min-h-screen overflow-auto bg-slate-50 p-3 lg:p-4">
               {/* Espaciador automático para compensar TopBar fijo */}
-              <div className="topbar-spacer"></div>
-              
-              <div className="container-fluid">
-                {children}
-              </div>
+              <div className="topbar-spacer" />
+              <div className="w-full px-2">{children}</div>
             </main>
           </div>
-          
+
           {/* Mobile: no margin */}
-          <div className="d-lg-none d-flex flex-column h-100">
-            {/* Page content */}
-            <main className="main-content flex-fill overflow-auto p-3 bg-light">
+          <div className="flex h-full flex-col lg:hidden">
+            <main className="main-content flex-1 overflow-auto bg-slate-50 p-3">
               {/* Espaciador automático para compensar TopBar fijo */}
-              <div className="topbar-spacer"></div>
-              
-              <div className="container-fluid">
-                {children}
-              </div>
+              <div className="topbar-spacer" />
+              <div className="w-full px-2">{children}</div>
             </main>
           </div>
         </div>

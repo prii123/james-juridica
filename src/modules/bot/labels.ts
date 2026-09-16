@@ -1,13 +1,14 @@
 // Etiquetas legibles para los valores normalizados que guarda el chatbot.
 // Los valores desconocidos se "humanizan" (guiones bajos -> espacios, primera letra mayúscula).
 
+// badgeVariant corresponde a las variantes del componente <Badge> (src/components/ui/Badge.tsx)
 export const ETAPAS_COMERCIALES = [
-  { value: 'nuevo', label: 'Nuevo', badge: 'bg-primary' },
-  { value: 'contactado', label: 'Contactado', badge: 'bg-info' },
-  { value: 'en_seguimiento', label: 'En seguimiento', badge: 'bg-warning text-dark' },
-  { value: 'calificado', label: 'Calificado', badge: 'bg-secondary' },
-  { value: 'convertido', label: 'Convertido', badge: 'bg-success' },
-  { value: 'descartado', label: 'Descartado', badge: 'bg-danger' },
+  { value: 'nuevo', label: 'Nuevo', badgeVariant: 'primary' },
+  { value: 'contactado', label: 'Contactado', badgeVariant: 'info' },
+  { value: 'en_seguimiento', label: 'En seguimiento', badgeVariant: 'warning' },
+  { value: 'calificado', label: 'Calificado', badgeVariant: 'secondary' },
+  { value: 'convertido', label: 'Convertido', badgeVariant: 'success' },
+  { value: 'descartado', label: 'Descartado', badgeVariant: 'danger' },
 ] as const
 
 export type EtapaComercial = (typeof ETAPAS_COMERCIALES)[number]['value']
@@ -107,5 +108,5 @@ export function labelList(field: string, values: unknown): string {
 }
 
 export function etapaInfo(value: string | null | undefined) {
-  return ETAPA_BY_VALUE.get(value || 'nuevo') ?? { value: value || 'nuevo', label: humanize(value), badge: 'bg-secondary' }
+  return ETAPA_BY_VALUE.get(value || 'nuevo') ?? { value: value || 'nuevo', label: humanize(value), badgeVariant: 'secondary' as const }
 }

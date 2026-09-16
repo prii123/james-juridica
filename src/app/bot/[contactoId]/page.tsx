@@ -10,6 +10,8 @@ import {
   Save, ExternalLink, ClipboardList, Briefcase, CheckCircle2, Clock,
 } from 'lucide-react'
 import { ETAPAS_COMERCIALES, etapaInfo, label, labelList, labelRangoDinero, humanize } from '@/modules/bot/labels'
+import { Button, Card, CardHeader, CardBody, Badge, Textarea, Select, Label as FieldLabel, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface CasoBot {
   id: string
@@ -156,22 +158,18 @@ export default function BotContactoPage() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !contacto) {
     return (
       <>
         <Breadcrumb items={[{ label: 'Bot', href: '/bot' }, { label: 'Contacto' }]} />
-        <div className="alert alert-danger" role="alert">{error || 'Contacto no encontrado'}</div>
-        <Link href="/bot" className="btn btn-outline-secondary d-flex align-items-center gap-2" style={{ width: 'fit-content' }}>
-          <ArrowLeft size={16} /> Volver
+        <Alert variant="danger" className="mb-4">{error || 'Contacto no encontrado'}</Alert>
+        <Link href="/bot">
+          <Button variant="outline">
+            <ArrowLeft size={16} /> Volver
+          </Button>
         </Link>
       </>
     )
@@ -191,164 +189,175 @@ export default function BotContactoPage() {
       <Breadcrumb items={[{ label: 'Bot', href: '/bot' }, { label: nombre }]} />
 
       {/* Header */}
-      <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+          <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold text-slate-800">
             <Bot size={26} />
             {nombre}
           </h1>
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <span className={`badge ${etapaActual.badge}`}>{etapaActual.label}</span>
-            <span className={`badge ${esperando ? 'bg-danger' : 'bg-light text-dark border'}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={etapaActual.badgeVariant}>{etapaActual.label}</Badge>
+            <Badge variant={esperando ? 'danger' : 'outline'}>
               {label('estado_conversacion', contacto.estado_conversacion)}
-            </span>
+            </Badge>
             {contacto.leadExistente && (
-              <Link href={`/leads/${contacto.leadExistente.id}`} className="badge bg-success text-decoration-none d-flex align-items-center gap-1">
-                <CheckCircle2 size={12} /> Ya está en Leads
+              <Link href={`/leads/${contacto.leadExistente.id}`}>
+                <Badge variant="success" className="cursor-pointer no-underline">
+                  <CheckCircle2 size={12} /> Ya está en Leads
+                </Badge>
               </Link>
             )}
           </div>
         </div>
-        <div className="d-flex gap-2">
-          <Link href="/bot" className="btn btn-outline-secondary d-flex align-items-center gap-2">
-            <ArrowLeft size={16} /> Volver
+        <div className="flex gap-2">
+          <Link href="/bot">
+            <Button variant="outline">
+              <ArrowLeft size={16} /> Volver
+            </Button>
           </Link>
           {contacto.leadExistente ? (
-            <Link href={`/leads/${contacto.leadExistente.id}`} className="btn btn-success d-flex align-items-center gap-2">
-              <ExternalLink size={16} /> Ver lead
+            <Link href={`/leads/${contacto.leadExistente.id}`}>
+              <Button variant="success">
+                <ExternalLink size={16} /> Ver lead
+              </Button>
             </Link>
           ) : (
-            <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => setShowCopiar(true)}>
+            <Button onClick={() => setShowCopiar(true)}>
               <Copy size={16} /> Copiar a Leads
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="row g-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Columna izquierda: datos */}
-        <div className="col-lg-5">
+        <div className="space-y-4 lg:col-span-5">
           {/* Contacto */}
-          <div className="card mb-4">
-            <div className="card-header bg-light d-flex align-items-center gap-2">
-              <User size={16} />
-              <h6 className="mb-0">Datos del contacto</h6>
-            </div>
-            <div className="card-body">
-              <dl className="row mb-0 small">
-                <dt className="col-5 text-muted">Teléfono</dt>
-                <dd className="col-7 d-flex align-items-center gap-1">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <User size={16} />
+                <h6 className="m-0 font-semibold text-slate-800">Datos del contacto</h6>
+              </div>
+            </CardHeader>
+            <CardBody>
+              <dl className="grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-y-2 text-sm">
+                <dt className="text-slate-500">Teléfono</dt>
+                <dd className="flex items-center gap-1">
                   <Phone size={12} />
-                  <a href={`https://wa.me/${contacto.telefono}`} target="_blank" rel="noreferrer" className="text-decoration-none">
+                  <a href={`https://wa.me/${contacto.telefono}`} target="_blank" rel="noreferrer" className="text-blue-800 hover:underline">
                     {contacto.telefono}
                   </a>
                 </dd>
-                <dt className="col-5 text-muted">Email</dt>
-                <dd className="col-7 d-flex align-items-center gap-1"><Mail size={12} />{contacto.email || '-'}</dd>
-                <dt className="col-5 text-muted">Nombre en WhatsApp</dt>
-                <dd className="col-7">{contacto.nombre_perfil || '-'}</dd>
-                <dt className="col-5 text-muted">Tipo de persona</dt>
-                <dd className="col-7">{label('tipo_persona', contacto.tipo_persona)}</dd>
-                <dt className="col-5 text-muted">Documento</dt>
-                <dd className="col-7">{contacto.documento || '-'}</dd>
-                <dt className="col-5 text-muted">Ciudad</dt>
-                <dd className="col-7 d-flex align-items-center gap-1"><MapPin size={12} />{contacto.ciudad || '-'}</dd>
-                <dt className="col-5 text-muted">Origen</dt>
-                <dd className="col-7">{humanize(contacto.origen)}</dd>
-                <dt className="col-5 text-muted">Consentimiento datos</dt>
-                <dd className="col-7">
+                <dt className="text-slate-500">Email</dt>
+                <dd className="flex items-center gap-1"><Mail size={12} />{contacto.email || '-'}</dd>
+                <dt className="text-slate-500">Nombre en WhatsApp</dt>
+                <dd>{contacto.nombre_perfil || '-'}</dd>
+                <dt className="text-slate-500">Tipo de persona</dt>
+                <dd>{label('tipo_persona', contacto.tipo_persona)}</dd>
+                <dt className="text-slate-500">Documento</dt>
+                <dd>{contacto.documento || '-'}</dd>
+                <dt className="text-slate-500">Ciudad</dt>
+                <dd className="flex items-center gap-1"><MapPin size={12} />{contacto.ciudad || '-'}</dd>
+                <dt className="text-slate-500">Origen</dt>
+                <dd>{humanize(contacto.origen)}</dd>
+                <dt className="text-slate-500">Consentimiento datos</dt>
+                <dd>
                   {contacto.consentimiento_datos
-                    ? <span className="text-success">Sí{contacto.consentimiento_at && ` · ${new Date(contacto.consentimiento_at).toLocaleString()}`}</span>
-                    : <span className="text-danger">No</span>}
+                    ? <span className="text-teal-700">Sí{contacto.consentimiento_at && ` · ${new Date(contacto.consentimiento_at).toLocaleString()}`}</span>
+                    : <span className="text-red-600">No</span>}
                 </dd>
-                <dt className="col-5 text-muted">Primer contacto</dt>
-                <dd className="col-7">{new Date(contacto.created_at).toLocaleString()}</dd>
-                <dt className="col-5 text-muted">Último mensaje</dt>
-                <dd className="col-7">{contacto.ultimo_mensaje_at ? new Date(contacto.ultimo_mensaje_at).toLocaleString() : '-'}</dd>
+                <dt className="text-slate-500">Primer contacto</dt>
+                <dd>{new Date(contacto.created_at).toLocaleString()}</dd>
+                <dt className="text-slate-500">Último mensaje</dt>
+                <dd>{contacto.ultimo_mensaje_at ? new Date(contacto.ultimo_mensaje_at).toLocaleString() : '-'}</dd>
               </dl>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Caso */}
-          <div className="card mb-4">
-            <div className="card-header bg-light d-flex align-items-center justify-content-between">
-              <div className="d-flex align-items-center gap-2">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
                 <Briefcase size={16} />
-                <h6 className="mb-0">Información del caso</h6>
+                <h6 className="m-0 font-semibold text-slate-800">Información del caso</h6>
               </div>
               {contacto.casos.length > 1 && (
-                <span className="badge bg-secondary" title="El bot creó más de un caso; se muestra el más reciente">
+                <Badge variant="secondary" title="El bot creó más de un caso; se muestra el más reciente">
                   {contacto.casos.length} casos
-                </span>
+                </Badge>
               )}
-            </div>
-            <div className="card-body">
+            </CardHeader>
+            <CardBody>
               {!caso ? (
-                <p className="text-muted small mb-0">El bot aún no ha capturado información del caso.</p>
+                <p className="mb-0 text-sm text-slate-500">El bot aún no ha capturado información del caso.</p>
               ) : (
-                <dl className="row mb-0 small">
-                  <dt className="col-5 text-muted">Situación</dt>
-                  <dd className="col-7">{label('situacion', caso.situacion)}</dd>
-                  <dt className="col-5 text-muted">Deuda total</dt>
-                  <dd className="col-7">{labelRangoDinero(caso.rango_deuda)}</dd>
-                  <dt className="col-5 text-muted">N° acreedores</dt>
-                  <dd className="col-7">{label('num_acreedores', caso.num_acreedores)}</dd>
-                  <dt className="col-5 text-muted">Tipos de acreedores</dt>
-                  <dd className="col-7">{labelList('tipos_acreedores', caso.tipos_acreedores)}</dd>
-                  <dt className="col-5 text-muted">Bienes</dt>
-                  <dd className="col-7">
+                <dl className="grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-y-2 text-sm">
+                  <dt className="text-slate-500">Situación</dt>
+                  <dd>{label('situacion', caso.situacion)}</dd>
+                  <dt className="text-slate-500">Deuda total</dt>
+                  <dd>{labelRangoDinero(caso.rango_deuda)}</dd>
+                  <dt className="text-slate-500">N° acreedores</dt>
+                  <dd>{label('num_acreedores', caso.num_acreedores)}</dd>
+                  <dt className="text-slate-500">Tipos de acreedores</dt>
+                  <dd>{labelList('tipos_acreedores', caso.tipos_acreedores)}</dd>
+                  <dt className="text-slate-500">Bienes</dt>
+                  <dd>
                     {caso.tiene_bienes === null ? '-' : caso.tiene_bienes ? labelList('bienes', caso.bienes) : 'No tiene'}
                   </dd>
-                  <dt className="col-5 text-muted">Ingresos</dt>
-                  <dd className="col-7">{labelRangoDinero(caso.rango_ingresos)}</dd>
-                  <dt className="col-5 text-muted">Procesos judiciales</dt>
-                  <dd className="col-7">{label('procesos_judiciales', caso.procesos_judiciales)}</dd>
-                  <dt className="col-5 text-muted">Contacto preferido</dt>
-                  <dd className="col-7">
+                  <dt className="text-slate-500">Ingresos</dt>
+                  <dd>{labelRangoDinero(caso.rango_ingresos)}</dd>
+                  <dt className="text-slate-500">Procesos judiciales</dt>
+                  <dd>{label('procesos_judiciales', caso.procesos_judiciales)}</dd>
+                  <dt className="text-slate-500">Contacto preferido</dt>
+                  <dd>
                     {label('preferencia_contacto', caso.preferencia_contacto)}
-                    {caso.horario_contacto && <span className="text-muted"> · {caso.horario_contacto}</span>}
+                    {caso.horario_contacto && <span className="text-slate-500"> · {caso.horario_contacto}</span>}
                   </dd>
-                  <dt className="col-5 text-muted">Actualizado</dt>
-                  <dd className="col-7">{new Date(caso.updated_at).toLocaleString()}</dd>
+                  <dt className="text-slate-500">Actualizado</dt>
+                  <dd>{new Date(caso.updated_at).toLocaleString()}</dd>
                 </dl>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Seguimiento */}
-          <div className="card">
-            <div className="card-header bg-light d-flex align-items-center gap-2">
-              <ClipboardList size={16} />
-              <h6 className="mb-0">Seguimiento comercial</h6>
-            </div>
-            <div className="card-body">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <ClipboardList size={16} />
+                <h6 className="m-0 font-semibold text-slate-800">Seguimiento comercial</h6>
+              </div>
+            </CardHeader>
+            <CardBody>
               <div className="mb-3">
-                <label className="form-label small text-muted">Etapa</label>
-                <select className="form-select" value={etapa} onChange={(e) => setEtapa(e.target.value)}>
+                <FieldLabel htmlFor="etapa">Etapa</FieldLabel>
+                <Select id="etapa" value={etapa} onChange={(e) => setEtapa(e.target.value)}>
                   {ETAPAS_COMERCIALES.map((e) => (
                     <option key={e.value} value={e.value}>{e.label}</option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="mb-3">
-                <label className="form-label small text-muted">Abogado asignado</label>
+                <FieldLabel htmlFor="abogado">Abogado asignado</FieldLabel>
                 <input
+                  id="abogado"
                   type="text"
-                  className="form-control"
+                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20"
                   placeholder="Nombre del abogado"
                   value={abogado}
                   onChange={(e) => setAbogado(e.target.value)}
                 />
               </div>
               <div className="mb-3">
-                <div className="d-flex justify-content-between align-items-center">
-                  <label className="form-label small text-muted mb-1">Notas de seguimiento</label>
-                  <button type="button" className="btn btn-link btn-sm p-0 text-decoration-none" onClick={agregarNotaRapida}>
-                    <Clock size={12} className="me-1" />Agregar nota con fecha
+                <div className="mb-1 flex items-center justify-between">
+                  <FieldLabel htmlFor="notas" className="mb-0">Notas de seguimiento</FieldLabel>
+                  <button type="button" className="flex items-center text-xs text-blue-800 hover:underline" onClick={agregarNotaRapida}>
+                    <Clock size={12} className="mr-1" />Agregar nota con fecha
                   </button>
                 </div>
-                <textarea
-                  className="form-control"
+                <Textarea
+                  id="notas"
                   rows={6}
                   value={notas}
                   onChange={(e) => setNotas(e.target.value)}
@@ -356,73 +365,77 @@ export default function BotContactoPage() {
                 />
               </div>
               {guardadoMsg && (
-                <div className={`alert py-2 small ${guardadoMsg.ok ? 'alert-success' : 'alert-danger'}`} role="alert">
+                <Alert variant={guardadoMsg.ok ? 'success' : 'danger'} className="mb-3 py-2 text-sm">
                   {guardadoMsg.msg}
-                </div>
+                </Alert>
               )}
-              <button
-                className="btn btn-primary d-flex align-items-center gap-2 w-100 justify-content-center"
+              <Button
+                className="w-full justify-center"
                 onClick={guardarSeguimiento}
-                disabled={guardando || !seguimientoCambiado}
+                loading={guardando}
+                disabled={!seguimientoCambiado}
               >
-                {guardando ? <span className="spinner-border spinner-border-sm" role="status" /> : <Save size={16} />}
+                {!guardando && <Save size={16} />}
                 Guardar seguimiento
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardBody>
+          </Card>
         </div>
 
         {/* Columna derecha: conversación / respuestas */}
-        <div className="col-lg-7">
-          <div className="card h-100">
-            <div className="card-header bg-light">
-              <ul className="nav nav-tabs card-header-tabs">
-                <li className="nav-item">
-                  <button className={`nav-link d-flex align-items-center gap-2 ${tab === 'conversacion' ? 'active' : ''}`} onClick={() => setTab('conversacion')}>
-                    <MessageCircle size={14} /> Conversación
-                    <span className="badge bg-secondary">{contacto.mensajes.length}</span>
-                  </button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link d-flex align-items-center gap-2 ${tab === 'respuestas' ? 'active' : ''}`} onClick={() => setTab('respuestas')}>
-                    <FileText size={14} /> Respuestas capturadas
-                    <span className="badge bg-secondary">{contacto.respuestas_captura.length}</span>
-                  </button>
-                </li>
-              </ul>
+        <div className="lg:col-span-7">
+          <Card className="flex h-full flex-col">
+            <div className="border-b border-slate-200 bg-slate-50 px-2">
+              <div className="flex gap-1">
+                <button
+                  className={cn(
+                    'flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium',
+                    tab === 'conversacion' ? 'border-blue-800 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-700'
+                  )}
+                  onClick={() => setTab('conversacion')}
+                >
+                  <MessageCircle size={14} /> Conversación
+                  <Badge variant="secondary">{contacto.mensajes.length}</Badge>
+                </button>
+                <button
+                  className={cn(
+                    'flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium',
+                    tab === 'respuestas' ? 'border-blue-800 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-700'
+                  )}
+                  onClick={() => setTab('respuestas')}
+                >
+                  <FileText size={14} /> Respuestas capturadas
+                  <Badge variant="secondary">{contacto.respuestas_captura.length}</Badge>
+                </button>
+              </div>
             </div>
 
             {tab === 'conversacion' ? (
               <div
                 ref={chatRef}
-                className="card-body overflow-auto"
+                className="overflow-auto p-4"
                 style={{ maxHeight: '75vh', backgroundColor: '#efeae2' }}
               >
                 {contacto.mensajes.length === 0 ? (
-                  <p className="text-muted text-center small mb-0">Sin mensajes registrados.</p>
+                  <p className="mb-0 text-center text-sm text-slate-500">Sin mensajes registrados.</p>
                 ) : (
                   contacto.mensajes.map((m) => {
                     const entrante = m.direccion === 'in'
                     return (
-                      <div key={m.id} className={`d-flex mb-2 ${entrante ? 'justify-content-start' : 'justify-content-end'}`}>
+                      <div key={m.id} className={cn('mb-2 flex', entrante ? 'justify-start' : 'justify-end')}>
                         <div
-                          className="rounded-3 px-3 py-2 shadow-sm small"
-                          style={{
-                            maxWidth: '80%',
-                            backgroundColor: entrante ? '#ffffff' : '#d9fdd3',
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                          }}
+                          className="max-w-[80%] whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-sm shadow-sm"
+                          style={{ backgroundColor: entrante ? '#ffffff' : '#d9fdd3' }}
                         >
-                          {m.contenido || <em className="text-muted">[{humanize(m.tipo)}]</em>}
+                          {m.contenido || <em className="text-slate-500">[{humanize(m.tipo)}]</em>}
                           {m.media_url && (
                             <div className="mt-1">
-                              <a href={m.media_url} target="_blank" rel="noreferrer" className="small">
+                              <a href={m.media_url} target="_blank" rel="noreferrer" className="text-xs text-blue-800 hover:underline">
                                 Ver adjunto{m.mime_type ? ` (${m.mime_type})` : ''}
                               </a>
                             </div>
                           )}
-                          <div className="text-end text-muted mt-1" style={{ fontSize: '0.7rem' }}>
+                          <div className="mt-1 text-right text-[0.7rem] text-slate-500">
                             {new Date(m.created_at).toLocaleString()}
                             {!entrante && m.estado_entrega && ` · ${humanize(m.estado_entrega)}`}
                           </div>
@@ -433,28 +446,31 @@ export default function BotContactoPage() {
                 )}
               </div>
             ) : (
-              <div className="card-body p-0 overflow-auto" style={{ maxHeight: '75vh' }}>
+              <div className="overflow-auto" style={{ maxHeight: '75vh' }}>
                 {contacto.respuestas_captura.length === 0 ? (
-                  <p className="text-muted text-center small py-4 mb-0">Sin respuestas capturadas.</p>
+                  <p className="mb-0 py-4 text-center text-sm text-slate-500">Sin respuestas capturadas.</p>
                 ) : (
-                  <table className="table table-sm table-hover mb-0 small align-middle">
-                    <thead className="table-light">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                       <tr>
-                        <th>Paso</th>
-                        <th>Pregunta</th>
-                        <th>Respuesta</th>
-                        <th>Normalizada</th>
-                        <th>Fecha</th>
+                        <th className="px-3 py-2 font-semibold">Paso</th>
+                        <th className="px-3 py-2 font-semibold">Pregunta</th>
+                        <th className="px-3 py-2 font-semibold">Respuesta</th>
+                        <th className="px-3 py-2 font-semibold">Normalizada</th>
+                        <th className="px-3 py-2 font-semibold">Fecha</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {contacto.respuestas_captura.map((r) => (
-                        <tr key={r.id} className={r.valida ? '' : 'table-warning'}>
-                          <td><code>{r.paso}</code></td>
-                          <td className="text-muted" style={{ maxWidth: 220 }}>{r.pregunta}</td>
-                          <td>{r.respuesta_raw}</td>
-                          <td>{r.respuesta_normalizada || '-'}{!r.valida && <span className="badge bg-warning text-dark ms-1">inválida</span>}</td>
-                          <td className="text-muted text-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                        <tr key={r.id} className={cn(!r.valida && 'bg-amber-50')}>
+                          <td className="px-3 py-2 align-middle"><code className="text-xs">{r.paso}</code></td>
+                          <td className="max-w-[220px] px-3 py-2 align-middle text-slate-500">{r.pregunta}</td>
+                          <td className="px-3 py-2 align-middle">{r.respuesta_raw}</td>
+                          <td className="px-3 py-2 align-middle">
+                            {r.respuesta_normalizada || '-'}
+                            {!r.valida && <Badge variant="warning" className="ml-1">inválida</Badge>}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-2 align-middle text-slate-500">{new Date(r.created_at).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -462,7 +478,7 @@ export default function BotContactoPage() {
                 )}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
 

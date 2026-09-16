@@ -42,3 +42,6 @@ next-env.d.ts
 
 # prisma clients generados
 /src/generated
+
+# Claude Code runtime (no versionar locks de sesión)
+.claude/*.lock
