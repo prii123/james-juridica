@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  Search, 
-  Filter, 
-  Eye, 
+import {
+  Search,
+  Eye,
   CreditCard,
   AlertTriangle,
   DollarSign,
@@ -15,6 +14,7 @@ import {
   Calculator,
   BarChart3
 } from 'lucide-react'
+import { Button, Card, CardBody, Badge, Input, Select, Spinner, type BadgeProps } from '@/components/ui'
 
 interface FacturaCartera {
   id: string
@@ -25,7 +25,7 @@ interface FacturaCartera {
   saldoPendiente: number
   diasVencida: number
   estado: string
-  modalidadPago: string // 'CONTADO' | 'FINANCIADO'
+  modalidadPago: string
   numeroCuotas?: number
   valorCuota?: number
   cliente: {
@@ -75,23 +75,23 @@ export default function CarteraPage() {
   const fetchCartera = async () => {
     try {
       setLoading(true)
-      
+
       // Construir parámetros de búsqueda
       const params = new URLSearchParams()
       if (busqueda) params.append('search', busqueda)
       if (filtroEstado !== 'TODAS') params.append('estado', filtroEstado)
-      
+
       const response = await fetch(`/api/cartera?${params.toString()}`)
-      
+
       if (!response.ok) {
         throw new Error('Error al cargar las facturas de cartera')
       }
-      
+
       const data = await response.json()
       const facturasFiltradas = data.facturas
 
       setFacturas(facturasFiltradas)
-      
+
       // Calculate statistics - solo facturas a crédito
       const facturasPendientes = facturasFiltradas.filter((f: FacturaCartera) => f.saldoPendiente > 0)
       setEstadisticas({
@@ -103,7 +103,6 @@ export default function CarteraPage() {
 
     } catch (error) {
       console.error('Error al cargar cartera:', error)
-      // En caso de error, mantener la vista limpia
       setFacturas([])
       setEstadisticas({
         totalFacturas: 0,
@@ -126,281 +125,188 @@ export default function CarteraPage() {
 
   const getEstadoBadge = (diasVencida: number, saldoPendiente: number) => {
     if (saldoPendiente === 0) {
-      return <span className="badge bg-success">Pagada</span>
+      return <Badge variant="success">Pagada</Badge>
     } else if (diasVencida === 0) {
-      return <span className="badge bg-info">Al día</span>
+      return <Badge variant="info">Al día</Badge>
     } else if (diasVencida <= 30) {
-      return <span className="badge bg-warning">Vencida {diasVencida}d</span>
+      return <Badge variant="warning">Vencida {diasVencida}d</Badge>
     } else {
-      return <span className="badge bg-danger">Crítica {diasVencida}d</span>
+      return <Badge variant="danger">Crítica {diasVencida}d</Badge>
     }
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
+
+  const statCards: Array<{ icon: typeof CreditCard; value: string; label: string; bg: string }> = [
+    { icon: CreditCard, value: String(estadisticas.totalFacturas), label: 'Facturas Pendientes', bg: 'bg-blue-800' },
+    { icon: DollarSign, value: formatCurrency(estadisticas.montoTotal), label: 'Saldo Pendiente', bg: 'bg-teal-700' },
+    { icon: AlertTriangle, value: formatCurrency(estadisticas.montoVencido), label: 'Monto Vencido', bg: 'bg-amber-500' },
+    { icon: Calendar, value: String(estadisticas.facturasMasVencidas), label: 'Críticas (+30d)', bg: 'bg-red-600' },
+  ]
 
   return (
     <>
       <Breadcrumb items={[{ label: 'Cartera Financiada' }]} />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Cartera Financiada</h1>
-          <p className="text-secondary mb-0">
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Cartera Financiada</h1>
+          <p className="mb-0 text-slate-500">
             Gestión de facturas financiadas y financiación
           </p>
         </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="row mb-4">
-        <div className="col-md-3">
-          <div className="card bg-primary text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="me-3">
-                  <CreditCard size={32} />
-                </div>
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+        {statCards.map((stat) => (
+          <Card key={stat.label} className={`${stat.bg} border-0 text-white`}>
+            <CardBody>
+              <div className="flex items-center">
+                <stat.icon size={32} className="mr-3" />
                 <div>
-                  <div className="h4 mb-0">{estadisticas.totalFacturas}</div>
-                  <small>Facturas Pendientes</small>
+                  <div className="text-xl font-bold">{stat.value}</div>
+                  <small>{stat.label}</small>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card bg-success text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="me-3">
-                  <DollarSign size={32} />
-                </div>
-                <div>
-                  <div className="h4 mb-0">{formatCurrency(estadisticas.montoTotal)}</div>
-                  <small>Saldo Pendiente</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card bg-warning text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="me-3">
-                  <AlertTriangle size={32} />
-                </div>
-                <div>
-                  <div className="h4 mb-0">{formatCurrency(estadisticas.montoVencido)}</div>
-                  <small>Monto Vencido</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card bg-danger text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="me-3">
-                  <Calendar size={32} />
-                </div>
-                <div>
-                  <div className="h4 mb-0">{estadisticas.facturasMasVencidas}</div>
-                  <small>Críticas (+30d)</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </CardBody>
+          </Card>
+        ))}
       </div>
 
       {/* Filtros y búsqueda */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row align-items-center">
-            <div className="col-md-4">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Buscar por factura, cliente o caso..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                />
-              </div>
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-12">
+            <div className="relative md:col-span-4">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                className="pl-9"
+                placeholder="Buscar por factura, cliente o caso..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
             </div>
-            <div className="col-md-3">
-              <select
-                className="form-select"
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
                 <option value="TODAS">Todas las facturas financiadas</option>
                 <option value="PROXIMAS">Por vencer/al día</option>
                 <option value="VENCIDAS">Vencidos</option>
                 <option value="PAGADAS">Pagados</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-5 text-end">
-              <span className="text-muted">
-                Mostrando {facturas.length} facturas financiadas
-              </span>
+            <div className="text-right text-slate-500 md:col-span-5">
+              Mostrando {facturas.length} facturas financiadas
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de facturas */}
-      <div className="card">
-        <div className="table-responsive">
-          <table className="table table-hover align-middle">
-            <thead className="table-light">
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
-                <th>Factura</th>
-                <th>Cliente</th>
-                <th>Caso</th>
-                <th>Modalidad</th>
-                <th>Total</th>
-                <th>Saldo</th>
-                <th>Vencimiento</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th className="px-4 py-3 font-semibold">Factura</th>
+                <th className="px-4 py-3 font-semibold">Cliente</th>
+                <th className="px-4 py-3 font-semibold">Caso</th>
+                <th className="px-4 py-3 font-semibold">Modalidad</th>
+                <th className="px-4 py-3 font-semibold">Total</th>
+                <th className="px-4 py-3 font-semibold">Saldo</th>
+                <th className="px-4 py-3 font-semibold">Vencimiento</th>
+                <th className="px-4 py-3 font-semibold">Estado</th>
+                <th className="px-4 py-3 font-semibold">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {facturas.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-5">
-                    <div className="text-muted">
-                      <CreditCard size={48} className="mb-2" />
-                      <p>No hay facturas financiadas que coincidan con los filtros</p>
-                    </div>
+                  <td colSpan={9} className="py-5 text-center">
+                    <CreditCard size={48} className="mx-auto mb-2 text-slate-300" />
+                    <p className="text-slate-500">No hay facturas financiadas que coincidan con los filtros</p>
                   </td>
                 </tr>
               ) : (
                 facturas.map((factura) => (
-                  <tr key={factura.id}>
-                    <td>
-                      <div>
-                        <strong>{factura.numero}</strong>
-                        <br />
-                        <small className="text-muted">
-                          {new Date(factura.fecha).toLocaleDateString()}
-                        </small>
+                  <tr key={factura.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 align-middle">
+                      <strong>{factura.numero}</strong>
+                      <div className="text-xs text-slate-500">
+                        {new Date(factura.fecha).toLocaleDateString()}
                       </div>
                     </td>
-                    <td>
-                      <div>
-                        <strong>{factura.cliente.nombre} {factura.cliente.apellido}</strong>
-                        <br />
-                        <small className="text-muted">{factura.cliente.email}</small>
-                      </div>
+                    <td className="px-4 py-3 align-middle">
+                      <strong>{factura.cliente.nombre} {factura.cliente.apellido}</strong>
+                      <div className="text-xs text-slate-500">{factura.cliente.email}</div>
                     </td>
-                    <td>
-                      <span className="badge bg-light text-dark">{factura.caso.numeroCaso}</span>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant="outline">{factura.caso.numeroCaso}</Badge>
                     </td>
-                    <td>
-                      <span className="badge bg-warning">Financiado</span>
-                      <br />
-                      <small className="text-muted">
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant="warning">Financiado</Badge>
+                      <div className="mt-1 text-xs text-slate-500">
                         {(factura.numeroCuotas ?? 1) === 1 ? (
-                          <span className="text-info">Sin financiar</span>
+                          <span className="text-sky-700">Sin financiar</span>
                         ) : (
                           `${factura.numeroCuotas} cuotas de ${formatCurrency(factura.valorCuota || 0)}`
                         )}
-                      </small>
+                      </div>
                     </td>
-                    <td>
+                    <td className="px-4 py-3 align-middle">
                       <strong>{formatCurrency(factura.total)}</strong>
                     </td>
-                    <td>
+                    <td className="px-4 py-3 align-middle">
                       {factura.saldoPendiente === 0 ? (
-                        <span className="badge bg-success">Pagada</span>
+                        <Badge variant="success">Pagada</Badge>
                       ) : (
                         <>
-                          <strong className="text-warning">{formatCurrency(factura.saldoPendiente)}</strong>
+                          <strong className="text-amber-600">{formatCurrency(factura.saldoPendiente)}</strong>
                           {factura.saldoPendiente < factura.total && (
-                            <>
-                              <br />
-                              <small className="text-success">
-                                Pagado: {formatCurrency(factura.total - factura.saldoPendiente)}
-                              </small>
-                            </>
+                            <div className="text-xs text-teal-700">
+                              Pagado: {formatCurrency(factura.total - factura.saldoPendiente)}
+                            </div>
                           )}
                         </>
                       )}
                     </td>
-                    <td>
+                    <td className="px-4 py-3 align-middle">
                       <div>{new Date(factura.fechaVencimiento).toLocaleDateString()}</div>
                       {factura.diasVencida > 0 && (
-                        <small className="text-danger">Vencida hace {factura.diasVencida} días</small>
+                        <small className="text-red-600">Vencida hace {factura.diasVencida} días</small>
                       )}
                     </td>
-                    <td>
+                    <td className="px-4 py-3 align-middle">
                       {getEstadoBadge(factura.diasVencida, factura.saldoPendiente)}
                     </td>
-                    <td>
-                      <div className="d-flex gap-1">
-                        <Link 
-                          href={`/facturacion/${factura.id}`}
-                          className="btn btn-sm btn-outline-primary"
-                          title="Ver factura"
-                        >
-                          <Eye size={14} />
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex gap-1">
+                        <Link href={`/facturacion/${factura.id}`}>
+                          <Button variant="outlinePrimary" size="icon" title="Ver factura">
+                            <Eye size={14} />
+                          </Button>
                         </Link>
-                        {/* {factura.saldoPendiente > 0 ? (
-                          <Link 
-                            href={`/cartera/pagos/${factura.id}`}
-                            className="btn btn-sm btn-outline-success"
-                            title="Registrar pago"
-                          >
-                            <DollarSign size={14} />
-                          </Link>
-                        ) : (
-                          <button 
-                            className="btn btn-sm btn-outline-success"
-                            title="Factura ya pagada"
-                            disabled
-                          >
-                            <DollarSign size={14} />
-                          </button>
-                        )} */}
                         {(factura.numeroCuotas ?? 1) === 1 && factura.saldoPendiente > 0 && (
-                          <Link 
-                            href={`/cartera/financiacion/${factura.id}`}
-                            className="btn btn-sm btn-outline-info"
-                            title="Configurar financiación"
-                          >
-                            <Calculator size={14} />
+                          <Link href={`/cartera/financiacion/${factura.id}`}>
+                            <Button variant="outline" size="icon" className="border-sky-700 text-sky-700 hover:bg-sky-50" title="Configurar financiación">
+                              <Calculator size={14} />
+                            </Button>
                           </Link>
                         )}
                         {(factura.numeroCuotas ?? 1) > 1 && (
                           <>
-                            <Link 
-                              href={`/cartera/financiacion/${factura.id}`}
-                              className="btn btn-sm btn-outline-warning"
-                              title="Ver plan de cuotas"
-                            >
-                              <Percent size={14} />
+                            <Link href={`/cartera/financiacion/${factura.id}`}>
+                              <Button variant="outline" size="icon" className="border-amber-500 text-amber-600 hover:bg-amber-50" title="Ver plan de cuotas">
+                                <Percent size={14} />
+                              </Button>
                             </Link>
-                            <Link 
-                              href={`/cartera/seguimiento/${factura.id}`}
-                              className="btn btn-sm btn-outline-info"
-                              title="Seguimiento de cuotas"
-                            >
-                              <BarChart3 size={14} />
+                            <Link href={`/cartera/seguimiento/${factura.id}`}>
+                              <Button variant="outline" size="icon" className="border-sky-700 text-sky-700 hover:bg-sky-50" title="Seguimiento de cuotas">
+                                <BarChart3 size={14} />
+                              </Button>
                             </Link>
                           </>
                         )}
@@ -412,7 +318,7 @@ export default function CarteraPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </>
   )
 }

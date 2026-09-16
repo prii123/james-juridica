@@ -1,13 +1,13 @@
 'use client'
 
-import { 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  DollarSign,
+import {
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
   Calendar
 } from 'lucide-react'
+import { Card, CardBody } from '@/components/ui'
 
 interface ResumenSeguimiento {
   totalPagado: number
@@ -47,129 +47,109 @@ export default function ResumenCuotas({ resumen, factura, formatCurrency }: Prop
   const totalCuotas = factura.numeroCuotas || 0
 
   return (
-    <div className="row mb-4">
+    <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
       {/* Progress General */}
-      <div className="col-md-6">
-        <div className="card h-100">
-          <div className="card-body text-center">
-            <div className="mb-3">
-              <div 
-                className="progress mx-auto mb-2"
-                style={{ width: '120px', height: '8px' }}
-              >
-                <div 
-                  className="progress-bar bg-success" 
-                  style={{ width: `${resumen.progresoPago}%` }}
-                ></div>
-              </div>
-              <div className="h4 text-success mb-1">{resumen.progresoPago.toFixed(1)}%</div>
-              <div className="text-muted small">Progreso de Pago</div>
+      <Card className="h-full">
+        <CardBody className="text-center">
+          <div className="mb-3">
+            <div className="mx-auto mb-2 h-2 w-32 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full rounded-full bg-teal-600" style={{ width: `${resumen.progresoPago}%` }} />
             </div>
-            
-            <div className="row text-center">
-              <div className="col-6">
-                <div className="h5 text-success">{formatCurrency(resumen.totalPagado)}</div>
-                <div className="text-muted small">Pagado</div>
-              </div>
-              <div className="col-6">
-                <div className="h5 text-warning">{formatCurrency(resumen.saldoPendiente)}</div>
-                <div className="text-muted small">Pendiente</div>
-              </div>
+            <div className="mb-1 text-2xl font-bold text-teal-700">{resumen.progresoPago.toFixed(1)}%</div>
+            <div className="text-sm text-slate-500">Progreso de Pago</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div className="text-lg font-bold text-teal-700">{formatCurrency(resumen.totalPagado)}</div>
+              <div className="text-sm text-slate-500">Pagado</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-amber-600">{formatCurrency(resumen.saldoPendiente)}</div>
+              <div className="text-sm text-slate-500">Pendiente</div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Estados de Cuotas */}
-      <div className="col-md-6">
-        <div className="card h-100">
-          <div className="card-body">
-            <h6 className="card-title mb-3">Estado de Cuotas</h6>
-            
-            <div className="row">
-              <div className="col-6 mb-3">
-                <div className="d-flex align-items-center">
-                  <CheckCircle size={16} className="text-success me-2" />
-                  <div>
-                    <div className="fw-bold">{resumen.cuotasPagadas}</div>
-                    <div className="text-muted small">Pagadas</div>
-                  </div>
-                </div>
+      <Card className="h-full">
+        <CardBody>
+          <h6 className="mb-3 font-semibold text-slate-800">Estado de Cuotas</h6>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <CheckCircle size={16} className="mr-2 text-teal-700" />
+              <div>
+                <div className="font-bold text-slate-800">{resumen.cuotasPagadas}</div>
+                <div className="text-sm text-slate-500">Pagadas</div>
               </div>
-              
-              <div className="col-6 mb-3">
-                <div className="d-flex align-items-center">
-                  <AlertTriangle size={16} className="text-danger me-2" />
-                  <div>
-                    <div className="fw-bold">{resumen.cuotasVencidas}</div>
-                    <div className="text-muted small">Vencidas</div>
-                  </div>
-                </div>
+            </div>
+
+            <div className="flex items-center">
+              <AlertTriangle size={16} className="mr-2 text-red-600" />
+              <div>
+                <div className="font-bold text-slate-800">{resumen.cuotasVencidas}</div>
+                <div className="text-sm text-slate-500">Vencidas</div>
               </div>
-              
-              <div className="col-6">
-                <div className="d-flex align-items-center">
-                  <TrendingUp size={16} className="text-info me-2" />
-                  <div>
-                    <div className="fw-bold">{resumen.cuotasParciales}</div>
-                    <div className="text-muted small">Parciales</div>
-                  </div>
-                </div>
+            </div>
+
+            <div className="flex items-center">
+              <TrendingUp size={16} className="mr-2 text-sky-700" />
+              <div>
+                <div className="font-bold text-slate-800">{resumen.cuotasParciales}</div>
+                <div className="text-sm text-slate-500">Parciales</div>
               </div>
-              
-              <div className="col-6">
-                <div className="d-flex align-items-center">
-                  <Clock size={16} className="text-secondary me-2" />
-                  <div>
-                    <div className="fw-bold">{resumen.cuotasPendientes}</div>
-                    <div className="text-muted small">Pendientes</div>
-                  </div>
-                </div>
+            </div>
+
+            <div className="flex items-center">
+              <Clock size={16} className="mr-2 text-slate-500" />
+              <div>
+                <div className="font-bold text-slate-800">{resumen.cuotasPendientes}</div>
+                <div className="text-sm text-slate-500">Pendientes</div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Información de la Factura */}
-      <div className="col-12 mt-3">
-        <div className="card">
-          <div className="card-body">
-            <div className="row align-items-center">
-              <div className="col-md-8">
-                <div className="row">
-                  <div className="col-sm-3">
-                    <div className="text-muted small">Total Factura</div>
-                    <div className="fw-bold">{formatCurrency(factura.total)}</div>
+      <div className="md:col-span-2">
+        <Card>
+          <CardBody>
+            <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div>
+                  <div className="text-sm text-slate-500">Total Factura</div>
+                  <div className="font-bold text-slate-800">{formatCurrency(factura.total)}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-500">Cuotas</div>
+                  <div className="font-bold text-slate-800">{totalCuotas} cuotas</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-500">Valor por Cuota</div>
+                  <div className="font-bold text-slate-800">
+                    {factura.valorCuota ? formatCurrency(factura.valorCuota) : '-'}
                   </div>
-                  <div className="col-sm-3">
-                    <div className="text-muted small">Cuotas</div>
-                    <div className="fw-bold">{totalCuotas} cuotas</div>
-                  </div>
-                  <div className="col-sm-3">
-                    <div className="text-muted small">Valor por Cuota</div>
-                    <div className="fw-bold">
-                      {factura.valorCuota ? formatCurrency(factura.valorCuota) : '-'}
-                    </div>
-                  </div>
-                  <div className="col-sm-3">
-                    <div className="text-muted small">Interés Mensual</div>
-                    <div className="fw-bold">
-                      {factura.tasaInteres ? `${factura.tasaInteres}%` : '0%'}
-                    </div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-500">Interés Mensual</div>
+                  <div className="font-bold text-slate-800">
+                    {factura.tasaInteres ? `${factura.tasaInteres}%` : '0%'}
                   </div>
                 </div>
               </div>
-              <div className="col-md-4 text-md-end">
-                <div className="text-muted small">Fecha Facturación</div>
-                <div className="fw-bold">
-                  <Calendar size={14} className="me-1" />
+              <div className="text-right">
+                <div className="text-sm text-slate-500">Fecha Facturación</div>
+                <div className="flex items-center gap-1 font-bold text-slate-800">
+                  <Calendar size={14} />
                   {new Date(factura.fecha).toLocaleDateString()}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   )

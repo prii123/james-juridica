@@ -1,21 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import EnviarFacturaModal from '@/components/EnviarFacturaModal'
-import { 
-  ArrowLeft, 
-  Calculator, 
-  Save, 
-  DollarSign,
-  Calendar,
-  Percent,
-  FileText,
+import {
+  ArrowLeft,
+  Calculator,
   Download,
   Send
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner } from '@/components/ui'
 
 interface Factura {
   id: string
@@ -47,22 +43,20 @@ interface CuotaAmortizacion {
 
 export default function FinanciacionPage() {
   const params = useParams()
-  const router = useRouter()
   const facturaId = params.facturaId as string
-  
+
   const [factura, setFactura] = useState<Factura | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
   const [error, setError] = useState('')
-  
-  const [formData, setFormData] = useState({
+
+  const [formData] = useState({
     numeroCuotas: 6,
     tasaInteres: 2.5, // 2.5% mensual
     fechaInicio: new Date().toISOString().split('T')[0]
   })
-  
+
   const [tablaCuotas, setTablaCuotas] = useState<CuotaAmortizacion[]>([])
 
   useEffect(() => {
@@ -80,24 +74,24 @@ export default function FinanciacionPage() {
   const fetchFactura = async () => {
     try {
       setLoading(true)
-      
+
       const response = await fetch(`/api/facturacion/${facturaId}`)
-      
+
       if (!response.ok) {
         throw new Error('No se pudo cargar la factura')
       }
-      
+
       const data = await response.json()
-      
+
       // Calcular saldo pendiente basado en pagos
       const totalPagos = data.pagos?.reduce((sum: number, pago: any) => sum + Number(pago.valor), 0) || 0
       const saldoPendiente = Number(data.total) - totalPagos
-      
+
       const facturaData: Factura = {
         id: data.id,
         numero: data.numero,
         total: Number(data.total),
-        saldoPendiente: Math.max(0, saldoPendiente), // Evitar saldos negativos
+        saldoPendiente: Math.max(0, saldoPendiente),
         numeroCuotas: data.numeroCuotas,
         valorCuota: data.valorCuota ? Number(data.valorCuota) : undefined,
         tasaInteres: data.tasaInteres ? Number(data.tasaInteres) : undefined,
@@ -111,15 +105,8 @@ export default function FinanciacionPage() {
           numeroCaso: data.honorario?.caso?.numeroCaso ?? 'N/A'
         }
       }
-      
+
       setFactura(facturaData)
-      
-      // Actualizar formData con la configuración existente de la factura
-      setFormData(prev => ({
-        ...prev,
-        numeroCuotas: data.numeroCuotas || prev.numeroCuotas,
-        tasaInteres: data.tasaInteres ? Number(data.tasaInteres) : prev.tasaInteres
-      }))
     } catch (error) {
       setError('Error al cargar la factura')
       console.error('Error:', error)
@@ -134,7 +121,7 @@ export default function FinanciacionPage() {
     const monto = factura.saldoPendiente
     const cuotas = formData.numeroCuotas
     const tasaMensual = formData.tasaInteres / 100
-    
+
     // Sistema francés de amortización
     let valorCuota = 0
     if (tasaMensual > 0) {
@@ -153,9 +140,7 @@ export default function FinanciacionPage() {
       const capital = valorCuota - interes
       saldoPendiente = saldoPendiente - capital
 
-      // Para la última cuota, ajustar para evitar diferencias por redondeo
       if (i === cuotas) {
-        const capitalAjustado = capital + saldoPendiente
         saldoPendiente = 0
       }
 
@@ -173,56 +158,6 @@ export default function FinanciacionPage() {
     }
 
     setTablaCuotas(tabla)
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: field === 'numeroCuotas' 
-        ? parseInt(value) || 1
-        : field === 'tasaInteres'
-        ? parseFloat(value) || 0
-        : value
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!factura) return
-
-    if (formData.numeroCuotas < 2 || formData.numeroCuotas > 60) {
-      setError('El número de cuotas debe estar entre 2 y 60')
-      return
-    }
-
-    try {
-      setSaving(true)
-      setError('')
-
-      const response = await fetch('/api/cartera/financiacion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          facturaId,
-          numeroCuotas: formData.numeroCuotas,
-          tasaInteres: formData.tasaInteres,
-          fechaInicio: formData.fechaInicio,
-        }),
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || 'Error al guardar la financiación')
-      }
-
-      router.push('/cartera')
-      
-    } catch (error) {
-      setError('Error al guardar la financiación')
-    } finally {
-      setSaving(false)
-    }
   }
 
   const handleDownloadPDF = async () => {
@@ -263,105 +198,80 @@ export default function FinanciacionPage() {
   const totalPagar = tablaCuotas.reduce((sum, cuota) => sum + cuota.valorCuota, 0)
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (!factura) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger">Factura no encontrada</div>
-        <Link href="/cartera" className="btn btn-primary">
-          Volver a Cartera
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">Factura no encontrada</Alert>
+        <Link href="/cartera"><Button>Volver a Cartera</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Cartera', href: '/cartera' },
           { label: 'Financiación' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/cartera" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Link href="/cartera">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <h1 className="h3 fw-bold text-dark mb-1">
-            {factura?.numeroCuotas && factura.numeroCuotas > 1 
-              ? 'Modificar Financiación' 
+        <div className="flex-1">
+          <h1 className="mb-1 text-xl font-bold text-slate-800">
+            {factura?.numeroCuotas && factura.numeroCuotas > 1
+              ? 'Modificar Financiación'
               : 'Configurar Financiación'}
           </h1>
-          <p className="text-secondary mb-0">
+          <p className="mb-0 text-slate-500">
             {factura.numero} - {factura.cliente.nombre} {factura.cliente.apellido}
             {factura?.numeroCuotas && factura.numeroCuotas > 1 && (
-              <span className="text-info ms-2">(Ya financiada)</span>
+              <span className="ml-2 text-sky-700">(Ya financiada)</span>
             )}
           </p>
         </div>
         {tablaCuotas.length > 0 && (
-          <button
-            onClick={handleDownloadPDF}
-            className="btn btn-outline-primary d-flex align-items-center gap-2"
-            disabled={downloadingPdf}
-          >
-            {downloadingPdf ? (
-              <span className="spinner-border spinner-border-sm" role="status" />
-            ) : (
-              <Download size={16} />
-            )}
+          <Button variant="outlinePrimary" onClick={handleDownloadPDF} loading={downloadingPdf}>
+            {!downloadingPdf && <Download size={16} />}
             {downloadingPdf ? 'Descargando...' : 'Descargar PDF'}
-          </button>
+          </Button>
         )}
         {tablaCuotas.length > 0 && (
-          <button
-            onClick={() => setShowSendModal(true)}
-            className="btn btn-success d-flex align-items-center gap-2"
-          >
+          <Button variant="success" onClick={() => setShowSendModal(true)}>
             <Send size={16} />
             Enviar
-          </button>
+          </Button>
         )}
       </div>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
-      <div className="row">
-        <div className="col-lg-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-4">
           {/* Información de la Factura */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Información de la Factura</h5>
-            </div>
-            <div className="card-body">
-              <div className="text-center mb-3">
-                <div className="h2 text-primary">{formatCurrency(factura.saldoPendiente)}</div>
-                <div className="text-muted">Saldo a Financiar</div>
+          <Card>
+            <CardHeader><CardTitle>Información de la Factura</CardTitle></CardHeader>
+            <CardBody>
+              <div className="mb-3 text-center">
+                <div className="text-2xl font-bold text-blue-800">{formatCurrency(factura.saldoPendiente)}</div>
+                <div className="text-slate-500">Saldo a Financiar</div>
               </div>
-              <hr />
-              <div className="small">
+              <hr className="mb-3 border-slate-200" />
+              <div className="text-sm">
                 <div><strong>Factura:</strong> {factura.numero}</div>
                 <div><strong>Cliente:</strong> {factura.cliente.nombre} {factura.cliente.apellido}</div>
                 <div><strong>Caso:</strong> {factura.caso.numeroCaso}</div>
                 <div><strong>Total Original:</strong> {formatCurrency(factura.total)}</div>
                 {factura.numeroCuotas && factura.numeroCuotas > 1 && (
                   <>
-                    <hr />
-                    <div className="text-info">
+                    <hr className="my-3 border-slate-200" />
+                    <div className="text-sky-700">
                       <div><strong>🛈 Configuración Actual:</strong></div>
                       <div>• {factura.numeroCuotas} cuotas</div>
                       <div>• {factura.tasaInteres || 0}% interés mensual</div>
@@ -372,183 +282,89 @@ export default function FinanciacionPage() {
                   </>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Configuración */}
-          {/* <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0 d-flex align-items-center gap-2">
-                <Calculator size={16} />
-                Configuración
-              </h5>
-            </div>
-            <div className="card-body">
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">
-                    <Calendar size={16} className="me-1" />
-                    Fecha de Inicio
-                  </label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={formData.fechaInicio}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => handleInputChange('fechaInicio', e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label">Número de Cuotas</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    min="2"
-                    max="60"
-                    value={formData.numeroCuotas}
-                    onChange={(e) => handleInputChange('numeroCuotas', e.target.value)}
-                    required
-                  />
-                  <div className="form-text">Entre 2 y 60 cuotas</div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label">
-                    <Percent size={16} className="me-1" />
-                    Tasa de Interés Mensual (%)
-                  </label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={formData.tasaInteres}
-                    onChange={(e) => handleInputChange('tasaInteres', e.target.value)}
-                    required
-                  />
-                  <div className="form-text">0% para sin intereses</div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      {factura?.numeroCuotas && factura.numeroCuotas > 1 
-                        ? 'Actualizar Plan de Financiación' 
-                        : 'Crear Plan de Financiación'}
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div> */}
+            </CardBody>
+          </Card>
 
           {/* Resumen */}
           {tablaCuotas.length > 0 && (
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Resumen Financiero</h5>
-              </div>
-              <div className="card-body">
-                <div className="d-flex justify-content-between mb-2">
+            <Card>
+              <CardHeader><CardTitle>Resumen Financiero</CardTitle></CardHeader>
+              <CardBody>
+                <div className="mb-2 flex justify-between">
                   <span>Capital:</span>
                   <span>{formatCurrency(factura.saldoPendiente)}</span>
                 </div>
-                <div className="d-flex justify-content-between mb-2">
+                <div className="mb-2 flex justify-between">
                   <span>Intereses:</span>
-                  <span className="text-warning">{formatCurrency(totalIntereses)}</span>
+                  <span className="text-amber-600">{formatCurrency(totalIntereses)}</span>
                 </div>
-                <hr />
-                <div className="d-flex justify-content-between">
-                  <span className="fw-bold">Total a Pagar:</span>
-                  <span className="fw-bold text-success">{formatCurrency(totalPagar)}</span>
+                <hr className="my-3 border-slate-200" />
+                <div className="flex justify-between">
+                  <span className="font-bold">Total a Pagar:</span>
+                  <span className="font-bold text-teal-700">{formatCurrency(totalPagar)}</span>
                 </div>
-                <div className="text-center mt-2">
-                  <small className="text-muted">
+                <div className="mt-2 text-center">
+                  <small className="text-slate-500">
                     {formData.numeroCuotas} cuotas de ~{formatCurrency(tablaCuotas[0]?.valorCuota || 0)}
                   </small>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           )}
         </div>
 
-        <div className="col-lg-8">
+        <div className="lg:col-span-8">
           {/* Tabla de Amortización */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between">
-              <h5 className="mb-0">Tabla de Amortización</h5>
-              <small className="text-muted">Sistema Francés</small>
-            </div>
-            <div className="card-body">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tabla de Amortización</CardTitle>
+              <small className="text-slate-500">Sistema Francés</small>
+            </CardHeader>
+            <CardBody>
               {tablaCuotas.length === 0 ? (
-                <div className="text-center py-5">
-                  <Calculator size={48} className="text-muted mb-3" />
-                  <p className="text-muted">Configure los parámetros para ver la tabla de amortización</p>
+                <div className="py-5 text-center">
+                  <Calculator size={48} className="mx-auto mb-3 text-slate-300" />
+                  <p className="text-slate-500">Configure los parámetros para ver la tabla de amortización</p>
                 </div>
               ) : (
-                <div className="table-responsive">
-                  <table className="table table-sm">
-                    <thead className="table-light">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                       <tr>
-                        <th>Cuota</th>
-                        <th>Fecha Venc.</th>
-                        <th>Valor Cuota</th>
-                        <th>Capital</th>
-                        <th>Interés</th>
-                        <th>Saldo</th>
+                        <th className="px-3 py-2 font-semibold">Cuota</th>
+                        <th className="px-3 py-2 font-semibold">Fecha Venc.</th>
+                        <th className="px-3 py-2 font-semibold">Valor Cuota</th>
+                        <th className="px-3 py-2 font-semibold">Capital</th>
+                        <th className="px-3 py-2 font-semibold">Interés</th>
+                        <th className="px-3 py-2 font-semibold">Saldo</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {tablaCuotas.map((cuota) => (
                         <tr key={cuota.numero}>
-                          <td>
-                            <span className="badge bg-primary">{cuota.numero}</span>
-                          </td>
-                          <td>
-                            <small>{new Date(cuota.fechaVencimiento).toLocaleDateString()}</small>
-                          </td>
-                          <td>
-                            <strong>{formatCurrency(cuota.valorCuota)}</strong>
-                          </td>
-                          <td>
-                            <span className="text-success">{formatCurrency(cuota.capital)}</span>
-                          </td>
-                          <td>
-                            <span className="text-warning">{formatCurrency(cuota.interes)}</span>
-                          </td>
-                          <td>
-                            <span className="text-muted">{formatCurrency(cuota.saldo)}</span>
-                          </td>
+                          <td className="px-3 py-2 align-middle"><Badge variant="primary">{cuota.numero}</Badge></td>
+                          <td className="px-3 py-2 align-middle"><small>{new Date(cuota.fechaVencimiento).toLocaleDateString()}</small></td>
+                          <td className="px-3 py-2 align-middle"><strong>{formatCurrency(cuota.valorCuota)}</strong></td>
+                          <td className="px-3 py-2 align-middle"><span className="text-teal-700">{formatCurrency(cuota.capital)}</span></td>
+                          <td className="px-3 py-2 align-middle"><span className="text-amber-600">{formatCurrency(cuota.interes)}</span></td>
+                          <td className="px-3 py-2 align-middle"><span className="text-slate-500">{formatCurrency(cuota.saldo)}</span></td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="table-secondary">
+                    <tfoot className="bg-slate-100 font-semibold">
                       <tr>
-                        <th colSpan={2}>TOTALES:</th>
-                        <th>{formatCurrency(totalPagar)}</th>
-                        <th className="text-success">{formatCurrency(factura.saldoPendiente)}</th>
-                        <th className="text-warning">{formatCurrency(totalIntereses)}</th>
-                        <th>-</th>
+                        <th className="px-3 py-2 text-left" colSpan={2}>TOTALES:</th>
+                        <th className="px-3 py-2 text-left">{formatCurrency(totalPagar)}</th>
+                        <th className="px-3 py-2 text-left text-teal-700">{formatCurrency(factura.saldoPendiente)}</th>
+                        <th className="px-3 py-2 text-left text-amber-600">{formatCurrency(totalIntereses)}</th>
+                        <th className="px-3 py-2 text-left">-</th>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
 
