@@ -1,23 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Edit3, 
-  Mail, 
-  Phone, 
-  CreditCard, 
-  User, 
-  Shield, 
+import {
+  ArrowLeft,
+  Edit3,
+  Mail,
+  Phone,
+  CreditCard,
+  Shield,
   Calendar,
   UserCheck,
   UserX,
   Key,
   Activity
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
 
 interface Usuario {
   id: string
@@ -36,8 +35,21 @@ interface Usuario {
   }
 }
 
+const ROLE_BADGE: Record<string, BadgeProps['variant']> = {
+  ADMIN: 'danger',
+  ASESOR: 'primary',
+  ABOGADO: 'success',
+  ASISTENTE: 'info',
+}
+
+const ROLE_ICON_COLOR: Record<string, string> = {
+  ADMIN: 'text-red-600',
+  ASESOR: 'text-blue-800',
+  ABOGADO: 'text-teal-700',
+  ASISTENTE: 'text-sky-700',
+}
+
 export default function UsuarioDetailPage({ params }: { params: { usuarioId: string } }) {
-  const router = useRouter()
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -51,7 +63,7 @@ export default function UsuarioDetailPage({ params }: { params: { usuarioId: str
     try {
       setLoading(true)
       const response = await fetch(`/api/usuarios/${params.usuarioId}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setUsuario(data)
@@ -67,7 +79,7 @@ export default function UsuarioDetailPage({ params }: { params: { usuarioId: str
 
   const handleStatusToggle = async () => {
     if (!usuario) return
-    
+
     try {
       setUpdating(true)
       const response = await fetch(`/api/usuarios/${params.usuarioId}`, {
@@ -95,242 +107,191 @@ export default function UsuarioDetailPage({ params }: { params: { usuarioId: str
     const date = new Date(dateString)
     return date.toLocaleDateString('es-CO', {
       year: 'numeric',
-      month: 'long', 
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     })
   }
 
-  const getRoleBadgeColor = (roleName: string) => {
-    switch (roleName) {
-      case 'ADMIN': return 'danger'
-      case 'ASESOR': return 'primary'
-      case 'ABOGADO': return 'success'
-      case 'ASISTENTE': return 'info'
-      default: return 'secondary'
-    }
-  }
-
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !usuario) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Usuario no encontrado'}
-        </div>
-        <Link href="/usuarios" className="btn btn-primary">
-          Volver a Usuarios
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Usuario no encontrado'}</Alert>
+        <Link href="/usuarios"><Button>Volver a Usuarios</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Usuarios', href: '/usuarios' },
           { label: `${usuario.nombre} ${usuario.apellido}` }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/usuarios" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/usuarios">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center gap-3 mb-1">
-            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{width: '48px', height: '48px'}}>
+        <div className="flex-1">
+          <div className="mb-1 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-800 text-white">
               {usuario.nombre.charAt(0)}{usuario.apellido.charAt(0)}
             </div>
             <div>
-              <h1 className="h3 fw-bold text-dark mb-0">
+              <h1 className="mb-0 text-xl font-bold text-slate-800">
                 {usuario.nombre} {usuario.apellido}
               </h1>
-              <div className="d-flex align-items-center gap-2">
-                <span className={`badge bg-${getRoleBadgeColor(usuario.role.nombre)}`}>
-                  {usuario.role.nombre}
-                </span>
-                {usuario.activo ? (
-                  <span className="badge bg-success">Activo</span>
-                ) : (
-                  <span className="badge bg-secondary">Inactivo</span>
-                )}
+              <div className="flex items-center gap-2">
+                <Badge variant={ROLE_BADGE[usuario.role.nombre] || 'secondary'}>{usuario.role.nombre}</Badge>
+                <Badge variant={usuario.activo ? 'success' : 'secondary'}>
+                  {usuario.activo ? 'Activo' : 'Inactivo'}
+                </Badge>
               </div>
             </div>
           </div>
         </div>
-        <Link 
-          href={`/usuarios/${params.usuarioId}/editar`}
-          className="btn btn-outline-primary d-flex align-items-center gap-2"
-        >
-          <Edit3 size={16} />
-          Editar
+        <Link href={`/usuarios/${params.usuarioId}/editar`}>
+          <Button variant="outlinePrimary">
+            <Edit3 size={16} />
+            Editar
+          </Button>
         </Link>
       </div>
 
-      <div className="row">
-        <div className="col-lg-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-8">
           {/* Información Personal */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Información Personal</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
+          <Card>
+            <CardHeader><CardTitle>Información Personal</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
                   <div className="mb-3">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                      <Mail size={16} className="text-muted" />
-                      <span className="fw-semibold text-muted">Correo Electrónico</span>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Mail size={16} className="text-slate-400" />
+                      <span className="font-semibold text-slate-500">Correo Electrónico</span>
                     </div>
                     <div>{usuario.email}</div>
                   </div>
-                  
+
                   {usuario.telefono && (
                     <div className="mb-3">
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <Phone size={16} className="text-muted" />
-                        <span className="fw-semibold text-muted">Teléfono</span>  
+                      <div className="mb-2 flex items-center gap-2">
+                        <Phone size={16} className="text-slate-400" />
+                        <span className="font-semibold text-slate-500">Teléfono</span>
                       </div>
                       <div>{usuario.telefono}</div>
                     </div>
                   )}
                 </div>
-                <div className="col-md-6">
+                <div>
                   {usuario.documento && (
                     <div className="mb-3">
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <CreditCard size={16} className="text-muted" />
-                        <span className="fw-semibold text-muted">Documento</span>
+                      <div className="mb-2 flex items-center gap-2">
+                        <CreditCard size={16} className="text-slate-400" />
+                        <span className="font-semibold text-slate-500">Documento</span>
                       </div>
                       <div>{usuario.documento}</div>
                     </div>
                   )}
 
                   <div className="mb-3">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                      <Shield size={16} className="text-muted" />
-                      <span className="fw-semibold text-muted">Rol del Sistema</span>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Shield size={16} className="text-slate-400" />
+                      <span className="font-semibold text-slate-500">Rol del Sistema</span>
                     </div>
-                    <div>
-                      <span className={`badge bg-${getRoleBadgeColor(usuario.role.nombre)} me-2`}>
-                        {usuario.role.nombre}
-                      </span>
-                      <span className="text-muted">{usuario.role.descripcion}</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={ROLE_BADGE[usuario.role.nombre] || 'secondary'}>{usuario.role.nombre}</Badge>
+                      <span className="text-slate-500">{usuario.role.descripcion}</span>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Histórico de Actividad */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Registros del Sistema</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="d-flex align-items-center gap-2 mb-2">
-                    <Calendar size={16} className="text-muted" />
-                    <span className="fw-semibold text-muted">Creado</span>
+          <Card>
+            <CardHeader><CardTitle>Registros del Sistema</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <Calendar size={16} className="text-slate-400" />
+                    <span className="font-semibold text-slate-500">Creado</span>
                   </div>
-                  <div className="mb-4">{formatDate(usuario.createdAt)}</div>
+                  <div>{formatDate(usuario.createdAt)}</div>
                 </div>
-                <div className="col-md-6">
-                  <div className="d-flex align-items-center gap-2 mb-2">
-                    <Activity size={16} className="text-muted" />
-                    <span className="fw-semibold text-muted">Última Actualización</span>
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <Activity size={16} className="text-slate-400" />
+                    <span className="font-semibold text-slate-500">Última Actualización</span>
                   </div>
-                  <div className="mb-4">{formatDate(usuario.updatedAt)}</div>
+                  <div>{formatDate(usuario.updatedAt)}</div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
-        <div className="col-lg-4">
+        <div className="space-y-4 lg:col-span-4">
           {/* Acciones */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Acciones</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-grid gap-2">
-                <Link 
-                  href={`/usuarios/${params.usuarioId}/editar`}
-                  className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                >
+          <Card>
+            <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+            <CardBody className="grid gap-2">
+              <Link href={`/usuarios/${params.usuarioId}/editar`}>
+                <Button className="w-full justify-center">
                   <Edit3 size={16} />
                   Editar Usuario
-                </Link>
-                
-                <button
-                  onClick={handleStatusToggle}
-                  className={`btn ${usuario.activo ? 'btn-outline-warning' : 'btn-outline-success'} d-flex align-items-center justify-content-center gap-2`}
-                  disabled={updating}
-                >
-                  {updating ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Actualizando...
-                    </>
-                  ) : usuario.activo ? (
-                    <>
-                      <UserX size={16} />
-                      Desactivar Usuario
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck size={16} />
-                      Activar Usuario
-                    </>
-                  )}
-                </button>
+                </Button>
+              </Link>
 
-                <button
-                  className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
-                  onClick={() => {
-                    // Implementar funcionalidad de reset de contraseña
-                    alert('Funcionalidad de reset de contraseña por implementar')
-                  }}
-                >
-                  <Key size={16} />
-                  Restablecer Contraseña
-                </button>
-              </div>
-            </div>
-          </div>
+              <Button
+                variant="outline"
+                className={usuario.activo ? 'justify-center border-amber-500 text-amber-600 hover:bg-amber-50' : 'justify-center border-teal-700 text-teal-700 hover:bg-teal-50'}
+                onClick={handleStatusToggle}
+                loading={updating}
+              >
+                {!updating && (usuario.activo ? <UserX size={16} /> : <UserCheck size={16} />)}
+                {updating ? 'Actualizando...' : usuario.activo ? 'Desactivar Usuario' : 'Activar Usuario'}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="justify-center"
+                onClick={() => {
+                  alert('Funcionalidad de reset de contraseña por implementar')
+                }}
+              >
+                <Key size={16} />
+                Restablecer Contraseña
+              </Button>
+            </CardBody>
+          </Card>
 
           {/* Información del Rol */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Rol y Permisos</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-2 mb-3">
-                <Shield size={20} className={`text-${getRoleBadgeColor(usuario.role.nombre) === 'danger' ? 'danger' : getRoleBadgeColor(usuario.role.nombre) === 'primary' ? 'primary' : 'success'}`} />
+          <Card>
+            <CardHeader><CardTitle>Rol y Permisos</CardTitle></CardHeader>
+            <CardBody>
+              <div className="mb-3 flex items-center gap-2">
+                <Shield size={20} className={ROLE_ICON_COLOR[usuario.role.nombre] || 'text-slate-500'} />
                 <div>
-                  <div className="fw-semibold">{usuario.role.nombre}</div>
-                  <div className="small text-muted">{usuario.role.descripcion}</div>
+                  <div className="font-semibold text-slate-800">{usuario.role.nombre}</div>
+                  <div className="text-sm text-slate-500">{usuario.role.descripcion}</div>
                 </div>
               </div>
 
-              <div className="small text-muted">
+              <div className="text-sm text-slate-500">
                 <strong>Permisos del rol:</strong>
-                <ul className="mt-2 mb-0">
+                <ul className="mt-2 list-disc space-y-1 pl-5">
                   {usuario.role.nombre === 'ADMIN' && (
                     <>
                       <li>Gestión completa de usuarios</li>
@@ -354,36 +315,34 @@ export default function UsuarioDetailPage({ params }: { params: { usuarioId: str
                   )}
                 </ul>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Estado del Usuario */}
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">Estado del Usuario</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-2">
+          <Card>
+            <CardHeader><CardTitle>Estado del Usuario</CardTitle></CardHeader>
+            <CardBody>
+              <div className="flex items-center gap-2">
                 {usuario.activo ? (
                   <>
-                    <UserCheck size={20} className="text-success" />
+                    <UserCheck size={20} className="text-teal-700" />
                     <div>
-                      <div className="fw-semibold text-success">Usuario Activo</div>
-                      <div className="small text-muted">Puede acceder al sistema</div>
+                      <div className="font-semibold text-teal-700">Usuario Activo</div>
+                      <div className="text-sm text-slate-500">Puede acceder al sistema</div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <UserX size={20} className="text-secondary" />
+                    <UserX size={20} className="text-slate-500" />
                     <div>
-                      <div className="fw-semibold text-secondary">Usuario Inactivo</div>
-                      <div className="small text-muted">No puede acceder al sistema</div>
+                      <div className="font-semibold text-slate-500">Usuario Inactivo</div>
+                      <div className="text-sm text-slate-500">No puede acceder al sistema</div>
                     </div>
-                  </>  
+                  </>
                 )}
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     </>

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Edit, Shield, Users, Key, AlertTriangle, Trash2, Check, X } from 'lucide-react'
+import { ArrowLeft, Edit, Shield, Users, Key, AlertTriangle, Trash2, Check } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, Modal } from '@/components/ui'
 
 interface Role {
   id: string
@@ -35,7 +36,7 @@ export default function RoleDetailPage() {
   const params = useParams()
   const router = useRouter()
   const roleId = params.roleId as string
-  
+
   const [loading, setLoading] = useState(true)
   const [role, setRole] = useState<Role | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -54,7 +55,7 @@ export default function RoleDetailPage() {
     try {
       setLoading(true)
       const response = await fetch(`/api/roles?includePermissions=true`)
-      
+
       if (response.ok) {
         const roles = await response.json()
         const currentRole = roles.find((r: Role) => r.id === roleId)
@@ -77,11 +78,11 @@ export default function RoleDetailPage() {
 
   const fetchUsers = async () => {
     if (!role || users.length > 0) return
-    
+
     try {
       setLoadingUsers(true)
       const response = await fetch(`/api/usuarios?roleId=${roleId}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setUsers(data.usuarios || [])
@@ -103,7 +104,7 @@ export default function RoleDetailPage() {
       const response = await fetch(`/api/roles/${role.id}`, {
         method: 'DELETE'
       })
-      
+
       if (response.ok) {
         router.push('/usuarios/permisos')
       } else {
@@ -126,7 +127,7 @@ export default function RoleDetailPage() {
 
   const getPermissionsByModule = () => {
     if (!role) return {}
-    
+
     return role.permissions.reduce((acc, permission) => {
       if (!acc[permission.modulo]) {
         acc[permission.modulo] = []
@@ -137,21 +138,13 @@ export default function RoleDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (!role) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-warning">
-          No se encontró el rol especificado
-        </div>
+      <div className="py-5 text-center">
+        <Alert variant="warning">No se encontró el rol especificado</Alert>
       </div>
     )
   }
@@ -160,59 +153,51 @@ export default function RoleDetailPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Usuarios', href: '/usuarios' },
           { label: 'Permisos y Roles', href: '/usuarios/permisos' },
           { label: role.nombre }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/usuarios/permisos" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/usuarios/permisos">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center gap-2">
-            <Shield className="text-primary" size={24} />
-            <h1 className="h2 fw-bold text-dark mb-0">{role.nombre}</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <Shield className="text-blue-800" size={24} />
+            <h1 className="mb-0 text-2xl font-bold text-slate-800">{role.nombre}</h1>
           </div>
           {role.descripcion && (
-            <p className="text-secondary mb-0">{role.descripcion}</p>
+            <p className="mb-0 text-slate-500">{role.descripcion}</p>
           )}
         </div>
-        <div className="d-flex gap-2">
-          <Link 
-            href={`/usuarios/permisos/roles/${role.id}/editar`} 
-            className="btn btn-primary"
-          >
-            <Edit size={16} className="me-1" />
-            Editar Rol
+        <div className="flex gap-2">
+          <Link href={`/usuarios/permisos/roles/${role.id}/editar`}>
+            <Button>
+              <Edit size={16} />
+              Editar Rol
+            </Button>
           </Link>
-          <button 
-            className="btn btn-outline-danger"
-            onClick={() => setShowDeleteModal(true)}
-          >
+          <Button variant="outlineDanger" onClick={() => setShowDeleteModal(true)}>
             <Trash2 size={16} />
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-lg-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-8">
           {/* Información del Rol */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Información del Rol</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <strong>Nombre:</strong> {role.nombre}
-                </div>
-                <div className="col-md-6">
-                  <strong>Usuarios Asignados:</strong> 
-                  <span className="badge bg-primary ms-2">{role._count.usuarios}</span>
+          <Card>
+            <CardHeader><CardTitle>Información del Rol</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div><strong>Nombre:</strong> {role.nombre}</div>
+                <div className="flex items-center gap-2">
+                  <strong>Usuarios Asignados:</strong>
+                  <Badge variant="primary">{role._count.usuarios}</Badge>
                 </div>
               </div>
               {role.descripcion && (
@@ -221,41 +206,39 @@ export default function RoleDetailPage() {
                   <p className="mb-0 mt-1">{role.descripcion}</p>
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Permisos del Rol */}
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                <Key size={20} className="me-2" />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key size={20} />
                 Permisos del Rol ({role.permissions.length} total)
-              </h5>
-            </div>
-            <div className="card-body">
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
               {Object.keys(permissionsByModule).length === 0 ? (
-                <div className="text-center py-4 text-muted">
-                  <Key size={48} className="opacity-50 mb-3" />
+                <div className="py-4 text-center text-slate-500">
+                  <Key size={48} className="mx-auto mb-3 opacity-50" />
                   <p>Este rol no tiene permisos asignados</p>
                 </div>
               ) : (
-                Object.entries(permissionsByModule).map(([modulo, permissions]) => (
+                Object.entries(permissionsByModule).map(([modulo, perms]) => (
                   <div key={modulo} className="mb-4">
-                    <h6 className="fw-bold text-primary border-bottom pb-2 mb-3">
+                    <h6 className="mb-3 flex items-center border-b border-slate-200 pb-2 font-bold text-blue-800">
                       {modulo.toUpperCase()}
-                      <span className="badge bg-light text-dark ms-2">{permissions.length}</span>
+                      <Badge variant="outline" className="ml-2">{perms.length}</Badge>
                     </h6>
-                    <div className="row">
-                      {permissions.map((permission) => (
-                        <div key={permission.id} className="col-md-6 mb-2">
-                          <div className="d-flex align-items-start">
-                            <Check size={16} className="text-success me-2 mt-1 flex-shrink-0" />
-                            <div>
-                              <div className="fw-semibold">{permission.nombre}</div>
-                              {permission.descripcion && (
-                                <div className="small text-muted">{permission.descripcion}</div>
-                              )}
-                            </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {perms.map((permission) => (
+                        <div key={permission.id} className="flex items-start gap-2">
+                          <Check size={16} className="mt-1 shrink-0 text-teal-700" />
+                          <div>
+                            <div className="font-semibold text-slate-800">{permission.nombre}</div>
+                            {permission.descripcion && (
+                              <div className="text-sm text-slate-500">{permission.descripcion}</div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -263,104 +246,83 @@ export default function RoleDetailPage() {
                   </div>
                 ))
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
-        <div className="col-lg-4">
+        <div className="space-y-4 lg:col-span-4">
           {/* Estadísticas */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Estadísticas</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-6">
-                  <div className="text-center">
-                    <div className="h4 fw-bold text-primary mb-1">{role._count.usuarios}</div>
-                    <div className="small text-muted">Usuarios</div>
-                  </div>
+          <Card>
+            <CardHeader><CardTitle>Estadísticas</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="mb-1 text-2xl font-bold text-blue-800">{role._count.usuarios}</div>
+                  <div className="text-sm text-slate-500">Usuarios</div>
                 </div>
-                <div className="col-6">
-                  <div className="text-center">
-                    <div className="h4 fw-bold text-success mb-1">{role.permissions.length}</div>
-                    <div className="small text-muted">Permisos</div>
-                  </div>
+                <div>
+                  <div className="mb-1 text-2xl font-bold text-teal-700">{role.permissions.length}</div>
+                  <div className="text-sm text-slate-500">Permisos</div>
                 </div>
               </div>
-              <hr />
+              <hr className="my-3 border-slate-200" />
               <div className="text-center">
-                <div className="h4 fw-bold text-info mb-1">{Object.keys(permissionsByModule).length}</div>
-                <div className="small text-muted">Módulos con acceso</div>
+                <div className="mb-1 text-2xl font-bold text-sky-700">{Object.keys(permissionsByModule).length}</div>
+                <div className="text-sm text-slate-500">Módulos con acceso</div>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Usuarios Asignados */}
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                <Users size={20} className="me-2" />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users size={20} />
                 Usuarios Asignados
-              </h5>
-            </div>
-            <div className="card-body">
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
               {role._count.usuarios === 0 ? (
-                <div className="text-center py-3 text-muted">
-                  <Users size={32} className="opacity-50 mb-2" />
+                <div className="py-3 text-center text-slate-500">
+                  <Users size={32} className="mx-auto mb-2 opacity-50" />
                   <p className="mb-0">No hay usuarios asignados</p>
                 </div>
               ) : (
                 <>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div className="mb-3 flex items-center justify-between">
                     <span>Total: <strong>{role._count.usuarios}</strong> usuarios</span>
                     {!showUsers && (
-                      <button 
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={handleShowUsers}
-                        disabled={loadingUsers}
-                      >
+                      <Button variant="outlinePrimary" size="sm" onClick={handleShowUsers} disabled={loadingUsers}>
                         {loadingUsers ? 'Cargando...' : 'Ver usuarios'}
-                      </button>
+                      </Button>
                     )}
                   </div>
 
                   {showUsers && (
                     <div className="mt-3">
                       {loadingUsers ? (
-                        <div className="text-center">
-                          <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">Cargando...</span>
-                          </div>
-                        </div>
+                        <Spinner />
                       ) : users.length > 0 ? (
-                        <div className="list-group list-group-flush">
+                        <div className="divide-y divide-slate-100">
                           {users.map((user) => (
-                            <div key={user.id} className="list-group-item px-0">
-                              <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                  <div className="fw-semibold">{user.nombre}</div>
-                                  <div className="small text-muted">{user.email}</div>
-                                </div>
-                                <div className="d-flex align-items-center gap-2">
-                                  <span 
-                                    className={`badge ${user.activo ? 'bg-success' : 'bg-secondary'}`}
-                                  >
-                                    {user.activo ? 'Activo' : 'Inactivo'}
-                                  </span>
-                                  <Link 
-                                    href={`/usuarios/${user.id}`}
-                                    className="btn btn-outline-secondary btn-sm"
-                                  >
-                                    Ver
-                                  </Link>
-                                </div>
+                            <div key={user.id} className="flex items-center justify-between py-2">
+                              <div>
+                                <div className="font-semibold text-slate-800">{user.nombre}</div>
+                                <div className="text-sm text-slate-500">{user.email}</div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={user.activo ? 'success' : 'secondary'}>
+                                  {user.activo ? 'Activo' : 'Inactivo'}
+                                </Badge>
+                                <Link href={`/usuarios/${user.id}`}>
+                                  <Button variant="outline" size="sm">Ver</Button>
+                                </Link>
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center text-muted py-2">
+                        <div className="py-2 text-center text-slate-500">
                           No se encontraron usuarios
                         </div>
                       )}
@@ -368,68 +330,38 @@ export default function RoleDetailPage() {
                   )}
                 </>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
 
       {/* Modal de Confirmación de Eliminación */}
       {showDeleteModal && (
-        <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  <AlertTriangle className="text-warning me-2" size={20} />
-                  Confirmar Eliminación
-                </h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowDeleteModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <p>¿Está seguro que desea eliminar el rol <strong>&quot;{role.nombre}&quot;</strong>?</p>
-                {role._count.usuarios > 0 && (
-                  <div className="alert alert-warning">
-                    <strong>Atención:</strong> Este rol tiene {role._count.usuarios} usuario(s) asignado(s). 
-                    Al eliminar el rol, los usuarios perderán estos permisos.
-                  </div>
-                )}
-                <p className="text-muted">Esta acción no se puede deshacer.</p>
-              </div>
-              <div className="modal-footer">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={deletingRole}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-danger"
-                  onClick={handleDeleteRole}
-                  disabled={deletingRole}
-                >
-                  {deletingRole ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Eliminando...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={16} className="me-1" />
-                      Eliminar Rol
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Modal
+          onClose={() => setShowDeleteModal(false)}
+          title="Confirmar Eliminación"
+          icon={<AlertTriangle className="text-amber-500" size={20} />}
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={deletingRole}>
+                Cancelar
+              </Button>
+              <Button variant="danger" onClick={handleDeleteRole} loading={deletingRole}>
+                {!deletingRole && <Trash2 size={16} />}
+                {deletingRole ? 'Eliminando...' : 'Eliminar Rol'}
+              </Button>
+            </>
+          }
+        >
+          <p>¿Está seguro que desea eliminar el rol <strong>&quot;{role.nombre}&quot;</strong>?</p>
+          {role._count.usuarios > 0 && (
+            <Alert variant="warning" className="my-3">
+              <strong>Atención:</strong> Este rol tiene {role._count.usuarios} usuario(s) asignado(s).
+              Al eliminar el rol, los usuarios perderán estos permisos.
+            </Alert>
+          )}
+          <p className="mb-0 text-slate-500">Esta acción no se puede deshacer.</p>
+        </Modal>
       )}
     </>
   )

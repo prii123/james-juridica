@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { ArrowLeft, Save, User, Mail, Shield, Lock } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface EditUsuarioData {
   nombre: string
-  apellido: string  
+  apellido: string
   email: string
   telefono: string
   documento: string
@@ -47,7 +49,7 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [roles, setRoles] = useState<Role[]>([])
   const [usuario, setUsuario] = useState<Usuario | null>(null)
-  
+
   const [formData, setFormData] = useState<EditUsuarioData>({
     nombre: '',
     apellido: '',
@@ -68,8 +70,7 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
   const fetchInitialData = async () => {
     try {
       setLoadingData(true)
-      
-      // Cargar usuario y roles en paralelo
+
       const [usuarioResponse, rolesResponse] = await Promise.all([
         fetch(`/api/usuarios/${params.usuarioId}`),
         fetch('/api/roles')
@@ -78,8 +79,7 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
       if (usuarioResponse.ok) {
         const usuarioData = await usuarioResponse.json()
         setUsuario(usuarioData)
-        
-        // Llenar formulario con datos existentes
+
         setFormData({
           nombre: usuarioData.nombre,
           apellido: usuarioData.apellido,
@@ -112,7 +112,6 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
     setLoading(true)
     setErrors({})
 
-    // Validación de contraseñas si se está cambiando
     if (formData.changePassword) {
       if (formData.newPassword !== formData.confirmPassword) {
         setErrors({ confirmPassword: 'Las contraseñas no coinciden' })
@@ -138,7 +137,6 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
         activo: formData.activo
       }
 
-      // Solo incluir password si se está cambiando
       if (formData.changePassword && formData.newPassword) {
         updateData.password = formData.newPassword
       }
@@ -170,163 +168,135 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
 
   const handleInputChange = (field: keyof EditUsuarioData, value: string | boolean) => {
     setFormData({ ...formData, [field]: value })
-    
-    // Limpiar error del campo cuando el usuario empiece a escribir
+
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' })
     }
   }
 
   if (loadingData) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (!usuario) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          Usuario no encontrado
-        </div>
-        <Link href="/usuarios" className="btn btn-primary">
-          Volver a Usuarios
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">Usuario no encontrado</Alert>
+        <Link href="/usuarios"><Button>Volver a Usuarios</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Usuarios', href: '/usuarios' },
           { label: `${usuario.nombre} ${usuario.apellido}`, href: `/usuarios/${params.usuarioId}` },
           { label: 'Editar' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href={`/usuarios/${params.usuarioId}`} className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href={`/usuarios/${params.usuarioId}`}>
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Editar Usuario</h1>
-          <p className="text-secondary mb-0">
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Editar Usuario</h1>
+          <p className="mb-0 text-slate-500">
             Modificar información de {usuario.nombre} {usuario.apellido}
           </p>
         </div>
       </div>
 
       {errors.general && (
-        <div className="alert alert-danger" role="alert">
-          {errors.general}
-        </div>
+        <Alert variant="danger" className="mb-4">{errors.general}</Alert>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Información Personal</h5>
-              </div>
-              <div className="card-body">
-                
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <Card>
+              <CardHeader><CardTitle>Información Personal</CardTitle></CardHeader>
+              <CardBody className="space-y-4">
                 {/* Nombre y Apellido */}
-                <div className="row">
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Nombre *</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.nombre ? 'is-invalid' : ''}`}
-                        value={formData.nombre}
-                        onChange={(e) => handleInputChange('nombre', e.target.value)}
-                        placeholder="Nombre del usuario"
-                        required
-                      />
-                      {errors.nombre && <div className="invalid-feedback">{errors.nombre}</div>}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="font-semibold">Nombre *</Label>
+                    <Input
+                      type="text"
+                      className={cn(errors.nombre && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.nombre}
+                      onChange={(e) => handleInputChange('nombre', e.target.value)}
+                      placeholder="Nombre del usuario"
+                      required
+                    />
+                    {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
                   </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Apellido *</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.apellido ? 'is-invalid' : ''}`}
-                        value={formData.apellido}
-                        onChange={(e) => handleInputChange('apellido', e.target.value)}
-                        placeholder="Apellido del usuario"
-                        required
-                      />
-                      {errors.apellido && <div className="invalid-feedback">{errors.apellido}</div>}
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Apellido *</Label>
+                    <Input
+                      type="text"
+                      className={cn(errors.apellido && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.apellido}
+                      onChange={(e) => handleInputChange('apellido', e.target.value)}
+                      placeholder="Apellido del usuario"
+                      required
+                    />
+                    {errors.apellido && <p className="mt-1 text-xs text-red-600">{errors.apellido}</p>}
                   </div>
                 </div>
 
                 {/* Email */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Correo Electrónico *</label>
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <Mail size={16} />
-                    </span>
-                    <input
+                <div>
+                  <Label className="font-semibold">Correo Electrónico *</Label>
+                  <div className="relative">
+                    <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Input
                       type="email"
-                      className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                      className={cn('pl-9', errors.email && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       placeholder="usuario@empresa.com"
                       required
                     />
                   </div>
-                  {errors.email && <div className="invalid-feedback d-block">{errors.email}</div>}
+                  {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                 </div>
 
                 {/* Documento y Teléfono */}
-                <div className="row">
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Documento</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.documento ? 'is-invalid' : ''}`}
-                        value={formData.documento}
-                        onChange={(e) => handleInputChange('documento', e.target.value)}
-                        placeholder="Número de identificación"
-                      />
-                      {errors.documento && <div className="invalid-feedback">{errors.documento}</div>}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="font-semibold">Documento</Label>
+                    <Input
+                      type="text"
+                      className={cn(errors.documento && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.documento}
+                      onChange={(e) => handleInputChange('documento', e.target.value)}
+                      placeholder="Número de identificación"
+                    />
+                    {errors.documento && <p className="mt-1 text-xs text-red-600">{errors.documento}</p>}
                   </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Teléfono</label>
-                      <input
-                        type="tel"
-                        className={`form-control ${errors.telefono ? 'is-invalid' : ''}`}
-                        value={formData.telefono}
-                        onChange={(e) => handleInputChange('telefono', e.target.value)}
-                        placeholder="Número de teléfono"
-                      />
-                      {errors.telefono && <div className="invalid-feedback">{errors.telefono}</div>}
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Teléfono</Label>
+                    <Input
+                      type="tel"
+                      className={cn(errors.telefono && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.telefono}
+                      onChange={(e) => handleInputChange('telefono', e.target.value)}
+                      placeholder="Número de teléfono"
+                    />
+                    {errors.telefono && <p className="mt-1 text-xs text-red-600">{errors.telefono}</p>}
                   </div>
                 </div>
 
                 {/* Rol */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Rol del Usuario *</label>
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <Shield size={16} />
-                    </span>
-                    <select
-                      className={`form-select ${errors.roleId ? 'is-invalid' : ''}`}
+                <div>
+                  <Label className="font-semibold">Rol del Usuario *</Label>
+                  <div className="relative">
+                    <Shield size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Select
+                      className={cn('pl-9', errors.roleId && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                       value={formData.roleId}
                       onChange={(e) => handleInputChange('roleId', e.target.value)}
                       required
@@ -337,147 +307,112 @@ export default function EditUsuarioPage({ params }: { params: { usuarioId: strin
                           {rol.nombre} - {rol.descripcion}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
-                  {errors.roleId && <div className="invalid-feedback d-block">{errors.roleId}</div>}
+                  {errors.roleId && <p className="mt-1 text-xs text-red-600">{errors.roleId}</p>}
                 </div>
 
                 {/* Estado */}
-                <div className="mb-4">
-                  <div className="form-check form-switch">
+                <div>
+                  <label htmlFor="activo" className="flex items-center gap-2">
                     <input
-                      className="form-check-input"
                       type="checkbox"
-                      role="switch"
                       id="activo"
+                      className="h-4 w-4 accent-blue-800"
                       checked={formData.activo}
                       onChange={(e) => handleInputChange('activo', e.target.checked)}
                     />
-                    <label className="form-check-label fw-semibold" htmlFor="activo">
-                      Usuario Activo
-                    </label>
-                  </div>
-                  <div className="form-text">
+                    <span className="font-semibold text-slate-800">Usuario Activo</span>
+                  </label>
+                  <p className="mt-1 text-xs text-slate-500">
                     Los usuarios inactivos no podrán acceder al sistema
-                  </div>
+                  </p>
                 </div>
 
                 {/* Cambio de Contraseña */}
-                <hr />
-                <h6>Cambio de Contraseña</h6>
-                
-                <div className="mb-3">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="changePassword"
-                      checked={formData.changePassword}
-                      onChange={(e) => handleInputChange('changePassword', e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="changePassword">
-                      Cambiar contraseña del usuario
-                    </label>
-                  </div>
-                </div>
+                <hr className="border-slate-200" />
+                <h6 className="font-semibold text-slate-700">Cambio de Contraseña</h6>
+
+                <label htmlFor="changePassword" className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="changePassword"
+                    className="h-4 w-4 accent-blue-800"
+                    checked={formData.changePassword}
+                    onChange={(e) => handleInputChange('changePassword', e.target.checked)}
+                  />
+                  <span className="text-sm text-slate-700">Cambiar contraseña del usuario</span>
+                </label>
 
                 {formData.changePassword && (
-                  <div className="row">
-                    <div className="col-md-6">
-                      <div className="mb-3">
-                        <label className="form-label fw-semibold">Nueva Contraseña *</label>
-                        <div className="input-group">
-                          <span className="input-group-text">
-                            <Lock size={16} />
-                          </span>
-                          <input
-                            type="password"
-                            className={`form-control ${errors.newPassword ? 'is-invalid' : ''}`}
-                            value={formData.newPassword}
-                            onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                            placeholder="Mínimo 8 caracteres"
-                            required
-                            minLength={8}
-                          />
-                        </div>
-                        {errors.newPassword && <div className="invalid-feedback d-block">{errors.newPassword}</div>}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <Label className="font-semibold">Nueva Contraseña *</Label>
+                      <div className="relative">
+                        <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          type="password"
+                          className={cn('pl-9', errors.newPassword && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                          value={formData.newPassword}
+                          onChange={(e) => handleInputChange('newPassword', e.target.value)}
+                          placeholder="Mínimo 8 caracteres"
+                          required
+                          minLength={8}
+                        />
                       </div>
+                      {errors.newPassword && <p className="mt-1 text-xs text-red-600">{errors.newPassword}</p>}
                     </div>
-                    <div className="col-md-6">
-                      <div className="mb-3">
-                        <label className="form-label fw-semibold">Confirmar Nueva Contraseña *</label>
-                        <div className="input-group">
-                          <span className="input-group-text">
-                            <Lock size={16} />
-                          </span>
-                          <input
-                            type="password"
-                            className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
-                            value={formData.confirmPassword}
-                            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                            placeholder="Repetir nueva contraseña"
-                            required
-                          />
-                        </div>
-                        {errors.confirmPassword && <div className="invalid-feedback d-block">{errors.confirmPassword}</div>}
+                    <div>
+                      <Label className="font-semibold">Confirmar Nueva Contraseña *</Label>
+                      <div className="relative">
+                        <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          type="password"
+                          className={cn('pl-9', errors.confirmPassword && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                          value={formData.confirmPassword}
+                          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                          placeholder="Repetir nueva contraseña"
+                          required
+                        />
                       </div>
+                      {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
                     </div>
                   </div>
                 )}
-
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Acciones</h5>
-              </div>
-              <div className="card-body">
-                <div className="d-grid gap-2">
-                  <button
-                    type="submit"
-                    className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save size={16} />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </button>
-                  <Link href={`/usuarios/${params.usuarioId}`} className="btn btn-outline-secondary">
-                    Cancelar
-                  </Link>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-4 lg:col-span-4">
+            <Card>
+              <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+              <CardBody className="grid gap-2">
+                <Button type="submit" loading={loading} className="justify-center">
+                  {!loading && <Save size={16} />}
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+                <Link href={`/usuarios/${params.usuarioId}`}>
+                  <Button type="button" variant="outline" className="w-full justify-center">Cancelar</Button>
+                </Link>
+              </CardBody>
+            </Card>
 
-            <div className="card mt-3">
-              <div className="card-header">
-                <h6 className="mb-0">Usuario Actual</h6>
-              </div>
-              <div className="card-body">
-                <div className="d-flex align-items-center gap-2 mb-2">
-                  <User size={16} />
-                  <span className="fw-semibold">{usuario.nombre} {usuario.apellido}</span>
+            <Card>
+              <CardHeader><CardTitle>Usuario Actual</CardTitle></CardHeader>
+              <CardBody>
+                <div className="mb-2 flex items-center gap-2">
+                  <User size={16} className="text-slate-400" />
+                  <span className="font-semibold text-slate-800">{usuario.nombre} {usuario.apellido}</span>
                 </div>
-                <div className="text-muted small">
+                <div className="space-y-1 text-sm text-slate-500">
                   <div>Email: {usuario.email}</div>
-                  <div>Rol: <span className="badge bg-primary">{usuario.role.nombre}</span></div>
-                  <div>Estado: <span className={`badge ${usuario.activo ? 'bg-success' : 'bg-secondary'}`}>
-                    {usuario.activo ? 'Activo' : 'Inactivo'}
-                  </span></div>
+                  <div className="flex items-center gap-1">Rol: <Badge variant="primary">{usuario.role.nombre}</Badge></div>
+                  <div className="flex items-center gap-1">
+                    Estado: <Badge variant={usuario.activo ? 'success' : 'secondary'}>{usuario.activo ? 'Activo' : 'Inactivo'}</Badge>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

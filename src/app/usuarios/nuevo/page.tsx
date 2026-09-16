@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Save, User, Mail, Lock, Shield } from 'lucide-react'
+import { ArrowLeft, Save, Mail, Lock, Shield } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface CreateUsuarioData {
   nombre: string
-  apellido: string  
+  apellido: string
   email: string
   password: string
   confirmPassword: string
@@ -30,7 +32,7 @@ export default function NuevoUsuarioPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [roles, setRoles] = useState<Role[]>([])
-  
+
   const [formData, setFormData] = useState<CreateUsuarioData>({
     nombre: '',
     apellido: '',
@@ -51,7 +53,7 @@ export default function NuevoUsuarioPage() {
     try {
       setLoadingData(true)
       const response = await fetch('/api/roles')
-      
+
       if (response.ok) {
         const data = await response.json()
         setRoles(data)
@@ -70,7 +72,6 @@ export default function NuevoUsuarioPage() {
     setLoading(true)
     setErrors({})
 
-    // Validación de contraseñas
     if (formData.password !== formData.confirmPassword) {
       setErrors({ confirmPassword: 'Las contraseñas no coinciden' })
       setLoading(false)
@@ -123,190 +124,158 @@ export default function NuevoUsuarioPage() {
 
   const handleInputChange = (field: keyof CreateUsuarioData, value: string | boolean) => {
     setFormData({ ...formData, [field]: value })
-    
-    // Limpiar error del campo cuando el usuario empiece a escribir
+
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' })
     }
   }
 
   if (loadingData) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Usuarios', href: '/usuarios' },
           { label: 'Nuevo Usuario' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/usuarios" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/usuarios">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Nuevo Usuario</h1>
-          <p className="text-secondary mb-0">Crear un nuevo usuario del sistema</p>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Nuevo Usuario</h1>
+          <p className="mb-0 text-slate-500">Crear un nuevo usuario del sistema</p>
         </div>
       </div>
 
       {errors.general && (
-        <div className="alert alert-danger" role="alert">
-          {errors.general}
-        </div>
+        <Alert variant="danger" className="mb-4">{errors.general}</Alert>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Información Personal</h5>
-              </div>
-              <div className="card-body">
-                
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <Card>
+              <CardHeader><CardTitle>Información Personal</CardTitle></CardHeader>
+              <CardBody className="space-y-4">
                 {/* Nombre y Apellido */}
-                <div className="row">
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Nombre *</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.nombre ? 'is-invalid' : ''}`}
-                        value={formData.nombre}
-                        onChange={(e) => handleInputChange('nombre', e.target.value)}
-                        placeholder="Nombre del usuario"
-                        required
-                      />
-                      {errors.nombre && <div className="invalid-feedback">{errors.nombre}</div>}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="font-semibold">Nombre *</Label>
+                    <Input
+                      type="text"
+                      className={cn(errors.nombre && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.nombre}
+                      onChange={(e) => handleInputChange('nombre', e.target.value)}
+                      placeholder="Nombre del usuario"
+                      required
+                    />
+                    {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
                   </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Apellido *</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.apellido ? 'is-invalid' : ''}`}
-                        value={formData.apellido}
-                        onChange={(e) => handleInputChange('apellido', e.target.value)}
-                        placeholder="Apellido del usuario"
-                        required
-                      />
-                      {errors.apellido && <div className="invalid-feedback">{errors.apellido}</div>}
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Apellido *</Label>
+                    <Input
+                      type="text"
+                      className={cn(errors.apellido && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.apellido}
+                      onChange={(e) => handleInputChange('apellido', e.target.value)}
+                      placeholder="Apellido del usuario"
+                      required
+                    />
+                    {errors.apellido && <p className="mt-1 text-xs text-red-600">{errors.apellido}</p>}
                   </div>
                 </div>
 
                 {/* Email */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Correo Electrónico *</label>
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <Mail size={16} />
-                    </span>
-                    <input
+                <div>
+                  <Label className="font-semibold">Correo Electrónico *</Label>
+                  <div className="relative">
+                    <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Input
                       type="email"
-                      className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                      className={cn('pl-9', errors.email && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       placeholder="usuario@empresa.com"
                       required
                     />
                   </div>
-                  {errors.email && <div className="invalid-feedback d-block">{errors.email}</div>}
+                  {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                 </div>
 
                 {/* Contraseñas */}
-                <div className="row">
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Contraseña *</label>
-                      <div className="input-group">
-                        <span className="input-group-text">
-                          <Lock size={16} />
-                        </span>
-                        <input
-                          type="password"
-                          className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                          value={formData.password}
-                          onChange={(e) => handleInputChange('password', e.target.value)}
-                          placeholder="Mínimo 8 caracteres"
-                          required
-                          minLength={8}
-                        />
-                      </div>
-                      {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="font-semibold">Contraseña *</Label>
+                    <div className="relative">
+                      <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        type="password"
+                        className={cn('pl-9', errors.password && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                        value={formData.password}
+                        onChange={(e) => handleInputChange('password', e.target.value)}
+                        placeholder="Mínimo 8 caracteres"
+                        required
+                        minLength={8}
+                      />
                     </div>
+                    {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
                   </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Confirmar Contraseña *</label>
-                      <div className="input-group">
-                        <span className="input-group-text">
-                          <Lock size={16} />
-                        </span>
-                        <input
-                          type="password"
-                          className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
-                          value={formData.confirmPassword}
-                          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                          placeholder="Repetir contraseña"
-                          required
-                        />
-                      </div>
-                      {errors.confirmPassword && <div className="invalid-feedback d-block">{errors.confirmPassword}</div>}
+                  <div>
+                    <Label className="font-semibold">Confirmar Contraseña *</Label>
+                    <div className="relative">
+                      <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        type="password"
+                        className={cn('pl-9', errors.confirmPassword && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                        value={formData.confirmPassword}
+                        onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                        placeholder="Repetir contraseña"
+                        required
+                      />
                     </div>
+                    {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
                   </div>
                 </div>
 
                 {/* Documento y Teléfono */}
-                <div className="row">
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Documento</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.documento ? 'is-invalid' : ''}`}
-                        value={formData.documento}
-                        onChange={(e) => handleInputChange('documento', e.target.value)}
-                        placeholder="Número de identificación"
-                      />
-                      {errors.documento && <div className="invalid-feedback">{errors.documento}</div>}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="font-semibold">Documento</Label>
+                    <Input
+                      type="text"
+                      className={cn(errors.documento && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.documento}
+                      onChange={(e) => handleInputChange('documento', e.target.value)}
+                      placeholder="Número de identificación"
+                    />
+                    {errors.documento && <p className="mt-1 text-xs text-red-600">{errors.documento}</p>}
                   </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Teléfono</label>
-                      <input
-                        type="tel"
-                        className={`form-control ${errors.telefono ? 'is-invalid' : ''}`}
-                        value={formData.telefono}
-                        onChange={(e) => handleInputChange('telefono', e.target.value)}
-                        placeholder="Número de teléfono"
-                      />
-                      {errors.telefono && <div className="invalid-feedback">{errors.telefono}</div>}
-                    </div>
+                  <div>
+                    <Label className="font-semibold">Teléfono</Label>
+                    <Input
+                      type="tel"
+                      className={cn(errors.telefono && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                      value={formData.telefono}
+                      onChange={(e) => handleInputChange('telefono', e.target.value)}
+                      placeholder="Número de teléfono"
+                    />
+                    {errors.telefono && <p className="mt-1 text-xs text-red-600">{errors.telefono}</p>}
                   </div>
                 </div>
 
                 {/* Rol */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Rol del Usuario *</label>
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <Shield size={16} />
-                    </span>
-                    <select
-                      className={`form-select ${errors.roleId ? 'is-invalid' : ''}`}
+                <div>
+                  <Label className="font-semibold">Rol del Usuario *</Label>
+                  <div className="relative">
+                    <Shield size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Select
+                      className={cn('pl-9', errors.roleId && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                       value={formData.roleId}
                       onChange={(e) => handleInputChange('roleId', e.target.value)}
                       required
@@ -317,92 +286,69 @@ export default function NuevoUsuarioPage() {
                           {rol.nombre} - {rol.descripcion}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
-                  {errors.roleId && <div className="invalid-feedback d-block">{errors.roleId}</div>}
+                  {errors.roleId && <p className="mt-1 text-xs text-red-600">{errors.roleId}</p>}
                 </div>
 
                 {/* Estado */}
-                <div className="mb-3">
-                  <div className="form-check form-switch">
+                <div>
+                  <label htmlFor="activo" className="flex items-center gap-2">
                     <input
-                      className="form-check-input"
                       type="checkbox"
-                      role="switch"
                       id="activo"
+                      className="h-4 w-4 accent-blue-800"
                       checked={formData.activo}
                       onChange={(e) => handleInputChange('activo', e.target.checked)}
                     />
-                    <label className="form-check-label fw-semibold" htmlFor="activo">
-                      Usuario Activo
-                    </label>
-                  </div>
-                  <div className="form-text">
+                    <span className="font-semibold text-slate-800">Usuario Activo</span>
+                  </label>
+                  <p className="mt-1 text-xs text-slate-500">
                     Los usuarios inactivos no podrán acceder al sistema
-                  </div>
+                  </p>
                 </div>
-
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Acciones</h5>
-              </div>
-              <div className="card-body">
-                <div className="d-grid gap-2">
-                  <button
-                    type="submit"
-                    className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Creando Usuario...
-                      </>
-                    ) : (
-                      <>
-                        <Save size={16} />
-                        Crear Usuario
-                      </>
-                    )}
-                  </button>
-                  <Link href="/usuarios" className="btn btn-outline-secondary">
-                    Cancelar
+          <div className="space-y-4 lg:col-span-4">
+            <Card>
+              <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+              <CardBody>
+                <div className="grid gap-2">
+                  <Button type="submit" loading={loading} className="justify-center">
+                    {!loading && <Save size={16} />}
+                    {loading ? 'Creando Usuario...' : 'Crear Usuario'}
+                  </Button>
+                  <Link href="/usuarios">
+                    <Button type="button" variant="outline" className="w-full justify-center">Cancelar</Button>
                   </Link>
                 </div>
 
-                <hr />
+                <hr className="my-4 border-slate-200" />
 
-                <div className="text-muted small">
-                  <h6>Información:</h6>
-                  <ul className="list-unstyled">
+                <div className="text-sm text-slate-500">
+                  <h6 className="mb-2 font-semibold text-slate-700">Información:</h6>
+                  <ul className="list-none space-y-1 p-0">
                     <li>• Los campos marcados con * son obligatorios</li>
                     <li>• La contraseña debe tener mínimo 8 caracteres</li>
                     <li>• El rol determinará los permisos del usuario</li>
                     <li>• Se enviará un email de bienvenida al usuario</li>
                   </ul>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
-            <div className="card mt-3">
-              <div className="card-header">
-                <h6 className="mb-0">Roles Disponibles</h6>
-              </div>
-              <div className="card-body">
-                <div className="small">
-                  {roles.map((rol) => (
-                    <div key={rol.id} className="mb-2">
-                      <strong>{rol.nombre}:</strong> {rol.descripcion}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <Card>
+              <CardHeader><CardTitle>Roles Disponibles</CardTitle></CardHeader>
+              <CardBody className="space-y-2 text-sm">
+                {roles.map((rol) => (
+                  <div key={rol.id}>
+                    <strong>{rol.nombre}:</strong> {rol.descripcion}
+                  </div>
+                ))}
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

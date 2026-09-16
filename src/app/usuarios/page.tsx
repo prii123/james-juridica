@@ -1,21 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  User, 
-  Mail, 
-  Shield, 
-  UserCheck, 
+import {
+  Plus,
+  Search,
+  Filter,
+  User,
+  Mail,
+  Shield,
+  UserCheck,
   UserX,
   Edit3,
   Users
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Alert, Spinner, type BadgeProps } from '@/components/ui'
 
 interface Usuario {
   id: string
@@ -28,8 +28,14 @@ interface Usuario {
   }
 }
 
+const ROLE_BADGE: Record<string, BadgeProps['variant']> = {
+  ADMIN: 'danger',
+  ASESOR: 'primary',
+  ABOGADO: 'success',
+  ASISTENTE: 'info',
+}
+
 export default function UsuariosPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([])
@@ -61,7 +67,7 @@ export default function UsuariosPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/usuarios')
-      
+
       if (response.ok) {
         const data = await response.json()
         setUsuarios(data.usuarios || [])
@@ -77,7 +83,7 @@ export default function UsuariosPage() {
 
   const calculateStats = () => {
     if (!Array.isArray(usuarios)) return
-    
+
     const total = usuarios.length
     const activos = usuarios.filter(u => u.activo).length
     const inactivos = usuarios.filter(u => !u.activo).length
@@ -87,7 +93,7 @@ export default function UsuariosPage() {
 
     setStats({
       total,
-      activos, 
+      activos,
       inactivos,
       admins,
       asesores,
@@ -97,10 +103,9 @@ export default function UsuariosPage() {
 
   const filterUsuarios = () => {
     if (!Array.isArray(usuarios)) return
-    
+
     let filtered = usuarios
 
-    // Filtro por búsqueda
     if (searchTerm) {
       filtered = filtered.filter(usuario =>
         usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,12 +114,10 @@ export default function UsuariosPage() {
       )
     }
 
-    // Filtro por rol
     if (roleFilter) {
       filtered = filtered.filter(usuario => usuario.role?.nombre === roleFilter)
     }
 
-    // Filtro por estado
     if (estadoFilter) {
       if (estadoFilter === 'activo') {
         filtered = filtered.filter(usuario => usuario.activo)
@@ -126,266 +129,169 @@ export default function UsuariosPage() {
     setFilteredUsuarios(filtered)
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return 'danger'
-      case 'ASESOR': return 'primary'
-      case 'ABOGADO': return 'success'
-      case 'ASISTENTE': return 'info'
-      default: return 'secondary'
-    }
+  if (loading) {
+    return <Spinner />
   }
 
-  if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
-  }
+  const statCards: Array<{ icon: typeof Users; value: number; label: string; bg: string }> = [
+    { icon: Users, value: stats.total, label: 'Total Usuarios', bg: 'bg-blue-800' },
+    { icon: UserCheck, value: stats.activos, label: 'Activos', bg: 'bg-teal-700' },
+    { icon: UserX, value: stats.inactivos, label: 'Inactivos', bg: 'bg-slate-500' },
+    { icon: Shield, value: stats.admins, label: 'Administradores', bg: 'bg-red-600' },
+    { icon: User, value: stats.asesores, label: 'Asesores', bg: 'bg-sky-600' },
+    { icon: User, value: stats.abogados, label: 'Abogados', bg: 'bg-amber-500' },
+  ]
 
   return (
     <>
       <Breadcrumb items={[{ label: 'Usuarios' }]} />
 
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Gestión de Usuarios</h1>
-          <p className="text-secondary mb-0">Administra usuarios del sistema</p>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Gestión de Usuarios</h1>
+          <p className="mb-0 text-slate-500">Administra usuarios del sistema</p>
         </div>
-        <div className="d-flex gap-2">
-          <Link href="/usuarios/permisos" className="btn btn-outline-primary d-flex align-items-center gap-2">
-            <Shield size={16} />
-            Permisos y Roles
+        <div className="flex gap-2">
+          <Link href="/usuarios/permisos">
+            <Button variant="outlinePrimary">
+              <Shield size={16} />
+              Permisos y Roles
+            </Button>
           </Link>
-          <Link href="/usuarios/nuevo" className="btn btn-primary d-flex align-items-center gap-2">
-            <Plus size={16} />
-            Nuevo Usuario
+          <Link href="/usuarios/nuevo">
+            <Button>
+              <Plus size={16} />
+              Nuevo Usuario
+            </Button>
           </Link>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="row mb-4">
-        <div className="col-xl-2 col-md-4 col-sm-6">
-          <div className="card bg-primary text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <Users size={24} className="me-3" />
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        {statCards.map((stat) => (
+          <Card key={stat.label} className={`${stat.bg} border-0 text-white`}>
+            <CardBody>
+              <div className="flex items-center">
+                <stat.icon size={24} className="mr-3" />
                 <div>
-                  <div className="fs-2 fw-bold">{stats.total}</div>
-                  <div className="small">Total Usuarios</div>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-sm">{stat.label}</div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-xl-2 col-md-4 col-sm-6">
-          <div className="card bg-success text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <UserCheck size={24} className="me-3" />
-                <div>
-                  <div className="fs-2 fw-bold">{stats.activos}</div>
-                  <div className="small">Activos</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-xl-2 col-md-4 col-sm-6">
-          <div className="card bg-secondary text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <UserX size={24} className="me-3" />
-                <div>
-                  <div className="fs-2 fw-bold">{stats.inactivos}</div>
-                  <div className="small">Inactivos</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-xl-2 col-md-4 col-sm-6">
-          <div className="card bg-danger text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <Shield size={24} className="me-3" />
-                <div>
-                  <div className="fs-2 fw-bold">{stats.admins}</div>
-                  <div className="small">Administradores</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-xl-2 col-md-4 col-sm-6">
-          <div className="card bg-info text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <User size={24} className="me-3" />
-                <div>
-                  <div className="fs-2 fw-bold">{stats.asesores}</div>
-                  <div className="small">Asesores</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-xl-2 col-md-4 col-sm-6">
-          <div className="card bg-warning text-white">
-            <div className="card-body">
-              <div className="d-flex align-items-center">
-                <User size={24} className="me-3" />
-                <div>
-                  <div className="fs-2 fw-bold">{stats.abogados}</div>
-                  <div className="small">Abogados</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </CardBody>
+          </Card>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-4">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Buscar por nombre, apellido o email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+            <div className="relative md:col-span-5">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                className="pl-9"
+                placeholder="Buscar por nombre, apellido o email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <div className="col-md-3">
-              <select
-                className="form-select"
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
                 <option value="">Todos los roles</option>
                 <option value="ADMIN">Administrador</option>
                 <option value="ASESOR">Asesor</option>
                 <option value="ABOGADO">Abogado</option>
                 <option value="ASISTENTE">Asistente</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <select
-                className="form-select"
-                value={estadoFilter}
-                onChange={(e) => setEstadoFilter(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)}>
                 <option value="">Todos los estados</option>
                 <option value="activo">Activos</option>
                 <option value="inactivo">Inactivos</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-2">
-              <button
-                onClick={() => {
-                  setSearchTerm('')
-                  setRoleFilter('')
-                  setEstadoFilter('')
-                }}
-                className="btn btn-outline-secondary w-100"
+            <div className="md:col-span-1">
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => { setSearchTerm(''); setRoleFilter(''); setEstadoFilter('') }}
               >
                 <Filter size={16} />
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
       {/* Users Table */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">
-            Usuarios ({filteredUsuarios.length} de {stats.total})
-          </h5>
-        </div>
-        <div className="card-body p-0">
+      <Card>
+        <CardHeader>
+          <CardTitle>Usuarios ({filteredUsuarios.length} de {stats.total})</CardTitle>
+        </CardHeader>
+        <CardBody className="p-0">
           {filteredUsuarios.length === 0 ? (
-            <div className="text-center py-5">
-              <Users size={48} className="text-muted mb-3" />
-              <p className="text-muted">No se encontraron usuarios</p>
+            <div className="py-5 text-center">
+              <Users size={48} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-slate-500">No se encontraron usuarios</p>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Usuario</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Estado</th>
-                    <th className="text-end">Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Usuario</th>
+                    <th className="px-4 py-3 font-semibold">Email</th>
+                    <th className="px-4 py-3 font-semibold">Rol</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 text-right font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {filteredUsuarios.map((usuario) => (
-                    <tr key={usuario.id}>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', fontSize: '12px'}}>
+                    <tr key={usuario.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-800 text-xs text-white">
                             {usuario.nombre.charAt(0)}{usuario.apellido.charAt(0)}
                           </div>
-                          <div>
-                            <div className="fw-semibold">
-                              {usuario.nombre} {usuario.apellido}
-                            </div>
+                          <div className="font-semibold text-slate-800">
+                            {usuario.nombre} {usuario.apellido}
                           </div>
                         </div>
                       </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-2 text-muted">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-2 text-slate-500">
                           <Mail size={14} />
                           {usuario.email}
                         </div>
                       </td>
-                      <td>
-                        <span className={`badge bg-${getRoleBadgeColor(usuario.role?.nombre || 'USUARIO')}`}>
+                      <td className="px-4 py-3 align-middle">
+                        <Badge variant={ROLE_BADGE[usuario.role?.nombre || ''] || 'secondary'}>
                           {usuario.role?.nombre || 'Sin Rol'}
-                        </span>
+                        </Badge>
                       </td>
-                      <td>
-                        {usuario.activo ? (
-                          <span className="badge bg-success">Activo</span>
-                        ) : (
-                          <span className="badge bg-secondary">Inactivo</span>
-                        )}
+                      <td className="px-4 py-3 align-middle">
+                        <Badge variant={usuario.activo ? 'success' : 'secondary'}>
+                          {usuario.activo ? 'Activo' : 'Inactivo'}
+                        </Badge>
                       </td>
-                      <td className="text-end">
-                        <div className="btn-group btn-group-sm">
-                          <Link
-                            href={`/usuarios/${usuario.id}`}
-                            className="btn btn-outline-primary"
-                            title="Ver detalles"
-                          >
-                            <User size={14} />
+                      <td className="px-4 py-3 text-right align-middle">
+                        <div className="flex justify-end gap-1">
+                          <Link href={`/usuarios/${usuario.id}`}>
+                            <Button variant="outlinePrimary" size="icon" title="Ver detalles">
+                              <User size={14} />
+                            </Button>
                           </Link>
-                          <Link
-                            href={`/usuarios/${usuario.id}/editar`}
-                            className="btn btn-outline-secondary"
-                            title="Editar usuario"
-                          >
-                            <Edit3 size={14} />
+                          <Link href={`/usuarios/${usuario.id}/editar`}>
+                            <Button variant="outline" size="icon" title="Editar usuario">
+                              <Edit3 size={14} />
+                            </Button>
                           </Link>
                         </div>
                       </td>
@@ -395,8 +301,8 @@ export default function UsuariosPage() {
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     </>
   )
 }

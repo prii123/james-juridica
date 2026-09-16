@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Save, Shield, Key, Check } from 'lucide-react'
+import { ArrowLeft, Save, Key } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Textarea, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface CreateRoleData {
   nombre: string
@@ -25,7 +27,7 @@ export default function NuevoRolePage() {
   const [loadingData, setLoadingData] = useState(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [permissions, setPermissions] = useState<Permission[]>([])
-  
+
   const [formData, setFormData] = useState<CreateRoleData>({
     nombre: '',
     descripcion: '',
@@ -40,7 +42,7 @@ export default function NuevoRolePage() {
     try {
       setLoadingData(true)
       const response = await fetch('/api/permissions')
-      
+
       if (response.ok) {
         const data = await response.json()
         setPermissions(data)
@@ -94,8 +96,7 @@ export default function NuevoRolePage() {
 
   const handleInputChange = (field: keyof CreateRoleData, value: string | string[]) => {
     setFormData({ ...formData, [field]: value })
-    
-    // Limpiar error del campo cuando el usuario empiece a escribir
+
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' })
     }
@@ -104,7 +105,7 @@ export default function NuevoRolePage() {
   const handlePermissionToggle = (permissionId: string) => {
     const currentPermissions = formData.permissionIds
     const isSelected = currentPermissions.includes(permissionId)
-    
+
     if (isSelected) {
       handleInputChange('permissionIds', currentPermissions.filter(id => id !== permissionId))
     } else {
@@ -116,15 +117,12 @@ export default function NuevoRolePage() {
     const modulePermissions = permissions.filter(p => p.modulo === modulo)
     const modulePermissionIds = modulePermissions.map(p => p.id)
     const currentPermissions = formData.permissionIds
-    
-    // Verificar si todos los permisos del módulo están seleccionados
+
     const allSelected = modulePermissionIds.every(id => currentPermissions.includes(id))
-    
+
     if (allSelected) {
-      // Deseleccionar todos los permisos del módulo
       handleInputChange('permissionIds', currentPermissions.filter(id => !modulePermissionIds.includes(id)))
     } else {
-      // Seleccionar todos los permisos del módulo
       const newPermissions = [...new Set([...currentPermissions, ...modulePermissionIds])]
       handleInputChange('permissionIds', newPermissions)
     }
@@ -149,220 +147,174 @@ export default function NuevoRolePage() {
   }
 
   if (loadingData) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Usuarios', href: '/usuarios' },
           { label: 'Permisos y Roles', href: '/usuarios/permisos' },
           { label: 'Nuevo Rol' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/usuarios/permisos" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/usuarios/permisos">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Nuevo Rol</h1>
-          <p className="text-secondary mb-0">Crear un nuevo rol del sistema con permisos específicos</p>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Nuevo Rol</h1>
+          <p className="mb-0 text-slate-500">Crear un nuevo rol del sistema con permisos específicos</p>
         </div>
       </div>
 
       {errors.general && (
-        <div className="alert alert-danger" role="alert">
-          {errors.general}
-        </div>
+        <Alert variant="danger" className="mb-4">{errors.general}</Alert>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Información del Rol</h5>
-              </div>
-              <div className="card-body">
-                
-                {/* Nombre del Rol */}
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Nombre del Rol *</label>
-                  <input
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
+            <Card>
+              <CardHeader><CardTitle>Información del Rol</CardTitle></CardHeader>
+              <CardBody className="space-y-4">
+                <div>
+                  <Label className="font-semibold">Nombre del Rol *</Label>
+                  <Input
                     type="text"
-                    className={`form-control ${errors.nombre ? 'is-invalid' : ''}`}
+                    className={cn(errors.nombre && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                     value={formData.nombre}
                     onChange={(e) => handleInputChange('nombre', e.target.value)}
                     placeholder="Ej: ASESOR, ABOGADO, ADMIN"
                     required
                   />
-                  {errors.nombre && <div className="invalid-feedback">{errors.nombre}</div>}
-                  <div className="form-text">
+                  {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
+                  <p className="mt-1 text-xs text-slate-500">
                     Use nombres en mayúsculas y descriptivos (ADMIN, ASESOR, ABOGADO, etc.)
-                  </div>
+                  </p>
                 </div>
 
-                {/* Descripción */}
-                <div className="mb-4">
-                  <label className="form-label fw-semibold">Descripción</label>
-                  <textarea
-                    className={`form-control ${errors.descripcion ? 'is-invalid' : ''}`}
+                <div>
+                  <Label className="font-semibold">Descripción</Label>
+                  <Textarea
+                    className={cn(errors.descripcion && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                     rows={3}
                     value={formData.descripcion}
                     onChange={(e) => handleInputChange('descripcion', e.target.value)}
                     placeholder="Descripción del rol y sus responsabilidades..."
                   />
-                  {errors.descripcion && <div className="invalid-feedback">{errors.descripcion}</div>}
+                  {errors.descripcion && <p className="mt-1 text-xs text-red-600">{errors.descripcion}</p>}
                 </div>
-
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
             {/* Permisos */}
-            <div className="card mt-4">
-              <div className="card-header">
-                <h5 className="mb-0">
-                  <Key size={20} className="me-2" />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key size={20} />
                   Permisos del Rol ({formData.permissionIds.length} seleccionados)
-                </h5>
-              </div>
-              <div className="card-body">
-                
-                {/* Permisos por Módulo */}
+                </CardTitle>
+              </CardHeader>
+              <CardBody className="space-y-4">
                 {getModules().map((modulo) => {
                   const modulePermissions = getPermissionsByModule(modulo)
                   const fullySelected = isModuleFullySelected(modulo)
                   const partiallySelected = isModulePartiallySelected(modulo)
 
                   return (
-                    <div key={modulo} className="mb-4">
-                      <div className="d-flex align-items-center mb-3">
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id={`module-${modulo}`}
-                            checked={fullySelected}
-                            ref={(el) => {
-                              if (el) el.indeterminate = partiallySelected;
-                            }}
-                            onChange={() => handleModuleToggle(modulo)}
-                          />
-                          <label 
-                            className="form-check-label fw-bold text-primary" 
-                            htmlFor={`module-${modulo}`}
-                          >
-                            {modulo.toUpperCase()}
-                          </label>
-                        </div>
-                        <span className="badge bg-light text-dark ms-auto">
+                    <div key={modulo}>
+                      <div className="mb-3 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`module-${modulo}`}
+                          className="h-4 w-4 accent-blue-800"
+                          checked={fullySelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = partiallySelected
+                          }}
+                          onChange={() => handleModuleToggle(modulo)}
+                        />
+                        <label htmlFor={`module-${modulo}`} className="font-bold text-blue-800">
+                          {modulo.toUpperCase()}
+                        </label>
+                        <Badge variant="outline" className="ml-auto">
                           {modulePermissions.filter(p => formData.permissionIds.includes(p.id)).length} / {modulePermissions.length}
-                        </span>
+                        </Badge>
                       </div>
 
-                      <div className="row ms-3">
+                      <div className="ml-6 grid grid-cols-1 gap-2 md:grid-cols-2">
                         {modulePermissions.map((permission) => (
-                          <div key={permission.id} className="col-md-6 mb-2">
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id={`permission-${permission.id}`}
-                                checked={formData.permissionIds.includes(permission.id)}
-                                onChange={() => handlePermissionToggle(permission.id)}
-                              />
-                              <label 
-                                className="form-check-label" 
-                                htmlFor={`permission-${permission.id}`}
-                              >
-                                <div className="fw-semibold">{permission.nombre}</div>
-                                {permission.descripcion && (
-                                  <div className="small text-muted">{permission.descripcion}</div>
-                                )}
-                              </label>
-                            </div>
-                          </div>
+                          <label key={permission.id} htmlFor={`permission-${permission.id}`} className="flex items-start gap-2">
+                            <input
+                              type="checkbox"
+                              id={`permission-${permission.id}`}
+                              className="mt-1 h-4 w-4 accent-blue-800"
+                              checked={formData.permissionIds.includes(permission.id)}
+                              onChange={() => handlePermissionToggle(permission.id)}
+                            />
+                            <span>
+                              <span className="block font-semibold text-slate-800">{permission.nombre}</span>
+                              {permission.descripcion && (
+                                <span className="block text-sm text-slate-500">{permission.descripcion}</span>
+                              )}
+                            </span>
+                          </label>
                         ))}
                       </div>
                     </div>
                   )
                 })}
-
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">Acciones</h5>
-              </div>
-              <div className="card-body">
-                <div className="d-grid gap-2">
-                  <button
-                    type="submit"
-                    className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Creando Rol...
-                      </>
-                    ) : (
-                      <>
-                        <Save size={16} />
-                        Crear Rol
-                      </>
-                    )}
-                  </button>
-                  <Link href="/usuarios/permisos" className="btn btn-outline-secondary">
-                    Cancelar
+          <div className="space-y-4 lg:col-span-4">
+            <Card>
+              <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+              <CardBody>
+                <div className="grid gap-2">
+                  <Button type="submit" loading={loading} className="justify-center">
+                    {!loading && <Save size={16} />}
+                    {loading ? 'Creando Rol...' : 'Crear Rol'}
+                  </Button>
+                  <Link href="/usuarios/permisos">
+                    <Button type="button" variant="outline" className="w-full justify-center">Cancelar</Button>
                   </Link>
                 </div>
 
-                <hr />
+                <hr className="my-4 border-slate-200" />
 
-                <div className="text-muted small">
-                  <h6>Resumen:</h6>
-                  <ul className="list-unstyled">
+                <div className="text-sm text-slate-500">
+                  <h6 className="mb-2 font-semibold text-slate-700">Resumen:</h6>
+                  <ul className="list-none space-y-1 p-0">
                     <li>• <strong>Rol:</strong> {formData.nombre || 'Sin nombre'}</li>
                     <li>• <strong>Permisos:</strong> {formData.permissionIds.length}</li>
                     <li>• <strong>Módulos:</strong> {
-                      getModules().filter(modulo => 
-                        getPermissionsByModule(modulo).some(p => 
+                      getModules().filter(modulo =>
+                        getPermissionsByModule(modulo).some(p =>
                           formData.permissionIds.includes(p.id)
                         )
                       ).length
                     }</li>
                   </ul>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
-            <div className="card mt-3">
-              <div className="card-header">
-                <h6 className="mb-0">Información</h6>
-              </div>
-              <div className="card-body">
-                <div className="small text-muted">
-                  <ul className="list-unstyled mb-0">
-                    <li>• Los permisos se agrupan por módulos</li>
-                    <li>• Puede seleccionar módulos completos o permisos individuales</li>
-                    <li>• El nombre del rol debe ser único en el sistema</li>
-                    <li>• Los usuarios heredarán estos permisos cuando se les asigne este rol</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+            <Card>
+              <CardHeader><CardTitle>Información</CardTitle></CardHeader>
+              <CardBody className="text-sm text-slate-500">
+                <ul className="list-none space-y-1 p-0">
+                  <li>• Los permisos se agrupan por módulos</li>
+                  <li>• Puede seleccionar módulos completos o permisos individuales</li>
+                  <li>• El nombre del rol debe ser único en el sistema</li>
+                  <li>• Los usuarios heredarán estos permisos cuando se les asigne este rol</li>
+                </ul>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>
