@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Plus, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
   Calculator,
   Save,
   User,
@@ -17,6 +17,8 @@ import {
   Building,
   X
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Honorario {
   id: string
@@ -56,7 +58,7 @@ export default function NuevaFacturaPage() {
   const [error, setError] = useState('')
   const [honorarios, setHonorarios] = useState<Honorario[]>([])
   const [loadingHonorarios, setLoadingHonorarios] = useState(true)
-  
+
   const [searchTerm, setSearchTerm] = useState('')
   const [clienteSearch, setClienteSearch] = useState('')
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -73,7 +75,7 @@ export default function NuevaFacturaPage() {
     numeroCuotas: 6,
     tasaInteres: 2.5,
   })
-  
+
   const [items, setItems] = useState<ItemFactura[]>([
     {
       descripcion: '',
@@ -199,7 +201,7 @@ export default function NuevaFacturaPage() {
     try {
       setLoading(true)
       setError('')
-      
+
       const { modalidadPago, numeroCuotas, tasaInteres, ...restForm } = formData
       const body: Record<string, any> = {
         ...restForm,
@@ -252,91 +254,91 @@ export default function NuevaFacturaPage() {
 
   const honorarioSeleccionado = honorarios.find(h => h.id === formData.honorarioId)
 
+  const honorariosFiltrados = honorarios.filter(h => {
+    if (!searchTerm) return true
+    const q = searchTerm.toLowerCase()
+    const c = h.caso.cliente
+    return c.nombre.toLowerCase().includes(q) ||
+      (c.apellido?.toLowerCase() || '').includes(q) ||
+      h.caso.numeroCaso.toLowerCase().includes(q)
+  })
+
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Facturación', href: '/facturacion' },
           { label: 'Nueva Factura' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/facturacion" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/facturacion">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <h1 className="h3 fw-bold text-dark mb-1">Nueva Factura</h1>
-          <p className="text-secondary mb-0">
+        <div className="flex-1">
+          <h1 className="mb-1 text-xl font-bold text-slate-800">Nueva Factura</h1>
+          <p className="mb-0 text-slate-500">
             Crear una nueva factura para honorarios pendientes o clientes
           </p>
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
             {/* Información General */}
-            <div className="card mb-4">
-              <div className="card-header">
-                <h5 className="mb-0">Información General</h5>
-              </div>
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-6">
+            <Card>
+              <CardHeader><CardTitle>Información General</CardTitle></CardHeader>
+              <CardBody>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
                     {/* Selección de Cliente */}
-                    <label className="form-label">Cliente</label>
+                    <Label>Cliente</Label>
                     {selectedCliente ? (
-                      <div className="d-flex align-items-center gap-2 p-2 border rounded bg-light mb-3">
-                        <User size={16} />
-                        <div className="flex-grow-1">
-                          <div className="fw-semibold small">
+                      <div className="mb-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                        <User size={16} className="text-slate-500" />
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-slate-800">
                             {selectedCliente.nombre} {selectedCliente.apellido || ''}
                           </div>
-                          <div className="text-muted small">{selectedCliente.documento}</div>
+                          <div className="text-sm text-slate-500">{selectedCliente.documento}</div>
                         </div>
-                        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={clearCliente}>
+                        <Button type="button" variant="outline" size="icon" onClick={clearCliente}>
                           <X size={14} />
-                        </button>
+                        </Button>
                       </div>
                     ) : (
-                      <div className="position-relative mb-3">
-                        <div className="input-group">
-                          <span className="input-group-text"><Search size={16} /></span>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Buscar cliente por nombre, apellido o documento..."
-                            value={clienteSearch}
-                            onChange={(e) => setClienteSearch(e.target.value)}
-                            onFocus={() => clientes.length > 0 && setShowClientList(true)}
-                          />
-                        </div>
+                      <div className="relative mb-3">
+                        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          type="text"
+                          className="pl-9"
+                          placeholder="Buscar cliente por nombre, apellido o documento..."
+                          value={clienteSearch}
+                          onChange={(e) => setClienteSearch(e.target.value)}
+                          onFocus={() => clientes.length > 0 && setShowClientList(true)}
+                        />
                         {loadingClientes && (
-                          <div className="position-absolute w-100 bg-white border rounded-bottom shadow-sm p-2 text-center" style={{ zIndex: 10 }}>
-                            <div className="spinner-border spinner-border-sm" role="status" />
+                          <div className="absolute z-10 w-full rounded-b-lg border border-t-0 border-slate-200 bg-white p-2 text-center shadow-sm">
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-800 border-t-transparent" />
                           </div>
                         )}
                         {showClientList && clientes.length > 0 && (
-                          <div className="position-absolute w-100 bg-white border rounded-bottom shadow-sm" style={{ zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
+                          <div className="absolute z-10 max-h-52 w-full overflow-y-auto rounded-b-lg border border-t-0 border-slate-200 bg-white shadow-sm">
                             {clientes.map((cliente) => (
                               <button
                                 key={cliente.id}
                                 type="button"
-                                className="w-100 text-start p-2 border-0 bg-transparent hover-bg-light"
+                                className="w-full border-0 bg-transparent p-2 text-left hover:bg-slate-50"
                                 onClick={() => selectCliente(cliente)}
-                                style={{ cursor: 'pointer' }}
                               >
-                                <div className="fw-semibold small">
+                                <div className="text-sm font-semibold text-slate-800">
                                   {cliente.nombre} {cliente.apellido || ''}
                                 </div>
-                                <div className="text-muted small">
+                                <div className="text-sm text-slate-500">
                                   {cliente.documento} | {cliente.email}
                                 </div>
                               </button>
@@ -344,8 +346,8 @@ export default function NuevaFacturaPage() {
                           </div>
                         )}
                         {showClientList && clientes.length === 0 && clienteSearch.length >= 2 && !loadingClientes && (
-                          <div className="position-absolute w-100 bg-white border rounded-bottom shadow-sm p-2" style={{ zIndex: 10 }}>
-                            <small className="text-muted">No se encontraron clientes. Puedes crear la factura igual.</small>
+                          <div className="absolute z-10 w-full rounded-b-lg border border-t-0 border-slate-200 bg-white p-2 shadow-sm">
+                            <small className="text-slate-500">No se encontraron clientes. Puedes crear la factura igual.</small>
                           </div>
                         )}
                       </div>
@@ -354,10 +356,9 @@ export default function NuevaFacturaPage() {
                     {/* Nombre libre si no hay cliente registrado */}
                     {!selectedCliente && (
                       <div className="mb-3">
-                        <label className="form-label">O escribe el nombre del cliente</label>
-                        <input
+                        <Label>O escribe el nombre del cliente</Label>
+                        <Input
                           type="text"
-                          className="form-control"
                           placeholder="Nombre del cliente (opcional)"
                           value={clienteNombre}
                           onChange={(e) => setClienteNombre(e.target.value)}
@@ -366,107 +367,88 @@ export default function NuevaFacturaPage() {
                     )}
 
                     {/* Honorario */}
-                    <label className="form-label">
-                      Honorario a Facturar <span className="text-muted">(opcional)</span>
-                    </label>
-                    <div className="input-group mb-2">
-                      <span className="input-group-text"><Search size={16} /></span>
-                      <input
+                    <Label>
+                      Honorario a Facturar <span className="text-slate-400">(opcional)</span>
+                    </Label>
+                    <div className="relative mb-2">
+                      <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Input
                         type="text"
-                        className="form-control"
+                        className="pl-9"
                         placeholder="Filtrar por nombre o número de caso..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
                     {loadingHonorarios ? (
-                      <div className="text-center py-3">
-                        <div className="spinner-border spinner-border-sm" role="status">
-                          <span className="visually-hidden">Cargando...</span>
-                        </div>
+                      <div className="py-3 text-center">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-800 border-t-transparent" />
                       </div>
                     ) : (
-                      <select
-                        className="form-select"
+                      <Select
                         size={5}
                         value={formData.honorarioId}
                         onChange={(e) => handleInputChange('honorarioId', e.target.value)}
                         style={{ minHeight: '130px' }}
                       >
                         <option value="">-- Sin honorario (factura libre) --</option>
-                        {honorarios
-                          .filter(h => {
-                            if (!searchTerm) return true
-                            const q = searchTerm.toLowerCase()
-                            const c = h.caso.cliente
-                            return c.nombre.toLowerCase().includes(q) ||
-                              (c.apellido?.toLowerCase() || '').includes(q) ||
-                              h.caso.numeroCaso.toLowerCase().includes(q)
-                          })
-                          .map((honorario) => (
-                            <option key={honorario.id} value={honorario.id}>
-                              {honorario.caso.cliente.nombre} {honorario.caso.cliente.apellido} | {honorario.caso.numeroCaso} | {formatCurrency(honorario.valor)}
-                            </option>
-                          ))}
-                      </select>
+                        {honorariosFiltrados.map((honorario) => (
+                          <option key={honorario.id} value={honorario.id}>
+                            {honorario.caso.cliente.nombre} {honorario.caso.cliente.apellido} | {honorario.caso.numeroCaso} | {formatCurrency(honorario.valor)}
+                          </option>
+                        ))}
+                      </Select>
                     )}
                     {honorarios.length === 0 && !loadingHonorarios && (
-                      <div className="alert alert-info py-2 mt-2 small">
+                      <Alert variant="info" className="mt-2 py-2 text-sm">
                         No hay honorarios pendientes. Puedes crear la factura sin asociar un honorario.
-                      </div>
+                      </Alert>
                     )}
-                    {honorarios.filter(h => {
-                      if (!searchTerm) return true
-                      const q = searchTerm.toLowerCase()
-                      const c = h.caso.cliente
-                      return c.nombre.toLowerCase().includes(q) ||
-                        (c.apellido?.toLowerCase() || '').includes(q) ||
-                        h.caso.numeroCaso.toLowerCase().includes(q)
-                    }).length === 0 && searchTerm && (
-                      <div className="alert alert-info py-2 mt-2 small">
+                    {honorariosFiltrados.length === 0 && searchTerm && (
+                      <Alert variant="info" className="mt-2 py-2 text-sm">
                         No se encontraron honorarios con ese criterio de búsqueda.
-                      </div>
+                      </Alert>
                     )}
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Fecha de Vencimiento *</label>
-                    <input
+                  <div>
+                    <Label>Fecha de Vencimiento *</Label>
+                    <Input
                       type="date"
-                      className="form-control"
                       value={formData.fechaVencimiento}
                       onChange={(e) => handleInputChange('fechaVencimiento', e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                       required
                     />
                     <div className="mt-3">
-                      <label className="form-label">Modalidad de Pago</label>
-                      <div className="d-flex gap-2">
-                        <button
+                      <Label>Modalidad de Pago</Label>
+                      <div className="flex gap-2">
+                        <Button
                           type="button"
-                          className={`btn ${formData.modalidadPago === 'CONTADO' ? 'btn-success' : 'btn-outline-success'} d-flex align-items-center gap-2 flex-fill`}
+                          variant={formData.modalidadPago === 'CONTADO' ? 'success' : 'outline'}
+                          className={cn('flex-1 justify-center', formData.modalidadPago !== 'CONTADO' && 'border-teal-700 text-teal-700 hover:bg-teal-50')}
                           onClick={() => handleInputChange('modalidadPago', 'CONTADO')}
                         >
                           <Building size={16} />
                           Contado
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className={`btn ${formData.modalidadPago === 'CREDITO' ? 'btn-primary' : 'btn-outline-primary'} d-flex align-items-center gap-2 flex-fill`}
+                          variant={formData.modalidadPago === 'CREDITO' ? 'primary' : 'outlinePrimary'}
+                          className="flex-1 justify-center"
                           onClick={() => handleInputChange('modalidadPago', 'CREDITO')}
                         >
                           <CreditCard size={16} />
                           Crédito
-                        </button>
+                        </Button>
                       </div>
                     </div>
                     {formData.modalidadPago === 'CREDITO' && (
-                      <div className="mt-3 p-3 border rounded bg-light">
-                        <h6 className="mb-2">Configuración de Financiación</h6>
-                        <div className="mb-2">
-                          <label className="form-label small">Número de Cuotas</label>
-                          <input
+                      <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <h6 className="mb-1 font-semibold text-slate-700">Configuración de Financiación</h6>
+                        <div>
+                          <Label className="text-xs">Número de Cuotas</Label>
+                          <Input
                             type="number"
-                            className="form-control form-control-sm"
                             min={2}
                             max={60}
                             value={formData.numeroCuotas}
@@ -474,10 +456,9 @@ export default function NuevaFacturaPage() {
                           />
                         </div>
                         <div>
-                          <label className="form-label small">Tasa de Interés Mensual (%)</label>
-                          <input
+                          <Label className="text-xs">Tasa de Interés Mensual (%)</Label>
+                          <Input
                             type="number"
-                            className="form-control form-control-sm"
                             min={0}
                             max={10}
                             step={0.1}
@@ -489,31 +470,29 @@ export default function NuevaFacturaPage() {
                     )}
                   </div>
                 </div>
-                
+
                 {honorarioSeleccionado && (
                   <div className="mt-3">
-                    <div className="bg-light p-3 rounded">
-                      <h6 className="mb-2">Información del Honorario Seleccionado</h6>
-                      <div className="row text-sm">
-                        <div className="col-md-6">
-                          <div className="d-flex align-items-center gap-2 mb-1">
-                            <User size={14} />
-                            <span className="fw-semibold">Cliente:</span>
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <h6 className="mb-2 font-semibold text-slate-700">Información del Honorario Seleccionado</h6>
+                      <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                        <div>
+                          <div className="mb-1 flex items-center gap-2">
+                            <User size={14} className="text-slate-400" />
+                            <span className="font-semibold">Cliente:</span>
                             <span>{honorarioSeleccionado.caso.cliente.nombre} {honorarioSeleccionado.caso.cliente.apellido}</span>
                           </div>
-                          <div className="d-flex align-items-center gap-2">
-                            <FileText size={14} />
-                            <span className="fw-semibold">Caso:</span>
+                          <div className="flex items-center gap-2">
+                            <FileText size={14} className="text-slate-400" />
+                            <span className="font-semibold">Caso:</span>
                             <span>{honorarioSeleccionado.caso.numeroCaso}</span>
                           </div>
                         </div>
-                        <div className="col-md-6">
-                          <div className="fw-semibold text-success">
+                        <div>
+                          <div className="font-semibold text-teal-700">
                             Valor: {formatCurrency(honorarioSeleccionado.valor)}
                           </div>
-                          <div className="text-muted">
-                            Tipo: {honorarioSeleccionado.tipo}
-                          </div>
+                          <div className="text-slate-500">Tipo: {honorarioSeleccionado.tipo}</div>
                         </div>
                       </div>
                     </div>
@@ -521,161 +500,127 @@ export default function NuevaFacturaPage() {
                 )}
 
                 <div className="mt-3">
-                  <label className="form-label">Observaciones</label>
-                  <textarea
-                    className="form-control"
+                  <Label>Observaciones</Label>
+                  <Textarea
                     rows={3}
                     value={formData.observaciones}
                     onChange={(e) => handleInputChange('observaciones', e.target.value)}
                     placeholder="Observaciones o notas adicionales..."
                   />
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
             {/* Items de la Factura */}
-            <div className="card mb-4">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Items de la Factura</h5>
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                  onClick={agregarItem}
-                >
-                  <Plus size={14} className="me-1" />
+            <Card>
+              <CardHeader>
+                <CardTitle>Items de la Factura</CardTitle>
+                <Button type="button" variant="outlinePrimary" size="sm" onClick={agregarItem}>
+                  <Plus size={14} />
                   Agregar Item
-                </button>
-              </div>
-              <div className="card-body">
+                </Button>
+              </CardHeader>
+              <CardBody className="space-y-3">
                 {items.map((item, index) => (
-                  <div key={index} className="border rounded p-3 mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <h6 className="mb-0">Item {index + 1}</h6>
+                  <div key={index} className="rounded-lg border border-slate-200 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h6 className="mb-0 font-semibold text-slate-700">Item {index + 1}</h6>
                       {items.length > 1 && (
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => eliminarItem(index)}
-                        >
+                        <Button type="button" variant="outlineDanger" size="icon" onClick={() => eliminarItem(index)}>
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       )}
                     </div>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <label className="form-label">Descripción *</label>
-                        <input
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+                      <div className="md:col-span-6">
+                        <Label>Descripción *</Label>
+                        <Input
                           type="text"
-                          className="form-control"
                           value={item.descripcion}
                           onChange={(e) => handleItemChange(index, 'descripcion', e.target.value)}
                           placeholder="Descripción del servicio o producto"
                           required
                         />
                       </div>
-                      <div className="col-md-2">
-                        <label className="form-label">Cantidad</label>
-                        <input
+                      <div className="md:col-span-2">
+                        <Label>Cantidad</Label>
+                        <Input
                           type="number"
-                          className="form-control"
                           min="1"
                           value={item.cantidad}
                           onChange={(e) => handleItemChange(index, 'cantidad', e.target.value)}
                         />
                       </div>
-                      <div className="col-md-2">
-                        <label className="form-label">Valor Unit.</label>
-                        <input
+                      <div className="md:col-span-2">
+                        <Label>Valor Unit.</Label>
+                        <Input
                           type="number"
-                          className="form-control"
                           min="0"
                           step="0.01"
                           value={item.valorUnitario}
                           onChange={(e) => handleItemChange(index, 'valorUnitario', e.target.value)}
                         />
                       </div>
-                      <div className="col-md-2">
-                        <label className="form-label">Total</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formatCurrency(item.valorTotal)}
-                          readOnly
-                        />
+                      <div className="md:col-span-2">
+                        <Label>Total</Label>
+                        <Input type="text" value={formatCurrency(item.valorTotal)} readOnly />
                       </div>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
+          <div className="space-y-4 lg:col-span-4">
             {/* Resumen */}
-            <div className="card mb-4">
-              <div className="card-header">
-                <h5 className="mb-0 d-flex align-items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Calculator size={16} />
                   Resumen de Factura
-                </h5>
-              </div>
-              <div className="card-body">
+                </CardTitle>
+              </CardHeader>
+              <CardBody>
                 {/* Cliente en resumen */}
                 {(selectedCliente || clienteNombre) && (
-                  <div className="mb-3 p-2 border rounded bg-light">
-                    <div className="small text-muted">Cliente</div>
-                    <div className="fw-semibold">
-                      {selectedCliente 
+                  <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    <div className="text-sm text-slate-500">Cliente</div>
+                    <div className="font-semibold text-slate-800">
+                      {selectedCliente
                         ? `${selectedCliente.nombre} ${selectedCliente.apellido || ''}`
                         : clienteNombre}
                     </div>
                   </div>
                 )}
-                <div className="d-flex justify-content-between mb-2">
+                <div className="mb-2 flex justify-between">
                   <span>Subtotal:</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="d-flex justify-content-between mb-2">
+                <div className="mb-2 flex justify-between">
                   <span>IVA (19%):</span>
                   <span>{formatCurrency(impuestos)}</span>
                 </div>
-                <hr />
-                <div className="d-flex justify-content-between">
-                  <span className="fw-bold">Total:</span>
-                  <span className="fw-bold text-success h5">{formatCurrency(total)}</span>
+                <hr className="my-3 border-slate-200" />
+                <div className="flex justify-between">
+                  <span className="font-bold">Total:</span>
+                  <span className="text-xl font-bold text-teal-700">{formatCurrency(total)}</span>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
             {/* Acciones */}
-            <div className="card">
-              <div className="card-body">
-                <button
-                  type="submit"
-                  className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Creando...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      Crear Factura
-                    </>
-                  )}
-                </button>
-                
-                <Link
-                  href="/facturacion"
-                  className="btn btn-outline-secondary w-100 mt-2"
-                >
-                  Cancelar
+            <Card>
+              <CardBody>
+                <Button type="submit" variant="success" loading={loading} className="w-full justify-center">
+                  {!loading && <Save size={16} />}
+                  {loading ? 'Creando...' : 'Crear Factura'}
+                </Button>
+                <Link href="/facturacion">
+                  <Button type="button" variant="outline" className="mt-2 w-full justify-center">Cancelar</Button>
                 </Link>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

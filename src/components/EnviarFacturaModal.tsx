@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, MessageCircle, Send, X } from 'lucide-react'
+import { Mail, MessageCircle, Send } from 'lucide-react'
+import { Button, Modal, Input, Label, Alert } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Props {
   facturaId: string
@@ -53,92 +55,68 @@ export default function EnviarFacturaModal({ facturaId, tipo, clienteNombre, ema
   const titulo = tipo === 'factura' ? 'Enviar Factura' : tipo === 'financiacion' ? 'Enviar Plan de Financiacion' : 'Enviar Estado de Cuenta'
 
   return (
-    <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title d-flex align-items-center gap-2">
-              <Send size={18} />
-              {titulo}
-            </h5>
-            <button type="button" className="btn-close" onClick={onClose} disabled={enviando} />
-          </div>
-          <div className="modal-body">
-            <div className="mb-3">
-              <label className="form-label">Cliente</label>
-              <div className="form-control bg-light">{clienteNombre}</div>
-            </div>
+    <Modal
+      onClose={enviando ? () => {} : onClose}
+      title={titulo}
+      icon={<Send size={18} />}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={enviando}>
+            Cerrar
+          </Button>
+          {!resultado?.ok && (
+            <Button onClick={handleEnviar} loading={enviando} disabled={!destinatario.trim()}>
+              {!enviando && <Send size={16} />}
+              {enviando ? 'Enviando...' : 'Enviar'}
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className="mb-3">
+        <Label>Cliente</Label>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">{clienteNombre}</div>
+      </div>
 
-            <div className="mb-3">
-              <label className="form-label">Metodo de envio</label>
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className={`btn flex-fill d-flex align-items-center justify-content-center gap-2 ${metodo === 'EMAIL' ? 'btn-primary' : 'btn-outline-primary'}`}
-                  onClick={() => { setMetodo('EMAIL'); setDestinatario(email || '') }}
-                  disabled={!email}
-                >
-                  <Mail size={16} />
-                  Email
-                </button>
-                <button
-                  type="button"
-                  className={`btn flex-fill d-flex align-items-center justify-content-center gap-2 ${metodo === 'WHATSAPP' ? 'btn-success' : 'btn-outline-success'}`}
-                  onClick={() => { setMetodo('WHATSAPP'); setDestinatario(telefono || '') }}
-                  disabled={!telefono}
-                >
-                  <MessageCircle size={16} />
-                  WhatsApp
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">
-                {metodo === 'EMAIL' ? 'Correo electronico' : 'Numero de WhatsApp'}
-              </label>
-              <input
-                type={metodo === 'EMAIL' ? 'email' : 'tel'}
-                className="form-control"
-                value={destinatario}
-                onChange={(e) => setDestinatario(e.target.value)}
-                placeholder={metodo === 'EMAIL' ? 'cliente@email.com' : '573001234567'}
-              />
-            </div>
-
-            {resultado && (
-              <div className={`alert ${resultado.ok ? 'alert-success' : 'alert-danger'} mb-0`}>
-                {resultado.ok ? (
-                  <span className="d-flex align-items-center gap-1">{resultado.msg}</span>
-                ) : (
-                  resultado.msg
-                )}
-              </div>
-            )}
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={enviando}>
-              <X size={16} className="me-1" />
-              Cerrar
-            </button>
-            {!resultado?.ok && (
-              <button
-                type="button"
-                className="btn btn-primary d-flex align-items-center gap-2"
-                onClick={handleEnviar}
-                disabled={enviando || !destinatario.trim()}
-              >
-                {enviando ? (
-                  <span className="spinner-border spinner-border-sm" role="status" />
-                ) : (
-                  <Send size={16} />
-                )}
-                {enviando ? 'Enviando...' : 'Enviar'}
-              </button>
-            )}
-          </div>
+      <div className="mb-3">
+        <Label>Metodo de envio</Label>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant={metodo === 'EMAIL' ? 'primary' : 'outlinePrimary'}
+            className="flex-1 justify-center"
+            onClick={() => { setMetodo('EMAIL'); setDestinatario(email || '') }}
+            disabled={!email}
+          >
+            <Mail size={16} />
+            Email
+          </Button>
+          <Button
+            type="button"
+            variant={metodo === 'WHATSAPP' ? 'success' : 'outline'}
+            className={cn('flex-1 justify-center', metodo !== 'WHATSAPP' && 'border-teal-700 text-teal-700 hover:bg-teal-50')}
+            onClick={() => { setMetodo('WHATSAPP'); setDestinatario(telefono || '') }}
+            disabled={!telefono}
+          >
+            <MessageCircle size={16} />
+            WhatsApp
+          </Button>
         </div>
       </div>
-    </div>
+
+      <div className="mb-3">
+        <Label>{metodo === 'EMAIL' ? 'Correo electronico' : 'Numero de WhatsApp'}</Label>
+        <Input
+          type={metodo === 'EMAIL' ? 'email' : 'tel'}
+          value={destinatario}
+          onChange={(e) => setDestinatario(e.target.value)}
+          placeholder={metodo === 'EMAIL' ? 'cliente@email.com' : '573001234567'}
+        />
+      </div>
+
+      {resultado && (
+        <Alert variant={resultado.ok ? 'success' : 'danger'}>{resultado.msg}</Alert>
+      )}
+    </Modal>
   )
 }

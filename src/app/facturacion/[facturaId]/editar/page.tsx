@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Save, 
-  Plus, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Save,
+  Plus,
+  Trash2,
   Calculator
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Factura {
   id: string
@@ -21,7 +23,7 @@ interface Factura {
   impuestos: number
   total: number
   estado: string
-  modalidadPago: 'CONTADO' | 'CREDITO' // Frontend usa CREDITO, backend FINANCIADO
+  modalidadPago: 'CONTADO' | 'CREDITO'
   numeroCuotas?: number
   valorCuota?: number
   tasaInteres?: number
@@ -74,7 +76,7 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  
+
   const [formData, setFormData] = useState({
     fechaVencimiento: '',
     observaciones: '',
@@ -83,7 +85,7 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
     numeroCuotas: 1,
     tasaInteres: 0
   })
-  
+
   const [items, setItems] = useState<ItemFactura[]>([])
 
   useEffect(() => {
@@ -105,11 +107,11 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
     try {
       setLoading(true)
       const response = await fetch(`/api/facturacion/${params.facturaId}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setFactura(data)
-        
+
         // Inicializar formulario con datos actuales
         setFormData({
           fechaVencimiento: data.fechaVencimiento.split('T')[0], // Formato date input
@@ -119,7 +121,7 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
           numeroCuotas: data.numeroCuotas || 1,
           tasaInteres: data.tasaInteres || 0
         })
-        
+
         // Inicializar items
         setItems(data.items || [])
       } else {
@@ -135,8 +137,8 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: field === 'ivaActivado' 
-        ? value === 'true' 
+      [field]: field === 'ivaActivado'
+        ? value === 'true'
         : field === 'numeroCuotas'
         ? parseInt(value) || 1
         : field === 'tasaInteres'
@@ -150,9 +152,9 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
     if (tasaMensual === 0) {
       return monto / cuotas
     }
-    
-    const factor = Math.pow(1 + tasaMensual/100, cuotas)
-    return (monto * (tasaMensual/100) * factor) / (factor - 1)
+
+    const factor = Math.pow(1 + tasaMensual / 100, cuotas)
+    return (monto * (tasaMensual / 100) * factor) / (factor - 1)
   }
 
   const handleItemChange = (index: number, field: string, value: string | number) => {
@@ -181,7 +183,7 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!factura) return
 
     if (!formData.fechaVencimiento) {
@@ -197,7 +199,7 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
     try {
       setSaving(true)
       setError('')
-      
+
       const response = await fetch(`/api/facturacion/${params.facturaId}`, {
         method: 'PATCH',
         headers: {
@@ -231,28 +233,18 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
   }
 
   const subtotal = items.reduce((sum, item) => sum + item.valorTotal, 0)
-  const impuestos = formData.ivaActivado ? subtotal * 0.19 : 0 // IVA 19% solo si está activado
+  const impuestos = formData.ivaActivado ? subtotal * 0.19 : 0
   const total = subtotal + impuestos
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error && !factura) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Factura no encontrada'}
-        </div>
-        <Link href="/facturacion" className="btn btn-primary">
-          Volver a Facturación
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Factura no encontrada'}</Alert>
+        <Link href="/facturacion"><Button>Volver a Facturación</Button></Link>
       </div>
     )
   }
@@ -264,357 +256,302 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
   // Solo permitir edición si está en estado GENERADA
   if (factura.estado !== 'GENERADA') {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-warning" role="alert">
+      <div className="py-5 text-center">
+        <Alert variant="warning" className="mb-4">
           Solo se pueden editar facturas en estado "Generada"
-        </div>
-        <Link href={`/facturacion/${params.facturaId}`} className="btn btn-primary">
-          Volver a la Factura
-        </Link>
+        </Alert>
+        <Link href={`/facturacion/${params.facturaId}`}><Button>Volver a la Factura</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Facturación', href: '/facturacion' },
           { label: factura.numero, href: `/facturacion/${params.facturaId}` },
           { label: 'Editar' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href={`/facturacion/${params.facturaId}`} className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href={`/facturacion/${params.facturaId}`}>
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <h1 className="h3 fw-bold text-dark mb-1">Editar Factura</h1>
-          <p className="text-secondary mb-0">
-            {factura.numero} - {factura.honorario 
+        <div className="flex-1">
+          <h1 className="mb-1 text-xl font-bold text-slate-800">Editar Factura</h1>
+          <p className="mb-0 text-slate-500">
+            {factura.numero} - {factura.honorario
               ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
-              : factura.cliente 
+              : factura.cliente
                 ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
                 : factura.clienteNombre || 'Sin cliente asociado'}
           </p>
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
             {/* Información General */}
-            <div className="card mb-4">
-              <div className="card-header">
-                <h5 className="mb-0">Información General</h5>
-              </div>
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-4">
-                    <label className="form-label">Número de Factura</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={factura.numero}
-                      readOnly
-                    />
+            <Card>
+              <CardHeader><CardTitle>Información General</CardTitle></CardHeader>
+              <CardBody>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <Label>Número de Factura</Label>
+                    <Input type="text" value={factura.numero} readOnly />
                   </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Fecha de Vencimiento *</label>
-                    <input
+                  <div>
+                    <Label>Fecha de Vencimiento *</Label>
+                    <Input
                       type="date"
-                      className="form-control"
                       value={formData.fechaVencimiento}
                       onChange={(e) => handleInputChange('fechaVencimiento', e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                       required
                     />
                   </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Modalidad de Pago *</label>
-                    <select
-                      className="form-select"
+                  <div>
+                    <Label>Modalidad de Pago *</Label>
+                    <Select
                       value={formData.modalidadPago}
                       onChange={(e) => handleInputChange('modalidadPago', e.target.value)}
                       required
                     >
                       <option value="CONTADO">Contado</option>
                       <option value="CREDITO">Crédito</option>
-                    </select>
+                    </Select>
                   </div>
                 </div>
 
                 {/* Configuración de financiación para crédito */}
                 {formData.modalidadPago === 'CREDITO' && (
-                  <div className="row mt-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Número de Cuotas *</label>
-                      <input
+                  <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <Label>Número de Cuotas *</Label>
+                      <Input
                         type="number"
-                        className="form-control"
                         min="1"
                         max="60"
                         value={formData.numeroCuotas}
                         onChange={(e) => handleInputChange('numeroCuotas', e.target.value)}
                         required
                       />
-                      <div className="form-text">Entre 1 y 60 cuotas</div>
+                      <p className="mt-1 text-xs text-slate-500">Entre 1 y 60 cuotas</p>
                     </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Tasa de Interés Mensual (%)</label>
-                      <input
+                    <div>
+                      <Label>Tasa de Interés Mensual (%)</Label>
+                      <Input
                         type="number"
-                        className="form-control"
                         min="0"
                         max="30"
                         step="0.1"
                         value={formData.tasaInteres}
                         onChange={(e) => handleInputChange('tasaInteres', e.target.value)}
                       />
-                      <div className="form-text">0% para sin intereses, máx 30% mensual</div>
+                      <p className="mt-1 text-xs text-slate-500">0% para sin intereses, máx 30% mensual</p>
                     </div>
                   </div>
                 )}
 
                 {/* Mostrar valor de cuota calculado */}
                 {formData.modalidadPago === 'CREDITO' && (
-                  <div className="mt-3">
-                    <div className="alert alert-info">
-                      <h6 className="mb-1">Información de Financiación:</h6>
+                  <Alert variant="info" className="mt-3">
+                    <div>
+                      <h6 className="mb-1 font-semibold">Información de Financiación:</h6>
                       <div><strong>Valor por cuota:</strong> {formatCurrency(calcularCuota(total, formData.numeroCuotas, formData.tasaInteres))}</div>
                       <div><strong>Total con intereses:</strong> {formatCurrency(calcularCuota(total, formData.numeroCuotas, formData.tasaInteres) * formData.numeroCuotas)}</div>
-                      <small className="text-muted">Sistema de amortización francés</small>
+                      <small className="text-slate-500">Sistema de amortización francés</small>
                     </div>
-                  </div>
+                  </Alert>
                 )}
-                
+
                 <div className="mt-3">
-                  <label className="form-label">Observaciones</label>
-                  <textarea
-                    className="form-control"
+                  <Label>Observaciones</Label>
+                  <Textarea
                     rows={3}
                     value={formData.observaciones}
                     onChange={(e) => handleInputChange('observaciones', e.target.value)}
                     placeholder="Observaciones o notas adicionales..."
                   />
                 </div>
-                
+
                 {/* Control de IVA */}
                 <div className="mt-3">
-                  <div className="form-check">
+                  <label htmlFor="ivaActivado" className="flex items-start gap-2">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       id="ivaActivado"
+                      className="mt-1 h-4 w-4 accent-blue-800"
                       checked={formData.ivaActivado}
                       onChange={(e) => handleInputChange('ivaActivado', e.target.checked.toString())}
                     />
-                    <label className="form-check-label" htmlFor="ivaActivado">
-                      Aplicar IVA (19%)
-                    </label>
-                    <div className="form-text">
-                      Desactivar si el cliente está exento de IVA o el servicio no lo incluye
-                    </div>
-                  </div>
+                    <span>
+                      <span className="text-sm text-slate-800">Aplicar IVA (19%)</span>
+                      <span className="block text-xs text-slate-500">
+                        Desactivar si el cliente está exento de IVA o el servicio no lo incluye
+                      </span>
+                    </span>
+                  </label>
                 </div>
 
                 {/* Información del caso (solo lectura) */}
-                <div className="mt-3">
-                  <div className="bg-light p-3 rounded">
-                    <h6 className="mb-2">Información del Cliente</h6>
-                    {factura.honorario ? (
-                      <div className="row text-sm">
-                        <div className="col-md-6">
-                          <div><strong>Cliente:</strong> {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}</div>
-                          <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
-                        </div>
-                        <div className="col-md-6">
-                          <div><strong>Caso:</strong> {factura.honorario.caso.numeroCaso}</div>
-                          <div><strong>Tipo Honorario:</strong> {factura.honorario.tipo}</div>
-                        </div>
-                      </div>
-                    ) : factura.cliente ? (
-                      <div className="row text-sm">
-                        <div className="col-md-6">
-                          <div><strong>Cliente:</strong> {factura.cliente.nombre} {factura.cliente.apellido || ''}</div>
-                          <div><strong>Email:</strong> {factura.cliente.email}</div>
-                        </div>
-                        <div className="col-md-6">
-                          <div><strong>Teléfono:</strong> {factura.cliente.telefono || '-'}</div>
-                          <div><strong>Documento:</strong> {factura.cliente.documento || '-'}</div>
-                        </div>
-                      </div>
-                    ) : factura.clienteNombre ? (
+                <div className="mt-3 rounded-lg bg-slate-50 p-3">
+                  <h6 className="mb-2 font-semibold text-slate-700">Información del Cliente</h6>
+                  {factura.honorario ? (
+                    <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
                       <div>
-                        <strong>Cliente:</strong> {factura.clienteNombre}
+                        <div><strong>Cliente:</strong> {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}</div>
+                        <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
                       </div>
-                    ) : (
-                      <p className="text-muted mb-0">Sin cliente asociado</p>
-                    )}
-                  </div>
+                      <div>
+                        <div><strong>Caso:</strong> {factura.honorario.caso.numeroCaso}</div>
+                        <div><strong>Tipo Honorario:</strong> {factura.honorario.tipo}</div>
+                      </div>
+                    </div>
+                  ) : factura.cliente ? (
+                    <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                      <div>
+                        <div><strong>Cliente:</strong> {factura.cliente.nombre} {factura.cliente.apellido || ''}</div>
+                        <div><strong>Email:</strong> {factura.cliente.email}</div>
+                      </div>
+                      <div>
+                        <div><strong>Teléfono:</strong> {factura.cliente.telefono || '-'}</div>
+                        <div><strong>Documento:</strong> {factura.cliente.documento || '-'}</div>
+                      </div>
+                    </div>
+                  ) : factura.clienteNombre ? (
+                    <div className="text-sm"><strong>Cliente:</strong> {factura.clienteNombre}</div>
+                  ) : (
+                    <p className="mb-0 text-sm text-slate-500">Sin cliente asociado</p>
+                  )}
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
             {/* Items de la Factura */}
-            <div className="card mb-4">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Items de la Factura</h5>
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                  onClick={agregarItem}
-                >
-                  <Plus size={14} className="me-1" />
+            <Card>
+              <CardHeader>
+                <CardTitle>Items de la Factura</CardTitle>
+                <Button type="button" variant="outlinePrimary" size="sm" onClick={agregarItem}>
+                  <Plus size={14} />
                   Agregar Item
-                </button>
-              </div>
-              <div className="card-body">
+                </Button>
+              </CardHeader>
+              <CardBody className="space-y-3">
                 {items.map((item, index) => (
-                  <div key={index} className="border rounded p-3 mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <h6 className="mb-0">Item {index + 1}</h6>
+                  <div key={index} className="rounded-lg border border-slate-200 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h6 className="mb-0 font-semibold text-slate-700">Item {index + 1}</h6>
                       {items.length > 1 && (
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => eliminarItem(index)}
-                        >
+                        <Button type="button" variant="outlineDanger" size="icon" onClick={() => eliminarItem(index)}>
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       )}
                     </div>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <label className="form-label">Descripción *</label>
-                        <input
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+                      <div className="md:col-span-6">
+                        <Label>Descripción *</Label>
+                        <Input
                           type="text"
-                          className="form-control"
                           value={item.descripcion}
                           onChange={(e) => handleItemChange(index, 'descripcion', e.target.value)}
                           placeholder="Descripción del servicio o producto"
                           required
                         />
                       </div>
-                      <div className="col-md-2">
-                        <label className="form-label">Cantidad</label>
-                        <input
+                      <div className="md:col-span-2">
+                        <Label>Cantidad</Label>
+                        <Input
                           type="number"
-                          className="form-control"
                           min="1"
                           value={item.cantidad}
                           onChange={(e) => handleItemChange(index, 'cantidad', e.target.value)}
                         />
                       </div>
-                      <div className="col-md-2">
-                        <label className="form-label">Valor Unit.</label>
-                        <input
+                      <div className="md:col-span-2">
+                        <Label>Valor Unit.</Label>
+                        <Input
                           type="number"
-                          className="form-control"
                           min="0"
                           step="0.01"
                           value={item.valorUnitario}
                           onChange={(e) => handleItemChange(index, 'valorUnitario', e.target.value)}
                         />
                       </div>
-                      <div className="col-md-2">
-                        <label className="form-label">Total</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formatCurrency(item.valorTotal)}
-                          readOnly
-                        />
+                      <div className="md:col-span-2">
+                        <Label>Total</Label>
+                        <Input type="text" value={formatCurrency(item.valorTotal)} readOnly />
                       </div>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
+          <div className="space-y-4 lg:col-span-4">
             {/* Resumen */}
-            <div className="card mb-4">
-              <div className="card-header">
-                <h5 className="mb-0 d-flex align-items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Calculator size={16} />
                   Resumen de Factura
-                </h5>
-              </div>
-              <div className="card-body">
-                <div className="d-flex justify-content-between mb-2">
+                </CardTitle>
+              </CardHeader>
+              <CardBody>
+                <div className="mb-2 flex justify-between">
                   <span>Subtotal:</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="d-flex justify-content-between mb-2">
+                <div className="mb-2 flex justify-between">
                   <span>IVA (19%):</span>
-                  <span className={!formData.ivaActivado ? 'text-muted' : ''}>
+                  <span className={cn(!formData.ivaActivado && 'text-slate-400')}>
                     {formData.ivaActivado ? formatCurrency(impuestos) : 'Exento'}
                   </span>
                 </div>
-                <div className="d-flex justify-content-between mb-2">
+                <div className="mb-2 flex justify-between">
                   <span>Modalidad:</span>
-                  <span className={formData.modalidadPago === 'CREDITO' ? 'text-warning' : 'text-success'}>
+                  <span className={formData.modalidadPago === 'CREDITO' ? 'text-amber-600' : 'text-teal-700'}>
                     {formData.modalidadPago === 'CREDITO' ? 'A Crédito' : 'De Contado'}
                   </span>
                 </div>
                 {formData.modalidadPago === 'CREDITO' && (
                   <>
-                    <div className="d-flex justify-content-between mb-2 small">
+                    <div className="mb-2 flex justify-between text-sm">
                       <span>Cuotas:</span>
                       <span>{formData.numeroCuotas}</span>
                     </div>
-                    <div className="d-flex justify-content-between mb-2 small">
+                    <div className="mb-2 flex justify-between text-sm">
                       <span>Valor cuota:</span>
                       <span>{formatCurrency(calcularCuota(total, formData.numeroCuotas, formData.tasaInteres))}</span>
                     </div>
                   </>
                 )}
-                <hr />
-                <div className="d-flex justify-content-between">
-                  <span className="fw-bold">Total:</span>
-                  <span className="fw-bold text-success h5">{formatCurrency(total)}</span>
+                <hr className="my-3 border-slate-200" />
+                <div className="flex justify-between">
+                  <span className="font-bold">Total:</span>
+                  <span className="text-xl font-bold text-teal-700">{formatCurrency(total)}</span>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
             {/* Acciones */}
-            <div className="card">
-              <div className="card-body">
-                <button
-                  type="submit"
-                  className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2 mb-2"
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      Guardar Cambios
-                    </>
-                  )}
-                </button>
-                
-                <Link
-                  href={`/facturacion/${params.facturaId}`}
-                  className="btn btn-outline-secondary w-100"
-                >
-                  Cancelar
+            <Card>
+              <CardBody>
+                <Button type="submit" variant="success" loading={saving} className="mb-2 w-full justify-center">
+                  {!saving && <Save size={16} />}
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+                <Link href={`/facturacion/${params.facturaId}`}>
+                  <Button type="button" variant="outline" className="w-full justify-center">Cancelar</Button>
                 </Link>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

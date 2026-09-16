@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  Plus, 
-  Search, 
+import {
+  Plus,
+  Search,
   Filter,
   Eye,
   Send,
@@ -16,6 +16,7 @@ import {
   FileText,
   Calendar
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Alert, Spinner, type BadgeProps } from '@/components/ui'
 
 interface Factura {
   id: string
@@ -26,7 +27,7 @@ interface Factura {
   impuestos: number
   total: number
   estado: 'GENERADA' | 'ENVIADA' | 'PAGADA' | 'VENCIDA' | 'ANULADA'
-  modalidadPago: 'CONTADO' | 'FINANCIADO' // Backend enum correcto
+  modalidadPago: 'CONTADO' | 'FINANCIADO'
   observaciones?: string
   honorario: {
     id: string
@@ -56,32 +57,12 @@ interface Factura {
   }
 }
 
-const ESTADO_CONFIG = {
-  GENERADA: {
-    color: 'warning',
-    icon: Clock,
-    label: 'Generada'
-  },
-  ENVIADA: {
-    color: 'info',
-    icon: Send,
-    label: 'Enviada'
-  },
-  PAGADA: {
-    color: 'success',
-    icon: CheckCircle,
-    label: 'Pagada'
-  },
-  VENCIDA: {
-    color: 'danger',
-    icon: AlertTriangle,
-    label: 'Vencida'
-  },
-  ANULADA: {
-    color: 'secondary',
-    icon: XCircle,
-    label: 'Anulada'
-  }
+const ESTADO_CONFIG: Record<Factura['estado'], { badge: BadgeProps['variant']; icon: typeof Clock; label: string }> = {
+  GENERADA: { badge: 'warning', icon: Clock, label: 'Generada' },
+  ENVIADA: { badge: 'info', icon: Send, label: 'Enviada' },
+  PAGADA: { badge: 'success', icon: CheckCircle, label: 'Pagada' },
+  VENCIDA: { badge: 'danger', icon: AlertTriangle, label: 'Vencida' },
+  ANULADA: { badge: 'secondary', icon: XCircle, label: 'Anulada' },
 }
 
 export default function FacturacionPage() {
@@ -101,7 +82,7 @@ export default function FacturacionPage() {
       const params = new URLSearchParams()
       if (search) params.append('search', search)
       if (estadoFilter) params.append('estado', estadoFilter)
-      
+
       const response = await fetch(`/api/facturacion?${params}`)
       if (response.ok) {
         const data = await response.json()
@@ -148,208 +129,179 @@ export default function FacturacionPage() {
     return new Date(dateString).toLocaleDateString('es-CO')
   }
 
-  const getDaysUntilDue = (fechaVencimiento: string) => {
-    const today = new Date()
-    const dueDate = new Date(fechaVencimiento)
-    const diffTime = dueDate.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
-
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   return (
     <>
-      <Breadcrumb 
-        items={[
-          { label: 'Facturación' }
-        ]} 
-      />
+      <Breadcrumb items={[{ label: 'Facturación' }]} />
 
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="h3 fw-bold text-dark mb-1">Facturación</h1>
-          <p className="text-secondary mb-0">
+          <h1 className="mb-1 text-xl font-bold text-slate-800">Facturación</h1>
+          <p className="mb-0 text-slate-500">
             Gestión de facturas y pagos del sistema jurídico
           </p>
         </div>
-        <Link href="/facturacion/nueva" className="btn btn-primary d-flex align-items-center gap-2">
-          <Plus size={16} />
-          Nueva Factura
+        <Link href="/facturacion/nueva">
+          <Button>
+            <Plus size={16} />
+            Nueva Factura
+          </Button>
         </Link>
       </div>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
       {/* Filtros */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-6">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Buscar por número, cliente o caso..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+            <div className="relative md:col-span-6">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                className="pl-9"
+                placeholder="Buscar por número, cliente o caso..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <div className="col-md-3">
-              <select
-                className="form-select"
-                value={estadoFilter}
-                onChange={(e) => setEstadoFilter(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)}>
                 <option value="">Todos los estados</option>
                 <option value="GENERADA">Generada</option>
                 <option value="ENVIADA">Enviada</option>
                 <option value="PAGADA">Pagada</option>
                 <option value="VENCIDA">Vencida</option>
                 <option value="ANULADA">Anulada</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <button 
-                className="btn btn-outline-secondary w-100"
-                onClick={() => {
-                  setSearch('')
-                  setEstadoFilter('')
-                }}
+            <div className="md:col-span-3">
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => { setSearch(''); setEstadoFilter('') }}
               >
-                <Filter size={16} className="me-1" />
+                <Filter size={16} />
                 Limpiar Filtros
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de Facturas */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">Facturas ({facturas.length})</h5>
-        </div>
-        <div className="card-body">
+      <Card>
+        <CardHeader><CardTitle>Facturas ({facturas.length})</CardTitle></CardHeader>
+        <CardBody>
           {facturas.length === 0 ? (
-            <div className="text-center py-5">
-              <FileText size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay facturas</h5>
-              <p className="text-muted mb-4">Aún no se han generado facturas en el sistema</p>
-              <Link href="/facturacion/nueva" className="btn btn-primary">
-                <Plus size={16} className="me-2" />
-                Crear Primera Factura
+            <div className="py-5 text-center">
+              <FileText size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">No hay facturas</h5>
+              <p className="mb-4 text-slate-500">Aún no se han generado facturas en el sistema</p>
+              <Link href="/facturacion/nueva">
+                <Button>
+                  <Plus size={16} />
+                  Crear Primera Factura
+                </Button>
               </Link>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Número</th>
-                    <th>Cliente</th>
-                    <th>Caso</th>
-                    <th>Fecha Emisión</th>
-                    <th>Modalidad Pago</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Número</th>
+                    <th className="px-4 py-3 font-semibold">Cliente</th>
+                    <th className="px-4 py-3 font-semibold">Caso</th>
+                    <th className="px-4 py-3 font-semibold">Fecha Emisión</th>
+                    <th className="px-4 py-3 font-semibold">Modalidad Pago</th>
+                    <th className="px-4 py-3 font-semibold">Total</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {facturas.map((factura) => {
                     const estadoConfig = ESTADO_CONFIG[factura.estado]
                     const IconoEstado = estadoConfig.icon
-                    const diasVencimiento = getDaysUntilDue(factura.fechaVencimiento)
-                    
+
                     return (
-                      <tr key={factura.id}>
-                        <td>
-                          <div className="fw-semibold">{factura.numero}</div>
+                      <tr key={factura.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 align-middle">
+                          <div className="font-semibold text-slate-800">{factura.numero}</div>
                         </td>
-                        <td>
-                          <div className="fw-semibold">
-                            {factura.honorario 
+                        <td className="px-4 py-3 align-middle">
+                          <div className="font-semibold text-slate-800">
+                            {factura.honorario
                               ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
-                              : factura.cliente 
+                              : factura.cliente
                                 ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
                                 : factura.clienteNombre || '—'}
                           </div>
-                          <div className="text-muted small">
-                            {factura.honorario?.caso.cliente.email 
-                              ?? factura.cliente?.email 
+                          <div className="text-xs text-slate-500">
+                            {factura.honorario?.caso.cliente.email
+                              ?? factura.cliente?.email
                               ?? '—'}
                           </div>
                         </td>
-                        <td>
-                          <span className="badge bg-light text-dark">
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant="outline">
                             {factura.honorario?.caso.numeroCaso ?? '—'}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <div className="d-flex align-items-center gap-1 small">
-                            <Calendar size={14} />
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex items-center gap-1 text-xs">
+                            <Calendar size={14} className="text-slate-400" />
                             {formatDate(factura.fecha)}
                           </div>
                         </td>
-                        <td>
-                          <span className={`badge ${factura.modalidadPago === 'CONTADO' ? 'bg-success' : 'bg-warning'}`}>
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant={factura.modalidadPago === 'CONTADO' ? 'success' : 'warning'}>
                             {factura.modalidadPago === 'CONTADO' ? 'Contado' : 'Financiado'}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <div className="fw-bold text-success">
+                        <td className="px-4 py-3 align-middle">
+                          <div className="font-bold text-teal-700">
                             {formatCurrency(factura.total)}
                           </div>
                         </td>
-                        <td>
-                          <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1 w-fit`}>
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant={estadoConfig.badge}>
                             <IconoEstado size={12} />
                             {estadoConfig.label}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <div className="btn-group" role="group">
-                            <Link
-                              href={`/facturacion/${factura.id}`}
-                              className="btn btn-outline-primary btn-sm"
-                              title="Ver detalles"
-                            >
-                              <Eye size={14} />
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex gap-1">
+                            <Link href={`/facturacion/${factura.id}`}>
+                              <Button variant="outlinePrimary" size="icon" title="Ver detalles">
+                                <Eye size={14} />
+                              </Button>
                             </Link>
                             {factura.estado === 'GENERADA' && (
-                              <button
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="border-sky-700 text-sky-700 hover:bg-sky-50"
                                 onClick={() => handleEstadoChange(factura.id, 'ENVIADA')}
-                                className="btn btn-outline-info btn-sm"
                                 title="Marcar como enviada"
                               >
                                 <Send size={14} />
-                              </button>
+                              </Button>
                             )}
                             {factura.estado === 'ENVIADA' && (
-                              <button
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="border-teal-700 text-teal-700 hover:bg-teal-50"
                                 onClick={() => handleEstadoChange(factura.id, 'PAGADA')}
-                                className="btn btn-outline-success btn-sm"
                                 title="Marcar como pagada"
                               >
                                 <CheckCircle size={14} />
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </td>
@@ -360,14 +312,8 @@ export default function FacturacionPage() {
               </table>
             </div>
           )}
-        </div>
-      </div>
-
-      <style jsx>{`
-        .w-fit {
-          width: fit-content !important;
-        }
-      `}</style>
+        </CardBody>
+      </Card>
     </>
   )
 }
