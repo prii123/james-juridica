@@ -32,6 +32,22 @@ const config: Config = {
           danger: '#dc2626', // red-600
         },
       },
+      // Sombras suaves y difusas (estilo SaaS moderno) en vez de las sombras
+      // duras por defecto de Tailwind. Usadas por Card, Modal, dropdowns, etc.
+      boxShadow: {
+        soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)',
+        'soft-md': '0 4px 8px -2px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.05)',
+        'soft-lg': '0 12px 24px -6px rgb(15 23 42 / 0.10), 0 4px 8px -4px rgb(15 23 42 / 0.06)',
+        'soft-xl': '0 24px 48px -12px rgb(15 23 42 / 0.16), 0 8px 16px -8px rgb(15 23 42 / 0.08)',
+      },
+      keyframes: {
+        'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+        'scale-in': { from: { opacity: '0', transform: 'scale(0.97)' }, to: { opacity: '1', transform: 'scale(1)' } },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.15s ease-out',
+        'scale-in': 'scale-in 0.15s ease-out',
+      },
     },
   },
   plugins: [],

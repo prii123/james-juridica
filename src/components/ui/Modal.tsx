@@ -20,15 +20,15 @@ const sizes = {
 export default function Modal({ onClose, title, icon, children, footer, size = 'md' }: ModalProps) {
   return (
     <div
-      className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[1050] flex animate-fade-in items-center justify-center bg-slate-900/50 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className={cn('w-full rounded-xl bg-white shadow-xl', sizes[size])}
+        className={cn('w-full animate-scale-in rounded-2xl bg-white shadow-soft-xl', sizes[size])}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-5 py-4">
-          <h5 className="flex items-center gap-2 text-base font-semibold text-slate-800 m-0">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
+          <h5 className="m-0 flex items-center gap-2 text-base font-semibold tracking-tight text-slate-800">
             {icon}
             {title}
           </h5>
@@ -36,7 +36,7 @@ export default function Modal({ onClose, title, icon, children, footer, size = '
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
             <X size={18} />
           </button>
@@ -45,7 +45,7 @@ export default function Modal({ onClose, title, icon, children, footer, size = '
         <div className="max-h-[75vh] overflow-y-auto px-5 py-4">{children}</div>
 
         {footer && (
-          <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-4">
+          <div className="flex items-center justify-end gap-2 rounded-b-2xl border-t border-slate-100 bg-slate-50/60 px-5 py-4">
             {footer}
           </div>
         )}

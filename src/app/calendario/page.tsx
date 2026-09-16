@@ -3,9 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
+import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card'
+import Button, { buttonVariants } from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import Spinner from '@/components/ui/Spinner'
+import { cn } from '@/lib/utils'
+import {
   Calendar as CalendarIcon,
-  ChevronLeft, 
+  ChevronLeft,
   ChevronRight,
   Clock,
   User,
@@ -73,6 +78,12 @@ const TIPO_AUDIENCIA_LABELS = {
   OTRA: 'Otra'
 }
 
+const ESTADO_BADGE_VARIANT: Record<string, 'primary' | 'success' | 'danger' | 'warning'> = {
+  PROGRAMADA: 'primary',
+  REALIZADA: 'success',
+  CANCELADA: 'danger',
+}
+
 export default function CalendarioPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -124,16 +135,18 @@ export default function CalendarioPage() {
         }
       })
       .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     fetchEvents()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate])
 
   const fetchEvents = async () => {
     try {
       setLoading(true)
-      
+
       // Obtener primer y último día del mes actual
       const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999)
@@ -147,7 +160,7 @@ export default function CalendarioPage() {
       if (asesoriasResponse.ok) {
         const asesoriasData = await asesoriasResponse.json()
         const asesorias = asesoriasData.asesorias || []
-        
+
         asesorias.forEach((asesoria: Asesoria) => {
           const asesoriaDate = new Date(asesoria.fecha)
           if (asesoriaDate >= firstDay && asesoriaDate <= lastDay) {
@@ -167,7 +180,7 @@ export default function CalendarioPage() {
       if (audienciasResponse.ok) {
         const audienciasData = await audienciasResponse.json()
         const audiencias = audienciasData.data || audienciasData.audiencias || []
-        
+
         audiencias.forEach((audiencia: Audiencia) => {
           const audienciaDate = new Date(audiencia.fechaHora)
           if (audienciaDate >= firstDay && audienciaDate <= lastDay) {
@@ -204,12 +217,12 @@ export default function CalendarioPage() {
     const startDayOfWeek = firstDay.getDay()
 
     const days = []
-    
+
     // Días vacíos antes del primer día del mes
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(null)
     }
-    
+
     // Días del mes
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day))
@@ -250,231 +263,199 @@ export default function CalendarioPage() {
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Calendario' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Calendario de Eventos</h1>
-          <p className="text-secondary mb-0">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Calendario de Eventos</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Visualiza y gestiona todos tus eventos: asesorías, audiencias y más
           </p>
           {syncStatus.configured && (
-            <div className="d-flex align-items-center gap-2 mt-1">
+            <div className="mt-1.5 flex items-center gap-2">
               {syncStatus.syncing ? (
-                <span className="small text-muted d-flex align-items-center gap-1">
-                  <RefreshCw size={12} className="spinner" /> Sincronizando...
+                <span className="flex items-center gap-1 text-xs text-slate-500">
+                  <RefreshCw size={12} className="animate-spin" /> Sincronizando...
                 </span>
               ) : syncStatus.lastSync ? (
-                <span className="small text-muted d-flex align-items-center gap-1">
-                  <CheckCircle2 size={12} style={{color: '#0f766e'}} />
+                <span className="flex items-center gap-1 text-xs text-slate-500">
+                  <CheckCircle2 size={12} className="text-teal-700" />
                   Última sincronización: {syncStatus.lastSync.toLocaleTimeString('es-CO')}
                 </span>
               ) : null}
               {syncStatus.message && !syncStatus.syncing && syncStatus.message.startsWith('Error') && (
-                <span className="small text-danger d-flex align-items-center gap-1">
+                <span className="flex items-center gap-1 text-xs text-red-600">
                   <AlertCircle size={12} /> {syncStatus.message}
                 </span>
               )}
             </div>
           )}
         </div>
-        <div className="d-flex gap-2 align-items-center">
+        <div className="flex items-center gap-2">
           {syncStatus.configured && (
-            <button
+            <Button
+              variant="outline"
               onClick={triggerSync}
               disabled={syncStatus.syncing}
-              className="btn btn-outline-secondary d-flex align-items-center gap-2"
-              style={{fontSize: '0.875rem'}}
             >
-              <RefreshCw size={16} className={syncStatus.syncing ? 'spinner' : ''} />
+              <RefreshCw size={16} className={syncStatus.syncing ? 'animate-spin' : ''} />
               Sincronizar
-            </button>
+            </Button>
           )}
-          <Link href="/asesorias/nueva" className="btn btn-primary d-flex align-items-center gap-2">
+          <Link href="/asesorias/nueva" className={buttonVariants({ variant: 'primary' })}>
             <Plus size={16} />
             Nueva Asesoría
           </Link>
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-lg-8">
-          <div className="card">
-            <div className="card-header">
-              <div className="d-flex align-items-center justify-content-between">
-                <h5 className="mb-0 d-flex align-items-center gap-2">
-                  <CalendarIcon size={20} />
-                  {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
-                </h5>
-                <div className="d-flex gap-2">
-                  <button 
-                    onClick={handlePrevMonth}
-                    className="btn btn-outline-secondary btn-sm"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button 
-                    onClick={handleToday}
-                    className="btn btn-outline-primary btn-sm"
-                  >
-                    Hoy
-                  </button>
-                  <button 
-                    onClick={handleNextMonth}
-                    className="btn btn-outline-secondary btn-sm"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon size={18} className="text-slate-400" />
+                {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={handlePrevMonth} aria-label="Mes anterior">
+                  <ChevronLeft size={16} />
+                </Button>
+                <Button variant="outlinePrimary" size="sm" onClick={handleToday}>
+                  Hoy
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleNextMonth} aria-label="Mes siguiente">
+                  <ChevronRight size={16} />
+                </Button>
               </div>
-            </div>
-            <div className="card-body p-0">
+            </CardHeader>
+            <CardBody className="p-0">
               {loading ? (
-                <div className="text-center py-5">
-                  <div className="spinner-border" role="status">
-                    <span className="visually-hidden">Cargando...</span>
+                <Spinner />
+              ) : (
+                <div className="overflow-x-auto">
+                  <div className="min-w-[640px]">
+                    <div className="grid grid-cols-7 border-b border-slate-100">
+                      {DAYS.map(day => (
+                        <div key={day} className="py-2.5 text-center text-xs font-semibold text-slate-500">
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7">
+                      {days.map((date, index) => {
+                        if (!date) {
+                          return <div key={index} className="h-[110px] border-b border-r border-slate-100 bg-slate-50/40" />
+                        }
+
+                        const dayEvents = getEventsForDate(date)
+                        const isTodayDate = isToday(date)
+                        const isSelected = selectedDate &&
+                          date.getDate() === selectedDate.getDate() &&
+                          date.getMonth() === selectedDate.getMonth() &&
+                          date.getFullYear() === selectedDate.getFullYear()
+
+                        return (
+                          <div
+                            key={index}
+                            onClick={() => dayEvents.length > 0 && setSelectedDate(date)}
+                            className={cn(
+                              'h-[110px] border-b border-r border-slate-100 p-2 align-top transition-colors',
+                              dayEvents.length > 0 ? 'cursor-pointer hover:bg-slate-50' : '',
+                              isTodayDate && 'bg-blue-50/60',
+                              isSelected && 'ring-2 ring-inset ring-blue-700'
+                            )}
+                          >
+                            <div className={cn('mb-1 text-xs font-semibold', isTodayDate ? 'text-blue-800' : 'text-slate-600')}>
+                              {date.getDate()}
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              {dayEvents.slice(0, 3).map(event => (
+                                <div
+                                  key={event.id}
+                                  title={`${event.time} - ${event.title}`}
+                                  className={cn(
+                                    'flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[0.65rem] font-medium',
+                                    event.type === 'asesoria'
+                                      ? 'bg-sky-50 text-sky-700'
+                                      : 'bg-amber-50 text-amber-700'
+                                  )}
+                                >
+                                  {event.type === 'asesoria' ? <User size={10} /> : <Gavel size={10} />} {event.time}
+                                </div>
+                              ))}
+                              {dayEvents.length > 3 && (
+                                <div className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-slate-600">
+                                  +{dayEvents.length - 3} más
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="table-responsive">
-                  <table className="table table-bordered mb-0" style={{ tableLayout: 'fixed' }}>
-                    <thead>
-                      <tr>
-                        {DAYS.map(day => (
-                          <th key={day} className="text-center bg-light py-2" style={{ width: '14.28%' }}>
-                            {day}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: Math.ceil(days.length / 7) }).map((_, weekIndex) => (
-                        <tr key={weekIndex}>
-                          {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((date, dayIndex) => {
-                            if (!date) {
-                              return <td key={dayIndex} className="bg-light"></td>
-                            }
-
-                            const dayEvents = getEventsForDate(date)
-                            const isTodayDate = isToday(date)
-                            const isSelected = selectedDate && 
-                              date.getDate() === selectedDate.getDate() &&
-                              date.getMonth() === selectedDate.getMonth() &&
-                              date.getFullYear() === selectedDate.getFullYear()
-
-                            return (
-                              <td 
-                                key={dayIndex}
-                                className={`p-2 align-top ${isTodayDate ? 'bg-primary bg-opacity-10' : ''} ${isSelected ? 'border-primary border-2' : ''}`}
-                                style={{ 
-                                  height: '120px', 
-                                  cursor: dayEvents.length > 0 ? 'pointer' : 'default',
-                                  position: 'relative'
-                                }}
-                                onClick={() => dayEvents.length > 0 && setSelectedDate(date)}
-                              >
-                                <div className={`fw-bold small mb-1 ${isTodayDate ? 'text-primary' : ''}`}>
-                                  {date.getDate()}
-                                </div>
-                                <div className="d-flex flex-column gap-1" style={{ fontSize: '0.7rem' }}>
-                                  {dayEvents.slice(0, 3).map(event => (
-                                    <div 
-                                      key={event.id}
-                                      className={`badge ${
-                                        event.type === 'asesoria' 
-                                          ? 'bg-info' 
-                                          : 'bg-warning'
-                                      } text-start text-truncate`}
-                                      title={`${event.time} - ${event.title}`}
-                                    >
-                                      {event.type === 'asesoria' ? <User size={10} /> : <Gavel size={10} />} {event.time}
-                                    </div>
-                                  ))}
-                                  {dayEvents.length > 3 && (
-                                    <div className="badge bg-secondary text-start">
-                                      +{dayEvents.length - 3} más
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            )
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
-        <div className="col-lg-4">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">
-                {selectedDate 
+        <div className="lg:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {selectedDate
                   ? `Eventos del ${selectedDate.getDate()} de ${MONTHS[selectedDate.getMonth()]}`
                   : 'Selecciona una fecha'
                 }
-              </h5>
-            </div>
-            <div className="card-body" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+              </CardTitle>
+            </CardHeader>
+            <CardBody className="max-h-[600px] overflow-y-auto">
               {selectedDateEvents.length === 0 ? (
-                <div className="text-center text-muted py-4">
-                  <CalendarIcon size={48} className="mb-3 opacity-50" />
-                  <p className="mb-0">
-                    {selectedDate 
+                <div className="py-8 text-center text-slate-400">
+                  <CalendarIcon size={40} className="mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">
+                    {selectedDate
                       ? 'No hay eventos programados para este día'
                       : 'Selecciona un día con eventos en el calendario'
                     }
                   </p>
                 </div>
               ) : (
-                <div className="d-flex flex-column gap-3">
+                <div className="flex flex-col gap-3">
                   {selectedDateEvents.map(event => {
                     if (event.type === 'asesoria') {
                       const asesoria = event.data as Asesoria
                       return (
-                        <Link
-                          key={event.id}
-                          href={`/asesorias/${asesoria.id}`}
-                          className="text-decoration-none"
-                        >
-                          <div className="card border-start border-info border-4 h-100">
-                            <div className="card-body p-3">
-                              <div className="d-flex align-items-start justify-content-between mb-2">
-                                <div className="d-flex align-items-center gap-2">
-                                  <User size={16} className="text-info" />
-                                  <span className="badge bg-info">Asesoría</span>
-                                </div>
-                                <span className={`badge ${
-                                  asesoria.estado === 'PROGRAMADA' ? 'bg-primary' :
-                                  asesoria.estado === 'REALIZADA' ? 'bg-success' :
-                                  asesoria.estado === 'CANCELADA' ? 'bg-danger' :
-                                  'bg-warning'
-                                }`}>
-                                  {asesoria.estado}
-                                </span>
+                        <Link key={event.id} href={`/asesorias/${asesoria.id}`}>
+                          <div className="rounded-xl border border-slate-200 border-l-4 border-l-sky-500 bg-white p-3.5 transition-shadow hover:shadow-soft-md">
+                            <div className="mb-2 flex items-start justify-between">
+                              <div className="flex items-center gap-2">
+                                <User size={16} className="text-sky-600" />
+                                <Badge variant="info">Asesoría</Badge>
                               </div>
-                              <h6 className="mb-2">{asesoria.tema}</h6>
-                              <div className="small text-muted">
-                                <div className="d-flex align-items-center gap-2 mb-1">
-                                  <Clock size={14} />
-                                  <span>{event.time} ({asesoria.duracion} min)</span>
-                                </div>
-                                <div className="d-flex align-items-center gap-2 mb-1">
-                                  <User size={14} />
-                                  <span>{asesoria.lead.nombre}</span>
-                                </div>
-                                <div className="d-flex align-items-center gap-2">
-                                  <MapPin size={14} />
-                                  <span>{asesoria.modalidad}</span>
-                                </div>
+                              <Badge variant={ESTADO_BADGE_VARIANT[asesoria.estado] || 'warning'}>
+                                {asesoria.estado}
+                              </Badge>
+                            </div>
+                            <h6 className="mb-2 text-sm font-semibold text-slate-800">{asesoria.tema}</h6>
+                            <div className="space-y-1 text-xs text-slate-500">
+                              <div className="flex items-center gap-2">
+                                <Clock size={13} />
+                                <span>{event.time} ({asesoria.duracion} min)</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <User size={13} />
+                                <span>{asesoria.lead.nombre}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MapPin size={13} />
+                                <span>{asesoria.modalidad}</span>
                               </div>
                             </div>
                           </div>
@@ -483,37 +464,26 @@ export default function CalendarioPage() {
                     } else {
                       const audiencia = event.data as Audiencia
                       return (
-                        <Link
-                          key={event.id}
-                          href={`/casos/${audiencia.caso?.id}/audiencias`}
-                          className="text-decoration-none"
-                        >
-                          <div className="card border-start border-warning border-4 h-100">
-                            <div className="card-body p-3">
-                              <div className="d-flex align-items-start justify-content-between mb-2">
-                                <div className="d-flex align-items-center gap-2">
-                                  <Gavel size={16} className="text-warning" />
-                                  <span className="badge bg-warning text-dark">Audiencia</span>
-                                </div>
-                                <span className={`badge ${
-                                  audiencia.estado === 'PROGRAMADA' ? 'bg-primary' :
-                                  audiencia.estado === 'REALIZADA' ? 'bg-success' :
-                                  audiencia.estado === 'CANCELADA' ? 'bg-danger' :
-                                  'bg-warning'
-                                }`}>
-                                  {audiencia.estado}
-                                </span>
+                        <Link key={event.id} href={`/casos/${audiencia.caso?.id}/audiencias`}>
+                          <div className="rounded-xl border border-slate-200 border-l-4 border-l-amber-500 bg-white p-3.5 transition-shadow hover:shadow-soft-md">
+                            <div className="mb-2 flex items-start justify-between">
+                              <div className="flex items-center gap-2">
+                                <Gavel size={16} className="text-amber-600" />
+                                <Badge variant="warning">Audiencia</Badge>
                               </div>
-                              <h6 className="mb-2">{event.title}</h6>
-                              <div className="small text-muted">
-                                <div className="d-flex align-items-center gap-2 mb-1">
-                                  <Clock size={14} />
-                                  <span>{event.time}</span>
-                                </div>
-                                <div className="d-flex align-items-center gap-2">
-                                  <Scale size={14} />
-                                  <span>{TIPO_AUDIENCIA_LABELS[audiencia.tipo] || audiencia.tipo}</span>
-                                </div>
+                              <Badge variant={ESTADO_BADGE_VARIANT[audiencia.estado] || 'warning'}>
+                                {audiencia.estado}
+                              </Badge>
+                            </div>
+                            <h6 className="mb-2 text-sm font-semibold text-slate-800">{event.title}</h6>
+                            <div className="space-y-1 text-xs text-slate-500">
+                              <div className="flex items-center gap-2">
+                                <Clock size={13} />
+                                <span>{event.time}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Scale size={13} />
+                                <span>{TIPO_AUDIENCIA_LABELS[audiencia.tipo] || audiencia.tipo}</span>
                               </div>
                             </div>
                           </div>
@@ -523,49 +493,34 @@ export default function CalendarioPage() {
                   })}
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
-          {/* Resumen de eventos del mes */}
-          <div className="card mt-3">
-            <div className="card-header">
-              <h5 className="mb-0">Resumen del Mes</h5>
-            </div>
-            <div className="card-body">
-              <div className="row g-3">
-                <div className="col-6">
-                  <div className="text-center p-3 bg-info bg-opacity-10 rounded">
-                    <User size={24} className="text-info mb-2" />
-                    <div className="h4 mb-0">
-                      {events.filter(e => e.type === 'asesoria').length}
-                    </div>
-                    <div className="small text-muted">Asesorías</div>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Resumen del Mes</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-sky-50 p-4 text-center">
+                  <User size={22} className="mx-auto mb-2 text-sky-600" />
+                  <div className="text-xl font-bold text-slate-900">
+                    {events.filter(e => e.type === 'asesoria').length}
                   </div>
+                  <div className="text-xs text-slate-500">Asesorías</div>
                 </div>
-                <div className="col-6">
-                  <div className="text-center p-3 bg-warning bg-opacity-10 rounded">
-                    <Gavel size={24} className="text-warning mb-2" />
-                    <div className="h4 mb-0">
-                      {events.filter(e => e.type === 'audiencia').length}
-                    </div>
-                    <div className="small text-muted">Audiencias</div>
+                <div className="rounded-xl bg-amber-50 p-4 text-center">
+                  <Gavel size={22} className="mx-auto mb-2 text-amber-600" />
+                  <div className="text-xl font-bold text-slate-900">
+                    {events.filter(e => e.type === 'audiencia').length}
                   </div>
+                  <div className="text-xs text-slate-500">Audiencias</div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
-
-      <style jsx>{`
-        :global(.spinner) {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </>
   )
 }

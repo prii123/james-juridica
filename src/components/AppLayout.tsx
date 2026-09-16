@@ -44,19 +44,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="flex flex-1 flex-col lg:block">
           {/* Desktop: apply margin */}
           <div className="hidden lg:ml-64 lg:block">
-            <main className="main-content min-h-screen overflow-auto bg-slate-50 p-3 lg:p-4">
+            <main className="main-content min-h-screen overflow-auto bg-slate-50 p-4 lg:p-6">
               {/* Espaciador automático para compensar TopBar fijo */}
               <div className="topbar-spacer" />
-              <div className="w-full px-2">{children}</div>
+              <div className="w-full">{children}</div>
             </main>
           </div>
 
           {/* Mobile: no margin */}
           <div className="flex h-full flex-col lg:hidden">
-            <main className="main-content flex-1 overflow-auto bg-slate-50 p-3">
+            <main className="main-content flex-1 overflow-auto bg-slate-50 p-4">
               {/* Espaciador automático para compensar TopBar fijo */}
               <div className="topbar-spacer" />
-              <div className="w-full px-2">{children}</div>
+              <div className="w-full">{children}</div>
             </main>
           </div>
         </div>

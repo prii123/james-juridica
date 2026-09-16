@@ -208,7 +208,7 @@ export default function TopBar() {
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-[1030] flex items-center border-b border-slate-200 bg-white px-4 py-2 shadow lg:ml-64 lg:w-[calc(100%-16rem)]"
+      className="fixed inset-x-0 top-0 z-[1030] flex items-center border-b border-slate-200 bg-white/90 px-4 py-2 shadow-soft backdrop-blur-sm lg:ml-64 lg:w-[calc(100%-16rem)]"
       style={{ height: 'var(--topbar-height)', maxHeight: 'var(--topbar-height)' }}
     >
       <div className="flex w-full items-center justify-between">
@@ -222,7 +222,7 @@ export default function TopBar() {
               ref={inputRef}
               type="text"
               placeholder="Buscar clientes, casos, facturas..."
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20"
+              className="w-full rounded-xl border border-transparent bg-slate-100 py-2 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-blue-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700/15"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -244,7 +244,7 @@ export default function TopBar() {
           {/* Dropdown Results */}
           {showDropdown && (
             <div
-              className="search-dropdown fixed overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg"
+              className="search-dropdown fixed animate-scale-in overflow-x-hidden overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-soft-lg"
               style={{
                 top: `${dropdownPosition.top}px`,
                 left: `${dropdownPosition.left}px`,
@@ -332,9 +332,9 @@ export default function TopBar() {
           <div className="hidden items-center gap-2 md:flex">
             {/* Notification Badge */}
             <div className="relative">
-              <button className="relative rounded-lg border border-slate-300 p-1.5 text-slate-600 hover:bg-slate-50">
+              <button className="relative rounded-xl border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700">
                 <Bell size={20} />
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-600" />
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
               </button>
             </div>
           </div>
@@ -352,7 +352,7 @@ export default function TopBar() {
 
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-800 shadow">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-700 to-blue-900 shadow-soft">
                   <User size={20} className="text-white" />
                 </div>
                 <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-teal-600" />
@@ -360,7 +360,7 @@ export default function TopBar() {
 
               <button
                 onClick={() => signOut({ callbackUrl: '/auth/login' })}
-                className="rounded-lg border border-red-600 p-1.5 text-red-600 hover:bg-red-50"
+                className="rounded-xl border border-slate-200 p-1.5 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                 title="Cerrar sesión"
               >
                 <LogOut size={16} />
