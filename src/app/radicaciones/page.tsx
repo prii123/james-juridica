@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  Plus, 
-  Search, 
-  Calendar, 
-  User, 
-  FileText, 
+import {
+  Plus,
+  Search,
+  Calendar,
+  FileText,
   Filter,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +17,8 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { EstadoRadicacion } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Spinner, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Radicacion {
   id: string
@@ -45,27 +46,11 @@ interface Radicacion {
   }
 }
 
-const ESTADO_CONFIG = {
-  SOLICITADA: {
-    color: 'warning',
-    icon: Clock,
-    label: 'Solicitada'
-  },
-  PROGRAMADA: {
-    color: 'primary',
-    icon: Calendar,
-    label: 'Programada'
-  },
-  REALIZADA: {
-    color: 'success', 
-    icon: CheckCircle,
-    label: 'Realizada'
-  },
-  CANCELADA: {
-    color: 'danger',
-    icon: XCircle,
-    label: 'Cancelada'
-  }
+const ESTADO_CONFIG: Record<EstadoRadicacion, { badge: BadgeProps['variant']; icon: typeof Clock; label: string }> = {
+  SOLICITADA: { badge: 'warning', icon: Clock, label: 'Solicitada' },
+  PROGRAMADA: { badge: 'primary', icon: Calendar, label: 'Programada' },
+  REALIZADA: { badge: 'success', icon: CheckCircle, label: 'Realizada' },
+  CANCELADA: { badge: 'danger', icon: XCircle, label: 'Cancelada' },
 }
 
 export default function RadicacionesPage() {
@@ -92,7 +77,7 @@ export default function RadicacionesPage() {
       if (estadoFilter) params.append('estado', estadoFilter)
 
       const response = await fetch(`/api/radicaciones?${params}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setRadicaciones(data.radicaciones)
@@ -111,7 +96,6 @@ export default function RadicacionesPage() {
     return new Date(dateString).toLocaleDateString('es-CO')
   }
 
-
   const calculateDaysElapsed = (startDate: string) => {
     const start = new Date(startDate)
     const now = new Date()
@@ -122,116 +106,102 @@ export default function RadicacionesPage() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
-    setCurrentPage(1) // Reset to first page when searching
+    setCurrentPage(1)
   }
 
   const handleFilterChange = (value: EstadoRadicacion | '') => {
     setEstadoFilter(value)
-    setCurrentPage(1) // Reset to first page when filtering
+    setCurrentPage(1)
   }
 
   return (
     <>
-      <Breadcrumb 
-        items={[
-          { label: 'Radicaciones' }
-        ]} 
-      />
+      <Breadcrumb items={[{ label: 'Radicaciones' }]} />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Radicaciones</h1>
-          <p className="text-secondary mb-0">Gestiona todas las radicaciones del sistema</p>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Radicaciones</h1>
+          <p className="mb-0 text-slate-500">Gestiona todas las radicaciones del sistema</p>
         </div>
-        <Link href="/radicaciones/nueva" className="btn btn-primary d-flex align-items-center gap-2">
-          <Plus size={16} />
-          Nueva Conciliación
+        <Link href="/radicaciones/nueva">
+          <Button>
+            <Plus size={16} />
+            Nueva Conciliación
+          </Button>
         </Link>
       </div>
 
       {/* Filtros y búsqueda */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-6">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Buscar por número, demandante o demandado..."
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                />
-              </div>
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-9">
+            <div className="relative md:col-span-6">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                className="pl-9"
+                placeholder="Buscar por número, demandante o demandado..."
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
             </div>
-            <div className="col-md-3">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <Filter size={16} />
-                </span>
-                <select
-                  className="form-select"
-                  value={estadoFilter}
-                  onChange={(e) => handleFilterChange(e.target.value as EstadoRadicacion)}
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="SOLICITADA">Solicitada</option>
-                  <option value="PROGRAMADA">Programada</option>
-                  <option value="REALIZADA">Realizada</option>
-                  <option value="CANCELADA">Cancelada</option>
-                </select>
-              </div>
+            <div className="relative md:col-span-3">
+              <Filter size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Select
+                className="pl-9"
+                value={estadoFilter}
+                onChange={(e) => handleFilterChange(e.target.value as EstadoRadicacion)}
+              >
+                <option value="">Todos los estados</option>
+                <option value="SOLICITADA">Solicitada</option>
+                <option value="PROGRAMADA">Programada</option>
+                <option value="REALIZADA">Realizada</option>
+                <option value="CANCELADA">Cancelada</option>
+              </Select>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de radicaciones */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">Listado de Radicaciones</h5>
-        </div>
-        <div className="card-body">
+      <Card>
+        <CardHeader><CardTitle>Listado de Radicaciones</CardTitle></CardHeader>
+        <CardBody>
           {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
-              </div>
-            </div>
+            <Spinner />
           ) : radicaciones.length === 0 ? (
-            <div className="text-center py-5">
-              <FileText size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay radicaciones</h5>
-              <p className="text-muted">
-                {search || estadoFilter 
+            <div className="py-5 text-center">
+              <FileText size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">No hay radicaciones</h5>
+              <p className="mb-3 text-slate-500">
+                {search || estadoFilter
                   ? 'No se encontraron radicaciones con los criterios de búsqueda.'
                   : 'Aún no se han creado radicaciones en el sistema.'
                 }
               </p>
-              <Link href="/radicaciones/nueva" className="btn btn-primary">
-                <Plus size={16} className="me-2" />
-                Crear Primera Conciliación
+              <Link href="/radicaciones/nueva">
+                <Button>
+                  <Plus size={16} />
+                  Crear Primera Conciliación
+                </Button>
               </Link>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Número</th>
-                    <th>Partes</th>
-                    <th>Estado</th>
-                    <th>Fecha Solicitud</th>
-                    <th>Días</th>
-                    <th>Asesoría Origen</th>
-                    <th>Asesor</th>
-                    <th>Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Número</th>
+                    <th className="px-4 py-3 font-semibold">Partes</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Fecha Solicitud</th>
+                    <th className="px-4 py-3 font-semibold">Días</th>
+                    <th className="px-4 py-3 font-semibold">Asesoría Origen</th>
+                    <th className="px-4 py-3 font-semibold">Asesor</th>
+                    <th className="px-4 py-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {radicaciones.map((radicacion) => {
                     const estadoConfig = ESTADO_CONFIG[radicacion.estado]
                     const IconoEstado = estadoConfig.icon
@@ -239,71 +209,46 @@ export default function RadicacionesPage() {
                     const isOverdue = diasTranscurridos > 10
 
                     return (
-                      <tr key={radicacion.id} className={isOverdue ? 'table-danger' : ''}>
-                        <td>
-                          <Link 
-                            href={`/radicaciones/${radicacion.id}`}
-                            className="text-decoration-none fw-semibold"
-                          >
+                      <tr key={radicacion.id} className={cn(isOverdue ? 'bg-red-50' : 'hover:bg-slate-50')}>
+                        <td className="px-4 py-3 align-middle">
+                          <Link href={`/radicaciones/${radicacion.id}`} className="font-semibold text-slate-800 no-underline hover:text-blue-800">
                             {radicacion.numero}
                           </Link>
                         </td>
-                        <td>
-                          <div className="small">
-                            <div className="fw-semibold">{radicacion.demandante}</div>
-                            <div className="text-muted">vs {radicacion.demandado}</div>
-                          </div>
+                        <td className="px-4 py-3 align-middle text-xs">
+                          <div className="font-semibold text-slate-800">{radicacion.demandante}</div>
+                          <div className="text-slate-500">vs {radicacion.demandado}</div>
                         </td>
-                        <td>
-                          <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1 w-fit`}>
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant={estadoConfig.badge}>
                             <IconoEstado size={12} />
                             {estadoConfig.label}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <div className="small">
-                            <div>{formatDate(radicacion.fechaSolicitud)}</div>
-                            {radicacion.fechaAudiencia && (
-                              <div className="text-muted">
-                                Audiencia: {formatDate(radicacion.fechaAudiencia)}
-                              </div>
-                            )}
+                        <td className="px-4 py-3 align-middle text-xs">
+                          <div>{formatDate(radicacion.fechaSolicitud)}</div>
+                          {radicacion.fechaAudiencia && (
+                            <div className="text-slate-500">Audiencia: {formatDate(radicacion.fechaAudiencia)}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center align-middle text-xs">
+                          <div className={cn('flex items-center justify-center gap-1 font-semibold', isOverdue ? 'text-red-600' : 'text-blue-800')}>
+                            {isOverdue && <AlertCircle size={14} />}
+                            {diasTranscurridos} días
                           </div>
                         </td>
-                        <td>
-                          <div className="small text-center">
-                            <div className={`fw-semibold ${isOverdue ? 'text-danger d-flex align-items-center gap-1 justify-content-center' : 'text-primary'}`}>
-                              {isOverdue && <AlertCircle size={14} />}
-                              {diasTranscurridos} días
-                            </div>
-                          </div>
+                        <td className="px-4 py-3 align-middle text-xs">
+                          <Link href={`/asesorias/${radicacion.asesoria.id}`} className="text-blue-800 no-underline hover:underline">
+                            {radicacion.asesoria.tema}
+                          </Link>
+                          <div className="text-slate-500">Cliente: {radicacion.asesoria.lead.nombre}</div>
                         </td>
-                        <td>
-                          <div className="small">
-                            <Link 
-                              href={`/asesorias/${radicacion.asesoria.id}`}
-                              className="text-decoration-none"
-                            >
-                              {radicacion.asesoria.tema}
-                            </Link>
-                            <div className="text-muted">
-                              Cliente: {radicacion.asesoria.lead.nombre}
-                            </div>
-                          </div>
+                        <td className="px-4 py-3 align-middle text-xs font-semibold text-slate-800">
+                          {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
                         </td>
-                        <td>
-                          <div className="small">
-                            <div className="fw-semibold">
-                              {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <Link 
-                            href={`/radicaciones/${radicacion.id}`}
-                            className="btn btn-outline-primary btn-sm"
-                          >
-                            Ver
+                        <td className="px-4 py-3 align-middle">
+                          <Link href={`/radicaciones/${radicacion.id}`}>
+                            <Button variant="outlinePrimary" size="sm">Ver</Button>
                           </Link>
                         </td>
                       </tr>
@@ -316,48 +261,42 @@ export default function RadicacionesPage() {
 
           {/* Paginación */}
           {totalPages > 1 && (
-            <div className="d-flex justify-content-center mt-4">
-              <nav>
-                <ul className="pagination">
-                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                    <button 
-                      className="page-link"
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                  </li>
-                  
-                  {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                    const pageNum = i + 1
-                    return (
-                      <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
-                        <button 
-                          className="page-link"
-                          onClick={() => setCurrentPage(pageNum)}
-                        >
-                          {pageNum}
-                        </button>
-                      </li>
-                    )
-                  })}
-                  
-                  <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                    <button 
-                      className="page-link"
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                  </li>
-                </ul>
-              </nav>
+            <div className="mt-4 flex items-center justify-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={16} />
+              </Button>
+
+              {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                const pageNum = i + 1
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? 'primary' : 'outline'}
+                    size="icon"
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight size={16} />
+              </Button>
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     </>
   )
 }

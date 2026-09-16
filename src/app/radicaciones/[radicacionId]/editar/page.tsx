@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Save, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Save, AlertCircle, CheckCircle, X } from 'lucide-react'
 import { EstadoRadicacion, ResultadoRadicacion } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
 
 interface UpdateRadicacionData {
     numero: string
@@ -76,7 +77,6 @@ export default function EditarRadicacionPage() {
             ...prev,
             [name]: value
         }))
-        // Limpiar error del campo si existe
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -154,11 +154,7 @@ export default function EditarRadicacionPage() {
                         { label: 'Editar Conciliación' }
                     ]}
                 />
-                <div className="text-center py-5">
-                    <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Cargando...</span>
-                    </div>
-                </div>
+                <Spinner />
             </>
         )
     }
@@ -172,196 +168,144 @@ export default function EditarRadicacionPage() {
                 ]}
             />
 
-            <div className="d-flex align-items-center gap-3 mb-4">
-                <Link href={`/radicaciones/${radicacionId}`} className="btn btn-outline-secondary">
-                    <ArrowLeft size={16} />
+            <div className="mb-4 flex items-center gap-3">
+                <Link href={`/radicaciones/${radicacionId}`}>
+                    <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
                 </Link>
                 <div>
-                    <h1 className="h2 fw-bold text-dark mb-1">Editar Conciliación</h1>
-                    <p className="text-secondary mb-0">{formData.numero}</p>
+                    <h1 className="mb-1 text-2xl font-bold text-slate-800">Editar Conciliación</h1>
+                    <p className="mb-0 text-slate-500">{formData.numero}</p>
                 </div>
             </div>
 
             {/* Mensaje de éxito */}
             {successMessage && (
-                <div className="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                    <CheckCircle size={20} />
-                    <div className="flex-grow-1">{successMessage}</div>
-                    <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
-                </div>
+                <Alert variant="success" className="mb-4 flex items-center justify-between">
+                    <span className="flex items-center gap-2"><CheckCircle size={20} />{successMessage}</span>
+                    <button type="button" onClick={() => setSuccessMessage('')}><X size={16} /></button>
+                </Alert>
             )}
 
             {/* Mensaje de error general */}
             {errors.general && (
-                <div className="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                    <AlertCircle size={20} />
-                    <div className="flex-grow-1">{errors.general}</div>
-                    <button type="button" className="btn-close" onClick={() => setErrors(prev => ({ ...prev, general: '' }))}></button>
-                </div>
+                <Alert variant="danger" className="mb-4 flex items-center justify-between">
+                    <span className="flex items-center gap-2"><AlertCircle size={20} />{errors.general}</span>
+                    <button type="button" onClick={() => setErrors(prev => ({ ...prev, general: '' }))}><X size={16} /></button>
+                </Alert>
             )}
 
             <form onSubmit={handleSubmit}>
-                <div className="row">
-                    <div className="col-lg-8">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                    <div className="lg:col-span-8">
                         {/* Información de Conciliación */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">Información de la Conciliación</h5>
-                            </div>
-                            <div className="card-body">
+                        <Card>
+                            <CardHeader><CardTitle>Información de la Conciliación</CardTitle></CardHeader>
+                            <CardBody className="space-y-4">
                                 {/* Número de Conciliación */}
-                                <div className="mb-3">
-                                    <label htmlFor="numero" className="form-label fw-semibold">
-                                        Número de Conciliación
-                                    </label>
-                                    <input
+                                <div>
+                                    <Label htmlFor="numero" className="font-semibold">Número de Conciliación</Label>
+                                    <Input
                                         type="text"
-                                        className={`form-control ${errors.numero ? 'is-invalid' : ''}`}
                                         id="numero"
                                         name="numero"
                                         value={formData.numero}
                                         onChange={handleChange}
                                         disabled
                                     />
-                                    {errors.numero && (
-                                        <div className="invalid-feedback d-block">
-                                            {errors.numero}
-                                        </div>
-                                    )}
+                                    {errors.numero && <p className="mt-1 text-xs text-red-600">{errors.numero}</p>}
                                 </div>
 
                                 {/* Demandante */}
-                                <div className="mb-3">
-                                    <label htmlFor="demandante" className="form-label fw-semibold">
-                                        Insolvente
-                                    </label>
-                                    <input
+                                <div>
+                                    <Label htmlFor="demandante" className="font-semibold">Insolvente</Label>
+                                    <Input
                                         type="text"
-                                        className={`form-control ${errors.demandante ? 'is-invalid' : ''}`}
                                         id="demandante"
                                         name="demandante"
                                         value={formData.demandante}
                                         onChange={handleChange}
                                         placeholder="Nombre del insolvente"
                                     />
-                                    {errors.demandante && (
-                                        <div className="invalid-feedback d-block">
-                                            {errors.demandante}
-                                        </div>
-                                    )}
+                                    {errors.demandante && <p className="mt-1 text-xs text-red-600">{errors.demandante}</p>}
                                 </div>
 
                                 {/* Demandado */}
-                                <div className="mb-3">
-                                    <label htmlFor="demandado" className="form-label fw-semibold">
-                                        Centro de Conciliación
-                                    </label>
-                                    <input
+                                <div>
+                                    <Label htmlFor="demandado" className="font-semibold">Centro de Conciliación</Label>
+                                    <Input
                                         type="text"
-                                        className={`form-control ${errors.demandado ? 'is-invalid' : ''}`}
                                         id="demandado"
                                         name="demandado"
                                         value={formData.demandado}
                                         onChange={handleChange}
                                         placeholder="Nombre del centro de conciliación"
                                     />
-                                    {errors.demandado && (
-                                        <div className="invalid-feedback d-block">
-                                            {errors.demandado}
-                                        </div>
-                                    )}
+                                    {errors.demandado && <p className="mt-1 text-xs text-red-600">{errors.demandado}</p>}
                                 </div>
 
                                 {/* Fechas */}
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label htmlFor="fechaSolicitud" className="form-label fw-semibold">
-                                                Fecha de Solicitud
-                                            </label>
-                                            <input
-                                                type="date"
-                                                className={`form-control ${errors.fechaSolicitud ? 'is-invalid' : ''}`}
-                                                id="fechaSolicitud"
-                                                name="fechaSolicitud"
-                                                value={formData.fechaSolicitud}
-                                                onChange={handleChange}
-                                            />
-                                            {errors.fechaSolicitud && (
-                                                <div className="invalid-feedback d-block">
-                                                    {errors.fechaSolicitud}
-                                                </div>
-                                            )}
-                                        </div>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <Label htmlFor="fechaSolicitud" className="font-semibold">Fecha de Solicitud</Label>
+                                        <Input
+                                            type="date"
+                                            id="fechaSolicitud"
+                                            name="fechaSolicitud"
+                                            value={formData.fechaSolicitud}
+                                            onChange={handleChange}
+                                        />
+                                        {errors.fechaSolicitud && <p className="mt-1 text-xs text-red-600">{errors.fechaSolicitud}</p>}
                                     </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label htmlFor="fechaAudiencia" className="form-label fw-semibold">
-                                                Fecha de Audiencia (opcional)
-                                            </label>
-                                            <input
-                                                type="date"
-                                                className="form-control"
-                                                id="fechaAudiencia"
-                                                name="fechaAudiencia"
-                                                value={formData.fechaAudiencia || ''}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
+                                    <div>
+                                        <Label htmlFor="fechaAudiencia" className="font-semibold">Fecha de Audiencia (opcional)</Label>
+                                        <Input
+                                            type="date"
+                                            id="fechaAudiencia"
+                                            name="fechaAudiencia"
+                                            value={formData.fechaAudiencia || ''}
+                                            onChange={handleChange}
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Estado */}
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label htmlFor="estado" className="form-label fw-semibold">
-                                                Estado
-                                            </label>
-                                            <select
-                                                className="form-select"
-                                                id="estado"
-                                                name="estado"
-                                                value={formData.estado}
-                                                onChange={handleChange}
-                                            >
-                                                <option value="SOLICITADA">Solicitada</option>
-                                                <option value="PROGRAMADA">Programada</option>
-                                                <option value="REALIZADA">Realizada</option>
-                                                <option value="CANCELADA">Cancelada</option>
-                                            </select>
-                                        </div>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <Label htmlFor="estado" className="font-semibold">Estado</Label>
+                                        <Select
+                                            id="estado"
+                                            name="estado"
+                                            value={formData.estado}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="SOLICITADA">Solicitada</option>
+                                            <option value="PROGRAMADA">Programada</option>
+                                            <option value="REALIZADA">Realizada</option>
+                                            <option value="CANCELADA">Cancelada</option>
+                                        </Select>
                                     </div>
                                     {formData.estado === 'REALIZADA' && (
-                                        <div className="col-md-6">
-                                            <div className="mb-3">
-                                                <label htmlFor="resultado" className="form-label fw-semibold">
-                                                    Resultado
-                                                </label>
-                                                <select
-                                                    className="form-select"
-                                                    id="resultado"
-                                                    name="resultado"
-                                                    value={formData.resultado || ''}
-                                                    onChange={handleChange}
-                                                >
-                                                    <option value="">Selecciona un resultado</option>
-                                                    <option value="ACUERDO_TOTAL">Acuerdo Total</option>
-                                                    <option value="ACUERDO_PARCIAL">Acuerdo Parcial</option>
-                                                    <option value="SIN_ACUERDO">Sin Acuerdo</option>
-                                                </select>
-                                            </div>
+                                        <div>
+                                            <Label htmlFor="resultado" className="font-semibold">Resultado</Label>
+                                            <Select
+                                                id="resultado"
+                                                name="resultado"
+                                                value={formData.resultado || ''}
+                                                onChange={handleChange}
+                                            >
+                                                <option value="">Selecciona un resultado</option>
+                                                <option value="ACUERDO_TOTAL">Acuerdo Total</option>
+                                                <option value="ACUERDO_PARCIAL">Acuerdo Parcial</option>
+                                                <option value="SIN_ACUERDO">Sin Acuerdo</option>
+                                            </Select>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Observaciones */}
-                                <div className="mb-0">
-                                    <label htmlFor="observaciones" className="form-label fw-semibold">
-                                        Observaciones (opcional)
-                                    </label>
-                                    <textarea
-                                        className="form-control"
+                                <div>
+                                    <Label htmlFor="observaciones" className="font-semibold">Observaciones (opcional)</Label>
+                                    <Textarea
                                         id="observaciones"
                                         name="observaciones"
                                         rows={4}
@@ -370,44 +314,24 @@ export default function EditarRadicacionPage() {
                                         placeholder="Añade observaciones sobre la conciliación"
                                     />
                                 </div>
-                            </div>
-                        </div>
+                            </CardBody>
+                        </Card>
                     </div>
 
-                    <div className="col-lg-4">
+                    <div className="lg:col-span-4">
                         {/* Botones de acción */}
-                        <div className="card sticky-top" style={{ top: '80px' }}>
-                            <div className="card-header">
-                                <h5 className="mb-0">Acciones</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="d-grid gap-2">
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                Guardando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save size={16} />
-                                                Guardar Cambios
-                                            </>
-                                        )}
-                                    </button>
-                                    <Link
-                                        href={`/radicaciones/${radicacionId}`}
-                                        className="btn btn-outline-secondary"
-                                    >
-                                        Cancelar
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
+                        <Card className="sticky top-20">
+                            <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+                            <CardBody className="grid gap-2">
+                                <Button type="submit" loading={loading} className="justify-center">
+                                    {!loading && <Save size={16} />}
+                                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                                </Button>
+                                <Link href={`/radicaciones/${radicacionId}`}>
+                                    <Button type="button" variant="outline" className="w-full justify-center">Cancelar</Button>
+                                </Link>
+                            </CardBody>
+                        </Card>
                     </div>
                 </div>
             </form>
