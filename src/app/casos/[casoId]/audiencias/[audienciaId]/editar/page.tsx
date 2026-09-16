@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner, Modal } from '@/components/ui'
 
 interface UpdateAudienciaData {
     tipo?: string
@@ -241,24 +242,14 @@ export default function EditarAudienciaPage() {
     }
 
     if (loadingData) {
-        return (
-            <div className="text-center py-5">
-                <div className="spinner-border" role="status">
-                    <span className="visually-hidden">Cargando...</span>
-                </div>
-            </div>
-        )
+        return <Spinner />
     }
 
     if (!caso || !audiencia) {
         return (
-            <div className="text-center py-5">
-                <div className="alert alert-danger" role="alert">
-                    Audiencia o caso no encontrado
-                </div>
-                <Link href="/casos" className="btn btn-primary">
-                    Volver a Casos
-                </Link>
+            <div className="py-5 text-center">
+                <Alert variant="danger" className="mb-4">Audiencia o caso no encontrado</Alert>
+                <Link href="/casos"><Button>Volver a Casos</Button></Link>
             </div>
         )
     }
@@ -274,270 +265,204 @@ export default function EditarAudienciaPage() {
                 ]}
             />
 
-            <div className="d-flex align-items-center justify-content-between mb-4">
-                <div className="d-flex align-items-center gap-3">
-                    <Link href={`/casos/${casoId}/audiencias`} className="btn btn-outline-secondary">
-                        <ArrowLeft size={16} />
-                    </Link>
-                    <div>
-                        <h1 className="h3 fw-bold text-dark mb-0">Editar Audiencia</h1>
-                        <p className="text-secondary mb-0">
-                            {caso.numeroCaso} • {caso.cliente.nombre}
-                        </p>
-                    </div>
+            <div className="mb-4 flex items-center gap-3">
+                <Link href={`/casos/${casoId}/audiencias`}>
+                    <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
+                </Link>
+                <div>
+                    <h1 className="mb-0 text-xl font-bold text-slate-800">Editar Audiencia</h1>
+                    <p className="mb-0 text-slate-500">{caso.numeroCaso} • {caso.cliente.nombre}</p>
                 </div>
             </div>
 
             {errors.general && (
-                <div className="alert alert-danger" role="alert">
-                    <AlertCircle size={16} className="me-2" />
-                    {errors.general}
-                </div>
+                <Alert variant="danger" className="mb-4">
+                    <span className="flex items-center gap-2"><AlertCircle size={16} />{errors.general}</span>
+                </Alert>
             )}
 
             {successMessage && (
-                <div className="alert alert-success" role="alert">
-                    {successMessage}
-                </div>
+                <Alert variant="success" className="mb-4">{successMessage}</Alert>
             )}
 
             <form onSubmit={handleSubmit}>
-                <div className="row mb-4">
-                    <div className="col-md-6">
-                        <div className="card">
-                            <div className="card-header">
-                                <h5 className="mb-0">Información de la Audiencia</h5>
+                <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader><CardTitle>Información de la Audiencia</CardTitle></CardHeader>
+                        <CardBody className="space-y-4">
+                            <div>
+                                <Label>Tipo de Audiencia *</Label>
+                                <Select name="tipo" value={formData.tipo || ''} onChange={handleChange}>
+                                    <option value="">Seleccionar tipo</option>
+                                    {TIPO_AUDIENCIAS.map(tipo => (
+                                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                                    ))}
+                                </Select>
                             </div>
-                            <div className="card-body">
-                                <div className="mb-3">
-                                    <label className="form-label">Tipo de Audiencia *</label>
-                                    <select
-                                        name="tipo"
-                                        value={formData.tipo || ''}
-                                        onChange={handleChange}
-                                        className={`form-select ${errors.tipo ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Seleccionar tipo</option>
-                                        {TIPO_AUDIENCIAS.map(tipo => (
-                                            <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                                        ))}
-                                    </select>
-                                    {errors.tipo && <div className="invalid-feedback">{errors.tipo}</div>}
-                                </div>
 
-                                <div className="mb-3">
-                                    <label className="form-label">Fecha y Hora *</label>
-                                    <input
-                                        type="datetime-local"
-                                        name="fechaHora"
-                                        value={formData.fechaHora || ''}
-                                        onChange={handleChange}
-                                        className={`form-control ${errors.fechaHora ? 'is-invalid' : ''}`}
-                                    />
-                                    {errors.fechaHora && <div className="invalid-feedback">{errors.fechaHora}</div>}
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Estado *</label>
-                                    <select
-                                        name="estado"
-                                        value={formData.estado || ''}
-                                        onChange={handleChange}
-                                        className={`form-select ${errors.estado ? 'is-invalid' : ''}`}
-                                    >
-                                        <option value="">Seleccionar estado</option>
-                                        {ESTADOS.map(estado => (
-                                            <option key={estado.value} value={estado.value}>{estado.label}</option>
-                                        ))}
-                                    </select>
-                                    {errors.estado && <div className="invalid-feedback">{errors.estado}</div>}
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Resultado de la Audiencia</label>
-                                    <select
-                                        name="resultadoAudiencia"
-                                        value={formData.resultadoAudiencia || ''}
-                                        onChange={handleChange}
-                                        className="form-select"
-                                    >
-                                        {RESULTADOS.map(resultado => (
-                                            <option key={resultado.value} value={resultado.value}>{resultado.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Modalidad</label>
-                                    <select
-                                        name="modalidad"
-                                        value={formData.modalidad || ''}
-                                        onChange={handleChange}
-                                        className="form-select"
-                                    >
-                                        <option value="">Seleccionar modalidad</option>
-                                        {MODALIDADES.map(modalidad => (
-                                            <option key={modalidad.value} value={modalidad.value}>{modalidad.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label">Responsable</label>
-                                    <select
-                                        name="responsableId"
-                                        value={formData.responsableId || ''}
-                                        onChange={handleChange}
-                                        className="form-select"
-                                    >
-                                        <option value="">Seleccionar responsable</option>
-                                        {responsables.map(usuario => (
-                                            <option key={usuario.id} value={usuario.id}>
-                                                {usuario.nombre} {usuario.apellido}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div>
+                                <Label>Fecha y Hora *</Label>
+                                <Input
+                                    type="datetime-local"
+                                    name="fechaHora"
+                                    value={formData.fechaHora || ''}
+                                    onChange={handleChange}
+                                />
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="col-md-6">
-                        <div className="card">
-                            <div className="card-header">
-                                <h5 className="mb-0">Detalles de Localización y Observaciones</h5>
+                            <div>
+                                <Label>Estado *</Label>
+                                <Select name="estado" value={formData.estado || ''} onChange={handleChange}>
+                                    <option value="">Seleccionar estado</option>
+                                    {ESTADOS.map(estado => (
+                                        <option key={estado.value} value={estado.value}>{estado.label}</option>
+                                    ))}
+                                </Select>
                             </div>
-                            <div className="card-body">
-                                <div className="mb-3">
-                                    <label className="form-label">Dirección (si es presencial)</label>
-                                    <input
+
+                            <div>
+                                <Label>Resultado de la Audiencia</Label>
+                                <Select name="resultadoAudiencia" value={formData.resultadoAudiencia || ''} onChange={handleChange}>
+                                    {RESULTADOS.map(resultado => (
+                                        <option key={resultado.value} value={resultado.value}>{resultado.label}</option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label>Modalidad</Label>
+                                <Select name="modalidad" value={formData.modalidad || ''} onChange={handleChange}>
+                                    <option value="">Seleccionar modalidad</option>
+                                    {MODALIDADES.map(modalidad => (
+                                        <option key={modalidad.value} value={modalidad.value}>{modalidad.label}</option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label>Responsable</Label>
+                                <Select name="responsableId" value={formData.responsableId || ''} onChange={handleChange}>
+                                    <option value="">Seleccionar responsable</option>
+                                    {responsables.map(usuario => (
+                                        <option key={usuario.id} value={usuario.id}>
+                                            {usuario.nombre} {usuario.apellido}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    <div className="space-y-4">
+                        <Card>
+                            <CardHeader><CardTitle>Detalles de Localización y Observaciones</CardTitle></CardHeader>
+                            <CardBody className="space-y-4">
+                                <div>
+                                    <Label>Dirección (si es presencial)</Label>
+                                    <Input
                                         type="text"
                                         name="direccion"
                                         value={formData.direccion || ''}
                                         onChange={handleChange}
-                                        className="form-control"
                                         placeholder="Ej: Calle 123 #45-67"
                                     />
                                 </div>
 
-                                <div className="mb-3">
-                                    <label className="form-label">Enlace (si es virtual)</label>
-                                    <input
+                                <div>
+                                    <Label>Enlace (si es virtual)</Label>
+                                    <Input
                                         type="url"
                                         name="enlace"
                                         value={formData.enlace || ''}
                                         onChange={handleChange}
-                                        className="form-control"
                                         placeholder="https://meet.google.com/..."
                                     />
                                 </div>
 
-                                <div className="mb-3">
-                                    <label className="form-label">Observaciones</label>
-                                    <textarea
+                                <div>
+                                    <Label>Observaciones</Label>
+                                    <Textarea
                                         name="observaciones"
                                         value={formData.observaciones || ''}
                                         onChange={handleChange}
-                                        className="form-control"
                                         rows={4}
                                         placeholder="Información adicional sobre la audiencia"
                                     />
                                 </div>
 
-                                <div className="mb-3">
-                                    <label className="form-label">Resultado Detallado</label>
-                                    <textarea
+                                <div>
+                                    <Label>Resultado Detallado</Label>
+                                    <Textarea
                                         name="resultado"
                                         value={formData.resultado || ''}
                                         onChange={handleChange}
-                                        className="form-control"
                                         rows={4}
                                         placeholder="Descripción del resultado obtenido en la audiencia"
                                     />
                                 </div>
-                            </div>
-                        </div>
+                            </CardBody>
+                        </Card>
 
-                        <div className="card mt-3">
-                            <div className="card-body">
-                                <button
+                        <Card>
+                            <CardBody className="grid gap-2">
+                                <Button
                                     type="button"
                                     onClick={() => setShowResultModal(true)}
-                                    className="btn btn-warning w-100 mb-2"
+                                    className="justify-center bg-amber-500 hover:bg-amber-600"
                                 >
                                     Marcar Resultado Rápido
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="btn btn-primary w-100"
-                                >
-                                    {loading ? 'Guardando...' : (
-                                        <>
-                                            <Save size={16} className="me-2" />
-                                            Guardar Cambios
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
+                                </Button>
+                                <Button type="submit" loading={loading} className="justify-center">
+                                    {!loading && <Save size={16} />}
+                                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                                </Button>
+                            </CardBody>
+                        </Card>
                     </div>
                 </div>
             </form>
 
             {/* Modal de Resultado Rápido */}
             {showResultModal && (
-                <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Registrar Resultado de la Audiencia</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowResultModal(false)}
-                                />
-                            </div>
-                            <div className="modal-body">
-                                <p className="mb-3">¿Cuál fue el resultado de la audiencia?</p>
-                                <div className="d-grid gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleResultadoChange('CONCILIACION')}
-                                        disabled={loading}
-                                        className="btn btn-success btn-lg"
-                                    >
-                                        ✓ Se logró Conciliación
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleResultadoChange('FRACASO')}
-                                        disabled={loading}
-                                        className="btn btn-danger btn-lg"
-                                    >
-                                        ✗ Fracaso
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleResultadoChange('OTRA_AUDIENCIA')}
-                                        disabled={loading}
-                                        className="btn btn-info btn-lg"
-                                    >
-                                        → Se programó otra Audiencia
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowResultModal(false)}
-                                        disabled={loading}
-                                        className="btn btn-outline-secondary"
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                <Modal onClose={() => setShowResultModal(false)} title="Registrar Resultado de la Audiencia">
+                    <p className="mb-3">¿Cuál fue el resultado de la audiencia?</p>
+                    <div className="grid gap-2">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            className="justify-center"
+                            onClick={() => handleResultadoChange('CONCILIACION')}
+                            disabled={loading}
+                        >
+                            ✓ Se logró Conciliación
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="lg"
+                            className="justify-center"
+                            onClick={() => handleResultadoChange('FRACASO')}
+                            disabled={loading}
+                        >
+                            ✗ Fracaso
+                        </Button>
+                        <Button
+                            size="lg"
+                            className="justify-center bg-sky-600 hover:bg-sky-700"
+                            onClick={() => handleResultadoChange('OTRA_AUDIENCIA')}
+                            disabled={loading}
+                        >
+                            → Se programó otra Audiencia
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="justify-center"
+                            onClick={() => setShowResultModal(false)}
+                            disabled={loading}
+                        >
+                            Cancelar
+                        </Button>
                     </div>
-                </div>
+                </Modal>
             )}
         </>
     )

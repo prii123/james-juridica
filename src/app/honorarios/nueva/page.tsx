@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Save, Search } from 'lucide-react'
+import { ArrowLeft, Save, Search, X } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert } from '@/components/ui'
 
 interface CasoResult {
   id: string
@@ -85,109 +86,143 @@ export default function NuevoHonorarioPage() {
     }
   }
 
-  const formatCurrency = (v: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v)
-
   return (
     <>
       <Breadcrumb items={[{ label: 'Honorarios', href: '/honorarios' }, { label: 'Nuevo Honorario' }]} />
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/honorarios" className="btn btn-outline-secondary"><ArrowLeft size={16} /></Link>
-        <h1 className="h3 fw-bold text-dark mb-0">Nuevo Honorario</h1>
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/honorarios">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
+        </Link>
+        <h1 className="mb-0 text-xl font-bold text-slate-800">Nuevo Honorario</h1>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
-            <div className="card mb-4">
-              <div className="card-header"><h5 className="mb-0">Caso Asociado (opcional)</h5></div>
-              <div className="card-body">
-                <div className="input-group mb-3">
-                  <input type="text" className="form-control" placeholder="Buscar caso por número o cliente..."
-                    value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchCasos())} />
-                  <button type="button" className="btn btn-outline-primary" onClick={searchCasos} disabled={loading}>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
+            <Card>
+              <CardHeader><CardTitle>Caso Asociado (opcional)</CardTitle></CardHeader>
+              <CardBody>
+                <div className="mb-3 flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Buscar caso por número o cliente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchCasos())}
+                  />
+                  <Button type="button" variant="outlinePrimary" onClick={searchCasos} disabled={loading}>
                     <Search size={16} />
-                  </button>
+                  </Button>
                 </div>
                 {selectedCaso && (
-                  <div className="alert alert-info py-2">
-                    Caso seleccionado: <strong>{selectedCaso.numeroCaso}</strong> — {selectedCaso.cliente.nombre} {selectedCaso.cliente.apellido}
-                    <button type="button" className="btn-close ms-2" onClick={() => setSelectedCaso(null)} />
-                  </div>
+                  <Alert variant="info" className="mb-3 items-center justify-between py-2">
+                    <span>
+                      Caso seleccionado: <strong>{selectedCaso.numeroCaso}</strong> — {selectedCaso.cliente.nombre} {selectedCaso.cliente.apellido}
+                    </span>
+                    <button type="button" onClick={() => setSelectedCaso(null)}><X size={16} /></button>
+                  </Alert>
                 )}
                 {casos.length > 0 && !selectedCaso && (
-                  <div className="list-group mb-3" style={{ maxHeight: 150, overflowY: 'auto' }}>
+                  <div className="mb-3 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200" style={{ maxHeight: 150 }}>
                     {casos.map(c => (
-                      <button type="button" key={c.id} className="list-group-item list-group-item-action"
-                        onClick={() => { setSelectedCaso(c); setCasos([]); setSearchTerm('') }}>
+                      <button
+                        type="button"
+                        key={c.id}
+                        className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                        onClick={() => { setSelectedCaso(c); setCasos([]); setSearchTerm('') }}
+                      >
                         <strong>{c.numeroCaso}</strong> — {c.cliente.nombre} {c.cliente.apellido}
                       </button>
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
-            <div className="card mb-4">
-              <div className="card-header"><h5 className="mb-0">Detalles del Honorario</h5></div>
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-4 mb-3">
-                    <label className="form-label">Tipo *</label>
-                    <select className="form-select" value={formData.tipo}
-                      onChange={(e) => setFormData({ ...formData, tipo: e.target.value })} required>
+            <Card>
+              <CardHeader><CardTitle>Detalles del Honorario</CardTitle></CardHeader>
+              <CardBody className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <Label>Tipo *</Label>
+                    <Select
+                      value={formData.tipo}
+                      onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                      required
+                    >
                       <option value="ASESORIA">Asesoría</option>
                       <option value="REPRESENTACION">Representación</option>
                       <option value="TRAMITE">Trámite</option>
                       <option value="GESTION_COBRANZA">Gestión de Cobranza</option>
-                    </select>
+                    </Select>
                   </div>
-                  <div className="col-md-4 mb-3">
-                    <label className="form-label">Valor *</label>
-                    <input type="number" className="form-control" min={0} step={1000} value={formData.valor}
-                      onChange={(e) => setFormData({ ...formData, valor: e.target.value })} required />
+                  <div>
+                    <Label>Valor *</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1000}
+                      value={formData.valor}
+                      onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                      required
+                    />
                   </div>
-                  <div className="col-md-4 mb-3">
-                    <label className="form-label">Modalidad de Pago</label>
-                    <select className="form-select" value={formData.modalidadPago}
-                      onChange={(e) => setFormData({ ...formData, modalidadPago: e.target.value })}>
+                  <div>
+                    <Label>Modalidad de Pago</Label>
+                    <Select
+                      value={formData.modalidadPago}
+                      onChange={(e) => setFormData({ ...formData, modalidadPago: e.target.value })}
+                    >
                       <option value="CONTADO">Contado</option>
                       <option value="FINANCIADO">Financiado</option>
-                    </select>
+                    </Select>
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Fecha de Vencimiento</label>
-                    <input type="date" className="form-control" value={formData.fechaVencimiento}
-                      onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })} />
+                  <div className="md:col-span-2">
+                    <Label>Fecha de Vencimiento</Label>
+                    <Input
+                      type="date"
+                      value={formData.fechaVencimiento}
+                      onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
+                    />
                   </div>
                   {formData.modalidadPago === 'FINANCIADO' && (
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Número de Cuotas</label>
-                      <input type="number" className="form-control" min={1} value={formData.numeroCuotas}
-                        onChange={(e) => setFormData({ ...formData, numeroCuotas: parseInt(e.target.value) || 1 })} />
+                    <div>
+                      <Label>Número de Cuotas</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={formData.numeroCuotas}
+                        onChange={(e) => setFormData({ ...formData, numeroCuotas: parseInt(e.target.value) || 1 })}
+                      />
                     </div>
                   )}
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Observaciones</label>
-                  <textarea className="form-control" rows={3} value={formData.observaciones}
-                    onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })} />
+                <div>
+                  <Label>Observaciones</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.observaciones}
+                    onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+                  />
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card">
-              <div className="card-body">
-                <button type="submit" className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" disabled={saving}>
-                  {saving ? <><span className="spinner-border spinner-border-sm" /> Creando...</> : <><Save size={16} /> Crear Honorario</>}
-                </button>
-                <Link href="/honorarios" className="btn btn-outline-secondary w-100 mt-2">Cancelar</Link>
-              </div>
-            </div>
+          <div className="lg:col-span-4">
+            <Card>
+              <CardBody>
+                <Button type="submit" variant="success" loading={saving} className="w-full justify-center">
+                  {!saving && <Save size={16} />}
+                  {saving ? 'Creando...' : 'Crear Honorario'}
+                </Button>
+                <Link href="/honorarios">
+                  <Button type="button" variant="outline" className="mt-2 w-full justify-center">Cancelar</Button>
+                </Link>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

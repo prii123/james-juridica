@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { ModalProcesosLiquidacion } from '@/components/ModalProcesosLiquidacion'
@@ -21,6 +21,8 @@ import {
   Video,
   AlertCircle
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Select, Label, Alert, Spinner, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Audiencia {
   id: string
@@ -50,68 +52,24 @@ interface Caso {
   }
 }
 
-const ESTADO_CONFIG = {
-  PROGRAMADA: {
-    color: 'primary',
-    icon: Calendar,
-    label: 'Programada'
-  },
-  REALIZADA: {
-    color: 'success',
-    icon: CheckCircle,
-    label: 'Realizada'
-  },
-  APLAZADA: {
-    color: 'warning',
-    icon: Clock,
-    label: 'Aplazada'
-  },
-  CANCELADA: {
-    color: 'danger',
-    icon: XCircle,
-    label: 'Cancelada'
-  }
+const ESTADO_CONFIG: Record<Audiencia['estado'], { badge: BadgeProps['variant']; icon: typeof Calendar; label: string }> = {
+  PROGRAMADA: { badge: 'primary', icon: Calendar, label: 'Programada' },
+  REALIZADA: { badge: 'success', icon: CheckCircle, label: 'Realizada' },
+  APLAZADA: { badge: 'warning', icon: Clock, label: 'Aplazada' },
+  CANCELADA: { badge: 'danger', icon: XCircle, label: 'Cancelada' },
 }
 
-const RESULTADO_CONFIG = {
-  PENDIENTE: {
-    color: 'secondary',
-    label: 'Pendiente',
-    icon: AlertTriangle
-  },
-  CONCILIACION: {
-    color: 'success',
-    label: 'Conciliación Lograda',
-    icon: CheckCircle
-  },
-  FRACASO: {
-    color: 'danger',
-    label: 'Fracaso',
-    icon: XCircle
-  },
-  OTRA_AUDIENCIA: {
-    color: 'info',
-    label: 'Otra Audiencia',
-    icon: Calendar
-  }
+const RESULTADO_CONFIG: Record<Audiencia['resultadoAudiencia'], { badge: BadgeProps['variant']; label: string; icon: typeof Calendar }> = {
+  PENDIENTE: { badge: 'secondary', label: 'Pendiente', icon: AlertTriangle },
+  CONCILIACION: { badge: 'success', label: 'Conciliación Lograda', icon: CheckCircle },
+  FRACASO: { badge: 'danger', label: 'Fracaso', icon: XCircle },
+  OTRA_AUDIENCIA: { badge: 'info', label: 'Otra Audiencia', icon: Calendar },
 }
 
-const MODALIDAD_CONFIG = {
-  PRESENCIAL: {
-    color: 'secondary',
-    icon: MapPin,
-    label: 'Presencial'
-  },
-  VIRTUAL: {
-    color: 'info',
-    icon: Video,
-    label: 'Virtual'
-  },
-  MIXTA: {
-    color: 'primary',
-    icon: Users,
-    label: 'Mixta'
-  }
+const MODALIDAD_CONFIG: Record<Audiencia['modalidad'], { icon: typeof MapPin; label: string }> = {
+  PRESENCIAL: { icon: MapPin, label: 'Presencial' },
+  VIRTUAL: { icon: Video, label: 'Virtual' },
+  MIXTA: { icon: Users, label: 'Mixta' },
 }
 
 const TIPO_AUDIENCIAS = {
@@ -125,7 +83,6 @@ const TIPO_AUDIENCIAS = {
 
 export default function AudienciasPage() {
   const params = useParams()
-  const router = useRouter()
   const casoId = params.casoId as string
 
   const [caso, setCaso] = useState<Caso | null>(null)
@@ -170,15 +127,6 @@ export default function AudienciasPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CO', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString)
     return date.toLocaleDateString('es-CO', {
@@ -195,11 +143,6 @@ export default function AudienciasPage() {
       hour: '2-digit',
       minute: '2-digit'
     })
-  }
-
-  const isUpcoming = (fechaHora: string) => {
-    const audienciaDateTime = new Date(fechaHora)
-    return audienciaDateTime > new Date()
   }
 
   const getDaysUntilAudiencia = (fechaHora: string) => {
@@ -248,44 +191,25 @@ export default function AudienciasPage() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !caso) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Caso no encontrado'}
-        </div>
-        <Link href="/casos" className="btn btn-primary">
-          Volver a Casos
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Caso no encontrado'}</Alert>
+        <Link href="/casos"><Button>Volver a Casos</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <style>{`
+      <style jsx global>{`
         @keyframes pulse-blink {
-          0% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.6;
-            transform: scale(1.05);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.05); }
+          100% { opacity: 1; transform: scale(1); }
         }
         .btn-parpadeante {
           animation: pulse-blink 1s infinite;
@@ -300,155 +224,116 @@ export default function AudienciasPage() {
         ]}
       />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Link href={`/casos/${casoId}`} className="btn btn-outline-secondary">
-            <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href={`/casos/${casoId}`}>
+            <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
           </Link>
           <div>
-            <h1 className="h3 fw-bold text-dark mb-0">Audiencias</h1>
-            <p className="text-secondary mb-0">
+            <h1 className="mb-0 text-xl font-bold text-slate-800">Audiencias</h1>
+            <p className="mb-0 text-slate-500">
               {caso.numeroCaso} • {caso.cliente.nombre} {caso.cliente.apellido}
             </p>
           </div>
         </div>
 
-        <Link
-          href={`/casos/${casoId}/audiencias/nueva`}
-          className="btn btn-primary d-flex align-items-center gap-2"
-        >
-          <Plus size={16} />
-          Nueva Audiencia
+        <Link href={`/casos/${casoId}/audiencias/nueva`}>
+          <Button>
+            <Plus size={16} />
+            Nueva Audiencia
+          </Button>
         </Link>
       </div>
 
       {/* Estadísticas */}
-      <div className="row mb-4">
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-light text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-dark">{estadisticas.total}</div>
-              <small className="text-muted">Total</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-primary bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-primary">{estadisticas.programadas}</div>
-              <small className="text-muted">Programadas</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-warning bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-warning">{estadisticas.proximas}</div>
-              <small className="text-muted">Próximas (7 días)</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-success bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-success">{estadisticas.completadas}</div>
-              <small className="text-muted">Completadas</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-danger bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-danger">{estadisticas.canceladas}</div>
-              <small className="text-muted">Canceladas</small>
-            </div>
-          </div>
-        </div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+        <Card className="bg-slate-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-slate-800">{estadisticas.total}</div>
+            <small className="text-slate-500">Total</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-blue-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-blue-800">{estadisticas.programadas}</div>
+            <small className="text-slate-500">Programadas</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-amber-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-amber-600">{estadisticas.proximas}</div>
+            <small className="text-slate-500">Próximas (7 días)</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-teal-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-teal-700">{estadisticas.completadas}</div>
+            <small className="text-slate-500">Completadas</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-red-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-red-600">{estadisticas.canceladas}</div>
+            <small className="text-slate-500">Canceladas</small>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Filtros */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">
-                <Filter size={14} className="me-1" />
-                Filtrar por Estado
-              </label>
-              <select
-                className="form-select"
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-              >
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
+            <div className="md:col-span-3">
+              <Label className="flex items-center gap-1"><Filter size={14} />Filtrar por Estado</Label>
+              <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
                 <option value="">Todos los estados</option>
                 <option value="PROGRAMADA">Programada</option>
                 <option value="EN_CURSO">En Curso</option>
                 <option value="COMPLETADA">Completada</option>
                 <option value="CANCELADA">Cancelada</option>
                 <option value="REPROGRAMADA">Reprogramada</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <label className="form-label">
-                <Calendar size={14} className="me-1" />
-                Filtrar por Tipo
-              </label>
-              <select
-                className="form-select"
-                value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Label className="flex items-center gap-1"><Calendar size={14} />Filtrar por Tipo</Label>
+              <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
                 <option value="">Todos los tipos</option>
                 {Object.entries(TIPO_AUDIENCIAS).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <label className="form-label">
-                <Video size={14} className="me-1" />
-                Modalidad
-              </label>
-              <select
-                className="form-select"
-                value={filtroModalidad}
-                onChange={(e) => setFiltroModalidad(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Label className="flex items-center gap-1"><Video size={14} />Modalidad</Label>
+              <Select value={filtroModalidad} onChange={(e) => setFiltroModalidad(e.target.value)}>
                 <option value="">Todas las modalidades</option>
                 <option value="PRESENCIAL">Presencial</option>
                 <option value="VIRTUAL">Virtual</option>
                 <option value="MIXTA">Mixta</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => {
-                  setFiltroEstado('')
-                  setFiltroTipo('')
-                  setFiltroModalidad('')
-                }}
+            <div className="md:col-span-3">
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => { setFiltroEstado(''); setFiltroTipo(''); setFiltroModalidad('') }}
               >
                 Limpiar Filtros
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de Audiencias */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">
-            Audiencias ({audienciasOrdenadas.length})
-          </h5>
-        </div>
-        <div className="card-body">
+      <Card>
+        <CardHeader><CardTitle>Audiencias ({audienciasOrdenadas.length})</CardTitle></CardHeader>
+        <CardBody>
           {audienciasOrdenadas.length === 0 ? (
-            <div className="text-center py-5">
-              <Calendar size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay audiencias</h5>
-              <p className="text-secondary">
+            <div className="py-5 text-center">
+              <Calendar size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">No hay audiencias</h5>
+              <p className="text-slate-500">
                 {audiencias.length === 0
                   ? 'Aún no se han programado audiencias para este caso.'
                   : 'No se encontraron audiencias con los filtros seleccionados.'
@@ -456,149 +341,135 @@ export default function AudienciasPage() {
               </p>
             </div>
           ) : (
-            <div className="row">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {audienciasOrdenadas.map((audiencia) => {
                 const estadoConfig = ESTADO_CONFIG[audiencia.estado] || ESTADO_CONFIG.PROGRAMADA
                 const modalidadConfig = MODALIDAD_CONFIG[audiencia.modalidad] || MODALIDAD_CONFIG.PRESENCIAL
                 const IconoEstado = estadoConfig.icon
                 const IconoModalidad = modalidadConfig.icon
                 const diasHasta = getDaysUntilAudiencia(audiencia.fechaHora)
-                const esProxima = audiencia.estado === 'PROGRAMADA' && diasHasta <= 7 && diasHasta >= 0
                 const esHoy = diasHasta === 0
                 const resultadoConfig = RESULTADO_CONFIG[audiencia.resultadoAudiencia] || RESULTADO_CONFIG.PENDIENTE
                 const IconoResultado = resultadoConfig.icon
 
                 return (
-                  <div key={audiencia.id} className="col-md-6 col-lg-4 mb-3">
-                    <div className={`card h-100 ${esHoy ? 'border-warning shadow-sm' : ''}`}>
-                      {esHoy && (
-                        <div className="card-header bg-warning text-dark py-1 small text-center fw-bold">
-                          AUDIENCIA HOY
+                  <Card key={audiencia.id} className={cn('flex h-full flex-col', esHoy && 'border-amber-400 shadow-sm')}>
+                    {esHoy && (
+                      <div className="rounded-t-xl bg-amber-400 py-1 text-center text-xs font-bold text-slate-900">
+                        AUDIENCIA HOY
+                      </div>
+                    )}
+                    <CardBody className="flex flex-1 flex-col">
+                      <div className="mb-2 flex items-start justify-between">
+                        <Badge variant="outline">
+                          {TIPO_AUDIENCIAS[audiencia.tipo as keyof typeof TIPO_AUDIENCIAS] || audiencia.tipo}
+                        </Badge>
+                        <Badge variant={estadoConfig.badge}>
+                          <IconoEstado size={12} />
+                          {estadoConfig.label}
+                        </Badge>
+                      </div>
+
+                      {audiencia.estado === 'REALIZADA' && (
+                        <div className="mb-2">
+                          <Badge variant={resultadoConfig.badge}>
+                            <IconoResultado size={12} />
+                            {resultadoConfig.label}
+                          </Badge>
                         </div>
                       )}
-                      <div className="card-body">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <span className="badge bg-light text-dark">
-                            {TIPO_AUDIENCIAS[audiencia.tipo as keyof typeof TIPO_AUDIENCIAS] || audiencia.tipo}
-                          </span>
-                          <div className="d-flex gap-1">
-                            <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`}>
-                              <IconoEstado size={12} />
-                              {estadoConfig.label}
-                            </span>
-                          </div>
+
+                      {audiencia.estado === 'REALIZADA' && audiencia.resultadoAudiencia === 'FRACASO' && (
+                        <div className="mb-3">
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            className="btn-parpadeante w-full justify-center"
+                            onClick={() => abrirModalLiquidacion(audiencia)}
+                            title="Iniciar proceso de liquidación"
+                          >
+                            <AlertCircle size={16} />
+                            Iniciar Liquidación
+                          </Button>
                         </div>
+                      )}
 
-                        {audiencia.estado === 'REALIZADA' && (
-                          <div className="mb-2">
-                            <span className={`badge bg-${resultadoConfig.color} d-flex align-items-center gap-1`}>
-                              <IconoResultado size={12} />
-                              {resultadoConfig.label}
-                            </span>
-                          </div>
-                        )}
+                      <div className="mb-2 flex items-center gap-2">
+                        <Calendar size={14} className="text-slate-400" />
+                        <span className="text-sm">{formatDateTime(audiencia.fechaHora)}</span>
+                      </div>
 
-                        {audiencia.estado === 'REALIZADA' && audiencia.resultadoAudiencia === 'FRACASO' && (
-                          <div className="mb-3">
-                            <button
-                              className="btn btn-danger btn-sm w-100 btn-parpadeante d-flex align-items-center justify-content-center gap-2"
-                              onClick={() => abrirModalLiquidacion(audiencia)}
-                              title="Iniciar proceso de liquidación"
-                            >
-                              <AlertCircle size={16} />
-                              Iniciar Liquidación
-                            </button>
-                          </div>
-                        )}
+                      <div className="mb-2 flex items-center gap-2">
+                        <Clock size={14} className="text-slate-400" />
+                        <span className="text-sm">{formatTime(audiencia.fechaHora)}</span>
+                      </div>
 
-                        <div className="d-flex align-items-center gap-2 mb-2">
-                          <Calendar size={14} className="text-muted" />
-                          <span className="small">{formatDateTime(audiencia.fechaHora)}</span>
-                        </div>
-
-                        <div className="d-flex align-items-center gap-2 mb-2">
-                          <Clock size={14} className="text-muted" />
-                          <span className="small">{formatTime(audiencia.fechaHora)}</span>
-                        </div>
-
-                        <div className="d-flex align-items-center gap-2 mb-3">
-                          <IconoModalidad size={14} className="text-muted" />
-                          <span className="small">{modalidadConfig.label}</span>
-                          {audiencia.modalidad === 'PRESENCIAL' && audiencia.direccion && (
-                            <small className="text-muted">• {audiencia.direccion}</small>
-                          )}
-                        </div>
-
-                        {audiencia.estado === 'PROGRAMADA' && (
-                          <div className="mb-3">
-                            {diasHasta < 0 ? (
-                              <div className="text-danger small">
-                                <AlertTriangle size={12} className="me-1" />
-                                Vencida hace {Math.abs(diasHasta)} días
-                              </div>
-                            ) : diasHasta === 0 ? (
-                              <div className="text-warning fw-bold small">
-                                <Clock size={12} className="me-1" />
-                                Hoy
-                              </div>
-                            ) : diasHasta <= 7 ? (
-                              <div className="text-warning small">
-                                <Clock size={12} className="me-1" />
-                                En {diasHasta} días
-                              </div>
-                            ) : (
-                              <div className="text-muted small">
-                                En {diasHasta} días
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {audiencia.responsable && (
-                          <div className="mb-2">
-                            <small className="text-muted">
-                              <strong>Responsable:</strong> {audiencia.responsable.nombre} {audiencia.responsable.apellido}
-                            </small>
-                          </div>
+                      <div className="mb-3 flex items-center gap-2">
+                        <IconoModalidad size={14} className="text-slate-400" />
+                        <span className="text-sm">{modalidadConfig.label}</span>
+                        {audiencia.modalidad === 'PRESENCIAL' && audiencia.direccion && (
+                          <small className="text-slate-500">• {audiencia.direccion}</small>
                         )}
                       </div>
-                      <div className="card-footer bg-transparent">
-                        <div className="btn-group w-100" role="group">
-                          <Link
-                            href={`/casos/${casoId}/audiencias/${audiencia.id}`}
-                            className="btn btn-outline-primary btn-sm"
-                            title="Ver detalles"
-                          >
+
+                      {audiencia.estado === 'PROGRAMADA' && (
+                        <div className="mb-3">
+                          {diasHasta < 0 ? (
+                            <div className="flex items-center gap-1 text-sm text-red-600">
+                              <AlertTriangle size={12} />
+                              Vencida hace {Math.abs(diasHasta)} días
+                            </div>
+                          ) : diasHasta === 0 ? (
+                            <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
+                              <Clock size={12} />
+                              Hoy
+                            </div>
+                          ) : diasHasta <= 7 ? (
+                            <div className="flex items-center gap-1 text-sm text-amber-600">
+                              <Clock size={12} />
+                              En {diasHasta} días
+                            </div>
+                          ) : (
+                            <div className="text-sm text-slate-500">En {diasHasta} días</div>
+                          )}
+                        </div>
+                      )}
+
+                      {audiencia.responsable && (
+                        <div className="mb-2">
+                          <small className="text-slate-500">
+                            <strong>Responsable:</strong> {audiencia.responsable.nombre} {audiencia.responsable.apellido}
+                          </small>
+                        </div>
+                      )}
+
+                      <div className="mt-auto flex gap-1 border-t border-slate-100 pt-3">
+                        <Link href={`/casos/${casoId}/audiencias/${audiencia.id}`} className="flex-1">
+                          <Button variant="outlinePrimary" size="sm" className="w-full justify-center" title="Ver detalles">
                             <Eye size={14} />
-                          </Link>
-                          <Link
-                            href={`/casos/${casoId}/audiencias/${audiencia.id}/editar`}
-                            className="btn btn-outline-secondary btn-sm"
-                            title="Editar"
-                          >
+                          </Button>
+                        </Link>
+                        <Link href={`/casos/${casoId}/audiencias/${audiencia.id}/editar`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full justify-center" title="Editar">
                             <Edit3 size={14} />
-                          </Link>
-                          {audiencia.modalidad === 'VIRTUAL' && audiencia.enlace && (
-                            <a
-                              href={audiencia.enlace}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-outline-info btn-sm"
-                              title="Unirse a videollamada"
-                            >
+                          </Button>
+                        </Link>
+                        {audiencia.modalidad === 'VIRTUAL' && audiencia.enlace && (
+                          <a href={audiencia.enlace} target="_blank" rel="noopener noreferrer" className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full justify-center border-sky-700 text-sky-700 hover:bg-sky-50" title="Unirse a videollamada">
                               <Video size={14} />
-                            </a>
-                          )}
-                        </div>
+                            </Button>
+                          </a>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    </CardBody>
+                  </Card>
                 )
               })}
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Modal de Procesos de Liquidación */}
       {audienciaSeleccionada && (

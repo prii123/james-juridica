@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import { PasoLiquidacion } from '@/modules/procesos-liquidacion'
+import { Button, Modal, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface ModalProcesosLiquidacionProps {
     isOpen: boolean
@@ -122,167 +124,107 @@ export function ModalProcesosLiquidacion({
     if (!isOpen) return null
 
     return (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-                <div className="modal-content">
-                    <div className="modal-header border-bottom">
-                        <div>
-                            <h5 className="modal-title fw-bold">Proceso de Liquidación</h5>
-                            <small className="text-secondary">
-                                Progreso: {pasosCompletados} de {totalPasos} pasos completados
-                            </small>
-                        </div>
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={onClose}
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <div className="modal-body">
-                        {loading ? (
-                            <div className="text-center py-5">
-                                <div className="spinner-border" role="status">
-                                    <span className="visually-hidden">Cargando...</span>
-                                </div>
-                            </div>
-                        ) : error ? (
-                            <div className="alert alert-danger d-flex gap-2 mb-0" role="alert">
-                                <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-                                <div>{error}</div>
-                            </div>
-                        ) : (
-                            <div className="timeline-container">
-                                {pasos.length === 0 ? (
-                                    <div className="text-center py-5">
-                                        <p className="text-muted">No hay pasos de liquidación disponibles</p>
-                                    </div>
-                                ) : (
-                                    <div className="timeline">
-                                        {pasos.map((paso, index) => (
-                                            <div
-                                                key={paso.id}
-                                                className="timeline-item mb-4"
-                                            >
-                                                <div className="d-flex gap-3">
-                                                    {/* Línea y punto de la timeline */}
-                                                    <div className="timeline-marker" style={{ minWidth: '40px' }}>
-                                                        <div
-                                                            className={`timeline-point rounded-circle d-flex align-items-center justify-content-center`}
-                                                            style={{
-                                                                width: '40px',
-                                                                height: '40px',
-                                                                backgroundColor: paso.completado ? '#198754' : '#e9ecef',
-                                                                border: paso.completado ? 'none' : '2px solid #dee2e6',
-                                                                position: 'relative',
-                                                                zIndex: 2
-                                                            }}
-                                                        >
-                                                            {paso.completado ? (
-                                                                <CheckCircle2 size={24} className="text-white" />
-                                                            ) : (
-                                                                <span className="text-secondary fw-bold">{index + 1}</span>
-                                                            )}
-                                                        </div>
-                                                        {index < pasos.length - 1 && (
-                                                            <div
-                                                                style={{
-                                                                    width: '2px',
-                                                                    height: '60px',
-                                                                    backgroundColor: '#dee2e6',
-                                                                    marginLeft: '19px',
-                                                                    marginTop: '8px'
-                                                                }}
-                                                            />
-                                                        )}
-                                                    </div>
-
-                                                    {/* Contenido del paso */}
-                                                    <div className="flex-grow-1 pt-1">
-                                                        <div className="d-flex align-items-start gap-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="form-check-input mt-1"
-                                                                id={`paso-${paso.id}`}
-                                                                checked={paso.completado}
-                                                                onChange={() => togglePaso(paso.id)}
-                                                                style={{ cursor: 'pointer' }}
-                                                            />
-                                                            <label
-                                                                htmlFor={`paso-${paso.id}`}
-                                                                className="flex-grow-1"
-                                                                style={{ cursor: 'pointer' }}
-                                                            >
-                                                                <div className={paso.completado ? 'text-decoration-line-through text-muted' : 'fw-600'}>
-                                                                    {paso.nombre}
-                                                                </div>
-                                                                {paso.descripcion && (
-                                                                    <small className="text-secondary d-block">
-                                                                        {paso.descripcion}
-                                                                    </small>
-                                                                )}
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Barra de progreso */}
-                                {totalPasos > 0 && (
-                                    <div className="mt-4 pt-3 border-top">
-                                        <div className="d-flex justify-content-between mb-2">
-                                            <small className="text-muted">Progreso General</small>
-                                            <small className="fw-bold">
-                                                {Math.round((pasosCompletados / totalPasos) * 100)}%
-                                            </small>
-                                        </div>
-                                        <div className="progress" style={{ height: '8px' }}>
-                                            <div
-                                                className="progress-bar bg-success"
-                                                style={{ width: `${(pasosCompletados / totalPasos) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="modal-footer border-top">
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={onClose}
-                            disabled={saving}
-                        >
-                            Cerrar
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={guardarCambios}
-                            disabled={saving || loading}
-                        >
-                            {saving ? (
-                                <>
-                                    <span
-                                        className="spinner-border spinner-border-sm me-2"
-                                        role="status"
-                                        aria-hidden="true"
-                                    />
-                                    Guardando...
-                                </>
-                            ) : (
-                                'Guardar Cambios'
-                            )}
-                        </button>
-                    </div>
+        <Modal
+            onClose={saving ? () => {} : onClose}
+            size="lg"
+            title={
+                <div>
+                    <div className="font-bold">Proceso de Liquidación</div>
+                    <small className="font-normal text-slate-500">
+                        Progreso: {pasosCompletados} de {totalPasos} pasos completados
+                    </small>
                 </div>
-            </div>
-        </div>
+            }
+            footer={
+                <>
+                    <Button variant="outline" onClick={onClose} disabled={saving}>
+                        Cerrar
+                    </Button>
+                    <Button onClick={guardarCambios} loading={saving} disabled={loading}>
+                        {saving ? 'Guardando...' : 'Guardar Cambios'}
+                    </Button>
+                </>
+            }
+        >
+            {loading ? (
+                <Spinner />
+            ) : error ? (
+                <Alert variant="danger">{error}</Alert>
+            ) : (
+                <div>
+                    {pasos.length === 0 ? (
+                        <div className="py-5 text-center">
+                            <p className="text-slate-500">No hay pasos de liquidación disponibles</p>
+                        </div>
+                    ) : (
+                        <div>
+                            {pasos.map((paso, index) => (
+                                <div key={paso.id} className="mb-4">
+                                    <div className="flex gap-3">
+                                        {/* Línea y punto de la timeline */}
+                                        <div className="flex min-w-[40px] flex-col items-center">
+                                            <div
+                                                className={cn(
+                                                    'relative z-[2] flex h-10 w-10 items-center justify-center rounded-full',
+                                                    paso.completado ? 'bg-teal-600' : 'border-2 border-slate-200 bg-slate-100'
+                                                )}
+                                            >
+                                                {paso.completado ? (
+                                                    <CheckCircle2 size={24} className="text-white" />
+                                                ) : (
+                                                    <span className="font-bold text-slate-500">{index + 1}</span>
+                                                )}
+                                            </div>
+                                            {index < pasos.length - 1 && (
+                                                <div className="mt-2 w-0.5 flex-1 bg-slate-200" style={{ minHeight: '40px' }} />
+                                            )}
+                                        </div>
+
+                                        {/* Contenido del paso */}
+                                        <div className="flex-1 pt-1">
+                                            <div className="flex items-start gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mt-1 h-4 w-4 cursor-pointer accent-teal-600"
+                                                    id={`paso-${paso.id}`}
+                                                    checked={paso.completado}
+                                                    onChange={() => togglePaso(paso.id)}
+                                                />
+                                                <label htmlFor={`paso-${paso.id}`} className="flex-1 cursor-pointer">
+                                                    <div className={paso.completado ? 'text-slate-400 line-through' : 'font-semibold text-slate-800'}>
+                                                        {paso.nombre}
+                                                    </div>
+                                                    {paso.descripcion && (
+                                                        <small className="block text-slate-500">{paso.descripcion}</small>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Barra de progreso */}
+                    {totalPasos > 0 && (
+                        <div className="mt-4 border-t border-slate-200 pt-3">
+                            <div className="mb-2 flex justify-between">
+                                <small className="text-slate-500">Progreso General</small>
+                                <small className="font-bold text-slate-700">
+                                    {Math.round((pasosCompletados / totalPasos) * 100)}%
+                                </small>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                    className="h-full rounded-full bg-teal-600 transition-all"
+                                    style={{ width: `${(pasosCompletados / totalPasos) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </Modal>
     )
 }

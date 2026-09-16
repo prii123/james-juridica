@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { ArrowLeft, Save, Search } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert } from '@/components/ui'
 
 interface LeadResult {
   id: string
@@ -16,7 +17,6 @@ interface LeadResult {
 
 export default function NuevoCasoPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [leadSearch, setLeadSearch] = useState('')
@@ -123,108 +123,142 @@ export default function NuevoCasoPage() {
   return (
     <>
       <Breadcrumb items={[{ label: 'Casos', href: '/casos' }, { label: 'Nuevo Caso' }]} />
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/casos" className="btn btn-outline-secondary"><ArrowLeft size={16} /></Link>
-        <h1 className="h3 fw-bold text-dark mb-0">Nuevo Caso</h1>
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/casos">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
+        </Link>
+        <h1 className="mb-0 text-xl font-bold text-slate-800">Nuevo Caso</h1>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-lg-8">
-            <div className="card mb-4">
-              <div className="card-header"><h5 className="mb-0">Buscar Cliente</h5></div>
-              <div className="card-body">
-                <div className="input-group mb-3">
-                  <input type="text" className="form-control" placeholder="Buscar lead por nombre, email o teléfono..."
-                    value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchLeads())} />
-                  <button type="button" className="btn btn-outline-primary" onClick={searchLeads} disabled={searching}>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
+            <Card>
+              <CardHeader><CardTitle>Buscar Cliente</CardTitle></CardHeader>
+              <CardBody>
+                <div className="mb-3 flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Buscar lead por nombre, email o teléfono..."
+                    value={leadSearch}
+                    onChange={(e) => setLeadSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchLeads())}
+                  />
+                  <Button type="button" variant="outlinePrimary" onClick={searchLeads} disabled={searching}>
                     <Search size={16} />
-                  </button>
+                  </Button>
                 </div>
                 {leads.length > 0 && (
-                  <div className="list-group mb-3" style={{ maxHeight: 200, overflowY: 'auto' }}>
+                  <div className="mb-3 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200" style={{ maxHeight: 200 }}>
                     {leads.map(lead => (
-                      <button type="button" key={lead.id} className="list-group-item list-group-item-action"
-                        onClick={() => selectLead(lead)}>
+                      <button
+                        type="button"
+                        key={lead.id}
+                        className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                        onClick={() => selectLead(lead)}
+                      >
                         <strong>{lead.nombre}</strong> — {lead.email} — {lead.telefono}
                       </button>
                     ))}
                   </div>
                 )}
-                <hr />
-                <h6>O ingresa los datos del cliente manualmente</h6>
-                <div className="row mt-2">
-                  <div className="col-md-6 mb-2">
-                    <label className="form-label">Nombre Completo *</label>
-                    <input type="text" className="form-control" value={formData.clienteNombre}
-                      onChange={(e) => setFormData({ ...formData, clienteNombre: e.target.value })} required />
+                <hr className="my-3 border-slate-200" />
+                <h6 className="mb-2 font-semibold text-slate-700">O ingresa los datos del cliente manualmente</h6>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <Label>Nombre Completo *</Label>
+                    <Input
+                      type="text"
+                      value={formData.clienteNombre}
+                      onChange={(e) => setFormData({ ...formData, clienteNombre: e.target.value })}
+                      required
+                    />
                   </div>
-                  <div className="col-md-3 mb-2">
-                    <label className="form-label">Email</label>
-                    <input type="email" className="form-control" value={formData.clienteEmail}
-                      onChange={(e) => setFormData({ ...formData, clienteEmail: e.target.value })} />
+                  <div>
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={formData.clienteEmail}
+                      onChange={(e) => setFormData({ ...formData, clienteEmail: e.target.value })}
+                    />
                   </div>
-                  <div className="col-md-3 mb-2">
-                    <label className="form-label">Teléfono</label>
-                    <input type="text" className="form-control" value={formData.clienteTelefono}
-                      onChange={(e) => setFormData({ ...formData, clienteTelefono: e.target.value })} />
+                  <div>
+                    <Label>Teléfono</Label>
+                    <Input
+                      type="text"
+                      value={formData.clienteTelefono}
+                      onChange={(e) => setFormData({ ...formData, clienteTelefono: e.target.value })}
+                    />
                   </div>
-                  <div className="col-md-3 mb-2">
-                    <label className="form-label">Documento</label>
-                    <input type="text" className="form-control" value={formData.clienteDocumento}
-                      onChange={(e) => setFormData({ ...formData, clienteDocumento: e.target.value })} />
+                  <div>
+                    <Label>Documento</Label>
+                    <Input
+                      type="text"
+                      value={formData.clienteDocumento}
+                      onChange={(e) => setFormData({ ...formData, clienteDocumento: e.target.value })}
+                    />
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
-            <div className="card mb-4">
-              <div className="card-header"><h5 className="mb-0">Configuración del Caso</h5></div>
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Tipo de Insolvencia *</label>
-                    <select className="form-select" value={formData.tipoInsolvencia}
-                      onChange={(e) => setFormData({ ...formData, tipoInsolvencia: e.target.value })} required>
+            <Card>
+              <CardHeader><CardTitle>Configuración del Caso</CardTitle></CardHeader>
+              <CardBody className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>Tipo de Insolvencia *</Label>
+                    <Select
+                      value={formData.tipoInsolvencia}
+                      onChange={(e) => setFormData({ ...formData, tipoInsolvencia: e.target.value })}
+                      required
+                    >
                       <option value="REORGANIZACION">Reorganización</option>
                       <option value="LIQUIDACION_JUDICIAL">Liquidación Judicial</option>
                       <option value="INSOLVENCIA_PERSONA_NATURAL">Insolvencia Persona Natural</option>
                       <option value="ACUERDO_REORGANIZACION">Acuerdo de Reorganización</option>
-                    </select>
+                    </Select>
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Prioridad</label>
-                    <select className="form-select" value={formData.prioridad}
-                      onChange={(e) => setFormData({ ...formData, prioridad: e.target.value })}>
+                  <div>
+                    <Label>Prioridad</Label>
+                    <Select
+                      value={formData.prioridad}
+                      onChange={(e) => setFormData({ ...formData, prioridad: e.target.value })}
+                    >
                       <option value="BAJA">Baja</option>
                       <option value="MEDIA">Media</option>
                       <option value="ALTA">Alta</option>
                       <option value="CRITICA">Crítica</option>
-                    </select>
+                    </Select>
                   </div>
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Observaciones</label>
-                  <textarea className="form-control" rows={3} value={formData.observaciones}
+                <div>
+                  <Label>Observaciones</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.observaciones}
                     onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-                    placeholder="Notas iniciales del caso..." />
+                    placeholder="Notas iniciales del caso..."
+                  />
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card">
-              <div className="card-body">
-                <button type="submit" className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" disabled={saving}>
-                  {saving ? <><span className="spinner-border spinner-border-sm" /> Creando...</> : <><Save size={16} /> Crear Caso</>}
-                </button>
-                <Link href="/casos" className="btn btn-outline-secondary w-100 mt-2">Cancelar</Link>
-              </div>
-            </div>
+          <div className="lg:col-span-4">
+            <Card>
+              <CardBody>
+                <Button type="submit" variant="success" loading={saving} className="w-full justify-center">
+                  {!saving && <Save size={16} />}
+                  {saving ? 'Creando...' : 'Crear Caso'}
+                </Button>
+                <Link href="/casos">
+                  <Button type="button" variant="outline" className="mt-2 w-full justify-center">Cancelar</Button>
+                </Link>
+              </CardBody>
+            </Card>
           </div>
         </div>
       </form>

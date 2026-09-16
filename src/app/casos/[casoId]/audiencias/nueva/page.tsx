@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { ArrowLeft, Save, Calendar, Clock, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Save, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface CreateAudienciaData {
     tipo: string
@@ -178,7 +180,7 @@ export default function NuevaAudienciaPage() {
             })
 
             if (response.ok) {
-                const resultado = await response.json()
+                await response.json()
                 setSuccessMessage('Audiencia creada exitosamente')
                 setTimeout(() => {
                     router.push(`/casos/${casoId}/audiencias`)
@@ -205,11 +207,7 @@ export default function NuevaAudienciaPage() {
                         { label: 'Nueva Audiencia' }
                     ]}
                 />
-                <div className="text-center py-5">
-                    <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Cargando...</span>
-                    </div>
-                </div>
+                <Spinner />
             </>
         )
     }
@@ -224,13 +222,9 @@ export default function NuevaAudienciaPage() {
                         { label: 'Nueva Audiencia' }
                     ]}
                 />
-                <div className="text-center py-5">
-                    <div className="alert alert-danger" role="alert">
-                        Caso no encontrado
-                    </div>
-                    <Link href="/casos" className="btn btn-primary">
-                        Volver a Casos
-                    </Link>
+                <div className="py-5 text-center">
+                    <Alert variant="danger" className="mb-4">Caso no encontrado</Alert>
+                    <Link href="/casos"><Button>Volver a Casos</Button></Link>
                 </div>
             </>
         )
@@ -247,50 +241,44 @@ export default function NuevaAudienciaPage() {
                 ]}
             />
 
-            <div className="d-flex align-items-center gap-3 mb-4">
-                <Link href={`/casos/${casoId}/audiencias`} className="btn btn-outline-secondary">
-                    <ArrowLeft size={16} />
+            <div className="mb-4 flex items-center gap-3">
+                <Link href={`/casos/${casoId}/audiencias`}>
+                    <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
                 </Link>
                 <div>
-                    <h1 className="h2 fw-bold text-dark mb-1">Nueva Audiencia</h1>
-                    <p className="text-secondary mb-0">{caso.numeroCaso} • {caso.cliente.nombre} {caso.cliente.apellido}</p>
+                    <h1 className="mb-1 text-2xl font-bold text-slate-800">Nueva Audiencia</h1>
+                    <p className="mb-0 text-slate-500">{caso.numeroCaso} • {caso.cliente.nombre} {caso.cliente.apellido}</p>
                 </div>
             </div>
 
             {/* Mensaje de éxito */}
             {successMessage && (
-                <div className="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                    <CheckCircle size={20} />
-                    <div className="flex-grow-1">{successMessage}</div>
-                    <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
-                </div>
+                <Alert variant="success" className="mb-4 flex items-center justify-between">
+                    <span className="flex items-center gap-2"><CheckCircle size={20} />{successMessage}</span>
+                    <button type="button" onClick={() => setSuccessMessage('')}><X size={16} /></button>
+                </Alert>
             )}
 
             {/* Mensaje de error general */}
             {errors.general && (
-                <div className="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                    <AlertCircle size={20} />
-                    <div className="flex-grow-1">{errors.general}</div>
-                    <button type="button" className="btn-close" onClick={() => setErrors(prev => ({ ...prev, general: '' }))}></button>
-                </div>
+                <Alert variant="danger" className="mb-4 flex items-center justify-between">
+                    <span className="flex items-center gap-2"><AlertCircle size={20} />{errors.general}</span>
+                    <button type="button" onClick={() => setErrors(prev => ({ ...prev, general: '' }))}><X size={16} /></button>
+                </Alert>
             )}
 
             <form onSubmit={handleSubmit}>
-                <div className="row">
-                    <div className="col-lg-8">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                    <div className="lg:col-span-8">
                         {/* Información de la Audiencia */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">Información de la Audiencia</h5>
-                            </div>
-                            <div className="card-body">
+                        <Card>
+                            <CardHeader><CardTitle>Información de la Audiencia</CardTitle></CardHeader>
+                            <CardBody className="space-y-4">
                                 {/* Tipo de Audiencia */}
-                                <div className="mb-3">
-                                    <label htmlFor="tipo" className="form-label fw-semibold">
-                                        Tipo de Audiencia *
-                                    </label>
-                                    <select
-                                        className={`form-select ${errors.tipo ? 'is-invalid' : ''}`}
+                                <div>
+                                    <Label htmlFor="tipo" className="font-semibold">Tipo de Audiencia *</Label>
+                                    <Select
+                                        className={cn(errors.tipo && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                                         id="tipo"
                                         name="tipo"
                                         value={formData.tipo}
@@ -300,105 +288,72 @@ export default function NuevaAudienciaPage() {
                                         {TIPO_AUDIENCIAS.map(t => (
                                             <option key={t.value} value={t.value}>{t.label}</option>
                                         ))}
-                                    </select>
-                                    {errors.tipo && (
-                                        <div className="invalid-feedback d-block">
-                                            {errors.tipo}
-                                        </div>
-                                    )}
+                                    </Select>
+                                    {errors.tipo && <p className="mt-1 text-xs text-red-600">{errors.tipo}</p>}
                                 </div>
 
                                 {/* Modalidad */}
-                                <div className="mb-3">
-                                    <label htmlFor="modalidad" className="form-label fw-semibold">
-                                        Modalidad *
-                                    </label>
-                                    <select
-                                        className="form-select"
-                                        id="modalidad"
-                                        name="modalidad"
-                                        value={formData.modalidad}
-                                        onChange={handleChange}
-                                    >
+                                <div>
+                                    <Label htmlFor="modalidad" className="font-semibold">Modalidad *</Label>
+                                    <Select id="modalidad" name="modalidad" value={formData.modalidad} onChange={handleChange}>
                                         {MODALIDADES.map(m => (
                                             <option key={m.value} value={m.value}>{m.label}</option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 </div>
 
                                 {/* Fecha y Hora */}
-                                <div className="mb-3">
-                                    <label htmlFor="fechaHora" className="form-label fw-semibold">
-                                        Fecha y Hora *
-                                    </label>
-                                    <input
+                                <div>
+                                    <Label htmlFor="fechaHora" className="font-semibold">Fecha y Hora *</Label>
+                                    <Input
                                         type="datetime-local"
-                                        className={`form-control ${errors.fechaHora ? 'is-invalid' : ''}`}
+                                        className={cn(errors.fechaHora && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                                         id="fechaHora"
                                         name="fechaHora"
                                         value={formData.fechaHora}
                                         onChange={handleChange}
                                     />
-                                    {errors.fechaHora && (
-                                        <div className="invalid-feedback d-block">
-                                            {errors.fechaHora}
-                                        </div>
-                                    )}
+                                    {errors.fechaHora && <p className="mt-1 text-xs text-red-600">{errors.fechaHora}</p>}
                                 </div>
 
                                 {/* Dirección (si es presencial) */}
                                 {formData.modalidad === 'PRESENCIAL' && (
-                                    <div className="mb-3">
-                                        <label htmlFor="direccion" className="form-label fw-semibold">
-                                            Dirección *
-                                        </label>
-                                        <input
+                                    <div>
+                                        <Label htmlFor="direccion" className="font-semibold">Dirección *</Label>
+                                        <Input
                                             type="text"
-                                            className={`form-control ${errors.direccion ? 'is-invalid' : ''}`}
+                                            className={cn(errors.direccion && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                                             id="direccion"
                                             name="direccion"
                                             value={formData.direccion}
                                             onChange={handleChange}
                                             placeholder="Ingresa la dirección del lugar"
                                         />
-                                        {errors.direccion && (
-                                            <div className="invalid-feedback d-block">
-                                                {errors.direccion}
-                                            </div>
-                                        )}
+                                        {errors.direccion && <p className="mt-1 text-xs text-red-600">{errors.direccion}</p>}
                                     </div>
                                 )}
 
                                 {/* Enlace (si es virtual) */}
                                 {formData.modalidad === 'VIRTUAL' && (
-                                    <div className="mb-3">
-                                        <label htmlFor="enlace" className="form-label fw-semibold">
-                                            Enlace de Videollamada *
-                                        </label>
-                                        <input
+                                    <div>
+                                        <Label htmlFor="enlace" className="font-semibold">Enlace de Videollamada *</Label>
+                                        <Input
                                             type="url"
-                                            className={`form-control ${errors.enlace ? 'is-invalid' : ''}`}
+                                            className={cn(errors.enlace && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
                                             id="enlace"
                                             name="enlace"
                                             value={formData.enlace}
                                             onChange={handleChange}
                                             placeholder="https://meet.google.com/..."
                                         />
-                                        {errors.enlace && (
-                                            <div className="invalid-feedback d-block">
-                                                {errors.enlace}
-                                            </div>
-                                        )}
+                                        {errors.enlace && <p className="mt-1 text-xs text-red-600">{errors.enlace}</p>}
                                     </div>
                                 )}
 
                                 {/* Observaciones */}
-                                <div className="mb-0">
-                                    <label htmlFor="observaciones" className="form-label fw-semibold">
-                                        Observaciones (opcional)
-                                    </label>
-                                    <textarea
-                                        className="form-control"
+                                <div>
+                                    <Label htmlFor="observaciones" className="font-semibold">Observaciones (opcional)</Label>
+                                    <Textarea
                                         id="observaciones"
                                         name="observaciones"
                                         rows={4}
@@ -407,77 +362,47 @@ export default function NuevaAudienciaPage() {
                                         placeholder="Añade notas sobre la audiencia"
                                     />
                                 </div>
-                            </div>
-                        </div>
+                            </CardBody>
+                        </Card>
                     </div>
 
-                    <div className="col-lg-4">
+                    <div className="space-y-4 lg:col-span-4">
                         {/* Responsable */}
-                        <div className="card mb-4">
-                            <div className="card-header">
-                                <h5 className="mb-0">Responsable</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="mb-3">
-                                    <label htmlFor="responsableId" className="form-label fw-semibold">
-                                        Selecciona Responsable *
-                                    </label>
-                                    <select
-                                        className={`form-select ${errors.responsableId ? 'is-invalid' : ''}`}
-                                        id="responsableId"
-                                        name="responsableId"
-                                        value={formData.responsableId}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="">Selecciona un responsable</option>
-                                        {responsables.map(user => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.nombre} {user.apellido}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.responsableId && (
-                                        <div className="invalid-feedback d-block">
-                                            {errors.responsableId}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                        <Card>
+                            <CardHeader><CardTitle>Responsable</CardTitle></CardHeader>
+                            <CardBody>
+                                <Label htmlFor="responsableId" className="font-semibold">Selecciona Responsable *</Label>
+                                <Select
+                                    className={cn(errors.responsableId && 'border-red-500 focus:border-red-500 focus:ring-red-500/20')}
+                                    id="responsableId"
+                                    name="responsableId"
+                                    value={formData.responsableId}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">Selecciona un responsable</option>
+                                    {responsables.map(user => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.nombre} {user.apellido}
+                                        </option>
+                                    ))}
+                                </Select>
+                                {errors.responsableId && <p className="mt-1 text-xs text-red-600">{errors.responsableId}</p>}
+                            </CardBody>
+                        </Card>
 
                         {/* Botones de acción */}
-                        <div className="card sticky-top" style={{ top: '80px' }}>
-                            <div className="card-header">
-                                <h5 className="mb-0">Acciones</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="d-grid gap-2">
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                Creando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save size={16} />
-                                                Crear Audiencia
-                                            </>
-                                        )}
-                                    </button>
-                                    <Link
-                                        href={`/casos/${casoId}/audiencias`}
-                                        className="btn btn-outline-secondary"
-                                    >
-                                        Cancelar
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
+                        <Card className="sticky top-20">
+                            <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+                            <CardBody className="grid gap-2">
+                                <Button type="submit" loading={loading} className="justify-center">
+                                    {!loading && <Save size={16} />}
+                                    {loading ? 'Creando...' : 'Crear Audiencia'}
+                                </Button>
+                                <Link href={`/casos/${casoId}/audiencias`}>
+                                    <Button type="button" variant="outline" className="w-full justify-center">Cancelar</Button>
+                                </Link>
+                            </CardBody>
+                        </Card>
                     </div>
                 </div>
             </form>

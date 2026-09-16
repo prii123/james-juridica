@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Plus, 
+import {
+  ArrowLeft,
+  Plus,
   User,
   Users,
   Mail,
@@ -21,6 +21,8 @@ import {
   X,
   UserPlus
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Select, Label, Alert, Spinner, Modal, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Responsable {
   id: string
@@ -55,45 +57,17 @@ interface Caso {
   }
 }
 
-const ROL_CONFIG = {
-  PRINCIPAL: {
-    color: 'primary',
-    icon: Shield,
-    label: 'Principal'
-  },
-  SECUNDARIO: {
-    color: 'info',
-    icon: User,
-    label: 'Secundario'
-  },
-  CONSULTOR: {
-    color: 'warning',
-    icon: Users,
-    label: 'Consultor'
-  },
-  EXTERNO: {
-    color: 'secondary',
-    icon: UserPlus,
-    label: 'Externo'
-  }
+const ROL_CONFIG: Record<Responsable['rol'], { badge: BadgeProps['variant']; icon: typeof Shield; label: string; avatarBg: string; avatarText: string }> = {
+  PRINCIPAL: { badge: 'primary', icon: Shield, label: 'Principal', avatarBg: 'bg-blue-50', avatarText: 'text-blue-800' },
+  SECUNDARIO: { badge: 'info', icon: User, label: 'Secundario', avatarBg: 'bg-sky-50', avatarText: 'text-sky-700' },
+  CONSULTOR: { badge: 'warning', icon: Users, label: 'Consultor', avatarBg: 'bg-amber-50', avatarText: 'text-amber-600' },
+  EXTERNO: { badge: 'secondary', icon: UserPlus, label: 'Externo', avatarBg: 'bg-slate-100', avatarText: 'text-slate-600' },
 }
 
-const ESTADO_CONFIG = {
-  ACTIVO: {
-    color: 'success',
-    icon: CheckCircle,
-    label: 'Activo'
-  },
-  INACTIVO: {
-    color: 'secondary',
-    icon: Clock,
-    label: 'Inactivo'
-  },
-  TEMPORAL: {
-    color: 'warning',
-    icon: AlertTriangle,
-    label: 'Temporal'
-  }
+const ESTADO_CONFIG: Record<Responsable['estado'], { badge: BadgeProps['variant']; icon: typeof CheckCircle; label: string }> = {
+  ACTIVO: { badge: 'success', icon: CheckCircle, label: 'Activo' },
+  INACTIVO: { badge: 'secondary', icon: Clock, label: 'Inactivo' },
+  TEMPORAL: { badge: 'warning', icon: AlertTriangle, label: 'Temporal' },
 }
 
 const RESPONSABILIDADES_OPCIONES = [
@@ -111,9 +85,8 @@ const RESPONSABILIDADES_OPCIONES = [
 
 export default function ResponsablesPage() {
   const params = useParams()
-  const router = useRouter()
   const casoId = params.casoId as string
-  
+
   const [caso, setCaso] = useState<Caso | null>(null)
   const [responsables, setResponsables] = useState<Responsable[]>([])
   const [loading, setLoading] = useState(true)
@@ -129,7 +102,7 @@ export default function ResponsablesPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      
+
       // Obtener información del caso
       const casoResponse = await fetch(`/api/casos/${casoId}`)
       if (casoResponse.ok) {
@@ -188,7 +161,7 @@ export default function ResponsablesPage() {
     if (!confirm('¿Estás seguro de remover este responsable del caso?')) {
       return
     }
-    
+
     try {
       // API call para remover responsable
       console.log('Removiendo responsable:', responsableId)
@@ -200,411 +173,325 @@ export default function ResponsablesPage() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !caso) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Caso no encontrado'}
-        </div>
-        <Link href="/casos" className="btn btn-primary">
-          Volver a Casos
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Caso no encontrado'}</Alert>
+        <Link href="/casos"><Button>Volver a Casos</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Casos', href: '/casos' },
           { label: caso.numeroCaso, href: `/casos/${casoId}` },
           { label: 'Responsables' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Link href={`/casos/${casoId}`} className="btn btn-outline-secondary">
-            <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href={`/casos/${casoId}`}>
+            <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
           </Link>
           <div>
-            <h1 className="h3 fw-bold text-dark mb-0">Responsables</h1>
-            <p className="text-secondary mb-0">
+            <h1 className="mb-0 text-xl font-bold text-slate-800">Responsables</h1>
+            <p className="mb-0 text-slate-500">
               {caso.numeroCaso} • {caso.cliente.nombre} {caso.cliente.apellido}
             </p>
           </div>
         </div>
-        
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn btn-primary d-flex align-items-center gap-2"
-        >
+
+        <Button onClick={() => setShowAddModal(true)}>
           <Plus size={16} />
           Asignar Responsable
-        </button>
+        </Button>
       </div>
 
       {/* Estadísticas */}
-      <div className="row mb-4">
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-light text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-dark">{estadisticas.total}</div>
-              <small className="text-muted">Total</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-success bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-success">{estadisticas.activos}</div>
-              <small className="text-muted">Activos</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-primary bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-primary">{estadisticas.principales}</div>
-              <small className="text-muted">Principales</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-info bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-info">{estadisticas.secundarios}</div>
-              <small className="text-muted">Secundarios</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-warning bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-warning">{estadisticas.consultores}</div>
-              <small className="text-muted">Consultores</small>
-            </div>
-          </div>
-        </div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+        <Card className="bg-slate-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-slate-800">{estadisticas.total}</div>
+            <small className="text-slate-500">Total</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-teal-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-teal-700">{estadisticas.activos}</div>
+            <small className="text-slate-500">Activos</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-blue-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-blue-800">{estadisticas.principales}</div>
+            <small className="text-slate-500">Principales</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-sky-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-sky-700">{estadisticas.secundarios}</div>
+            <small className="text-slate-500">Secundarios</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-amber-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-amber-600">{estadisticas.consultores}</div>
+            <small className="text-slate-500">Consultores</small>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Filtros */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">
-                <Shield size={14} className="me-1" />
-                Filtrar por Rol
-              </label>
-              <select 
-                className="form-select"
-                value={filtroRol}
-                onChange={(e) => setFiltroRol(e.target.value)}
-              >
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
+            <div className="md:col-span-4">
+              <Label className="flex items-center gap-1"><Shield size={14} />Filtrar por Rol</Label>
+              <Select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
                 <option value="">Todos los roles</option>
                 <option value="PRINCIPAL">Principal</option>
                 <option value="SECUNDARIO">Secundario</option>
                 <option value="CONSULTOR">Consultor</option>
                 <option value="EXTERNO">Externo</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <label className="form-label">
-                <CheckCircle size={14} className="me-1" />
-                Estado
-              </label>
-              <select 
-                className="form-select"
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-              >
+            <div className="md:col-span-4">
+              <Label className="flex items-center gap-1"><CheckCircle size={14} />Estado</Label>
+              <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
                 <option value="">Todos los estados</option>
                 <option value="ACTIVO">Activo</option>
                 <option value="INACTIVO">Inactivo</option>
                 <option value="TEMPORAL">Temporal</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <button 
-                className="btn btn-outline-secondary"
-                onClick={() => {
-                  setFiltroRol('')
-                  setFiltroEstado('')
-                }}
+            <div className="md:col-span-4">
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => { setFiltroRol(''); setFiltroEstado('') }}
               >
                 Limpiar Filtros
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de Responsables */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">
-            Responsables Asignados ({responsablesFiltrados.length})
-          </h5>
-        </div>
-        <div className="card-body">
+      <Card>
+        <CardHeader><CardTitle>Responsables Asignados ({responsablesFiltrados.length})</CardTitle></CardHeader>
+        <CardBody>
           {responsablesFiltrados.length === 0 ? (
-            <div className="text-center py-5">
-              <Users size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay responsables</h5>
-              <p className="text-secondary">
-                {responsables.length === 0 
+            <div className="py-5 text-center">
+              <Users size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">No hay responsables</h5>
+              <p className="mb-3 text-slate-500">
+                {responsables.length === 0
                   ? 'Aún no se han asignado responsables para este caso.'
                   : 'No se encontraron responsables con los filtros seleccionados.'
                 }
               </p>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="btn btn-primary"
-              >
-                <Plus size={16} className="me-2" />
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus size={16} />
                 Asignar Primer Responsable
-              </button>
+              </Button>
             </div>
           ) : (
-            <div className="row">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {responsablesFiltrados.map((responsable) => {
                 const rolConfig = ROL_CONFIG[responsable.rol] || ROL_CONFIG.SECUNDARIO
                 const estadoConfig = ESTADO_CONFIG[responsable.estado] || ESTADO_CONFIG.ACTIVO
                 const IconoRol = rolConfig.icon
                 const IconoEstado = estadoConfig.icon
                 const diasActivo = calculateDaysActive(responsable.fechaInicio, responsable.fechaFin)
-                
+
                 return (
-                  <div key={responsable.id} className="col-md-6 col-lg-4 mb-3">
-                    <div className="card h-100">
-                      <div className="card-body">
-                        <div className="d-flex justify-content-between align-items-start mb-3">
-                          <span className={`badge bg-${rolConfig.color} d-flex align-items-center gap-1`}>
-                            <IconoRol size={12} />
-                            {rolConfig.label}
-                          </span>
-                          <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`}>
-                            <IconoEstado size={12} />
-                            {estadoConfig.label}
-                          </span>
+                  <Card key={responsable.id} className="flex h-full flex-col">
+                    <CardBody className="flex-1">
+                      <div className="mb-3 flex items-start justify-between">
+                        <Badge variant={rolConfig.badge}>
+                          <IconoRol size={12} />
+                          {rolConfig.label}
+                        </Badge>
+                        <Badge variant={estadoConfig.badge}>
+                          <IconoEstado size={12} />
+                          {estadoConfig.label}
+                        </Badge>
+                      </div>
+
+                      <div className="mb-3 flex items-start gap-3">
+                        <div className={cn('rounded-full p-2', rolConfig.avatarBg)}>
+                          <User size={20} className={rolConfig.avatarText} />
                         </div>
-                        
-                        <div className="d-flex align-items-start gap-3 mb-3">
-                          <div className={`bg-${rolConfig.color} bg-opacity-10 rounded-circle p-2`}>
-                            <User size={20} className={`text-${rolConfig.color}`} />
+                        <div className="flex-1">
+                          <h6 className="mb-1 font-semibold text-slate-800">
+                            {responsable.usuario.nombre} {responsable.usuario.apellido}
+                          </h6>
+                          {responsable.usuario.cargo && (
+                            <small className="block text-slate-500">{responsable.usuario.cargo}</small>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <div className="mb-1 flex items-center gap-2">
+                          <Mail size={14} className="text-slate-400" />
+                          <small>{responsable.usuario.email}</small>
+                        </div>
+                        {responsable.usuario.telefono && (
+                          <div className="mb-1 flex items-center gap-2">
+                            <Phone size={14} className="text-slate-400" />
+                            <small>{responsable.usuario.telefono}</small>
                           </div>
-                          <div className="flex-grow-1">
-                            <h6 className="fw-semibold mb-1">
-                              {responsable.usuario.nombre} {responsable.usuario.apellido}
-                            </h6>
-                            {responsable.usuario.cargo && (
-                              <small className="text-muted d-block">
-                                {responsable.usuario.cargo}
-                              </small>
+                        )}
+                      </div>
+
+                      <div className="mb-3">
+                        <div className="mb-1 flex items-center gap-2">
+                          <Calendar size={14} className="text-slate-400" />
+                          <small>Asignado: {formatDate(responsable.fechaAsignacion)}</small>
+                        </div>
+                        {responsable.fechaInicio && (
+                          <small className="text-slate-500">
+                            {responsable.estado === 'ACTIVO'
+                              ? `Activo desde hace ${diasActivo} días`
+                              : `Trabajó ${diasActivo} días`
+                            }
+                          </small>
+                        )}
+                      </div>
+
+                      {responsable.responsabilidades.length > 0 && (
+                        <div className="mb-3">
+                          <h6 className="mb-1 text-xs font-semibold text-slate-500">Responsabilidades:</h6>
+                          <div className="flex flex-wrap gap-1">
+                            {responsable.responsabilidades.slice(0, 3).map((resp, index) => (
+                              <Badge key={index} variant="outline">{resp}</Badge>
+                            ))}
+                            {responsable.responsabilidades.length > 3 && (
+                              <Badge variant="secondary">+{responsable.responsabilidades.length - 3} más</Badge>
                             )}
                           </div>
                         </div>
-                        
+                      )}
+
+                      {responsable.observaciones && (
                         <div className="mb-3">
-                          <div className="d-flex align-items-center gap-2 mb-1">
-                            <Mail size={14} className="text-muted" />
-                            <small>{responsable.usuario.email}</small>
-                          </div>
-                          {responsable.usuario.telefono && (
-                            <div className="d-flex align-items-center gap-2 mb-1">
-                              <Phone size={14} className="text-muted" />
-                              <small>{responsable.usuario.telefono}</small>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="mb-3">
-                          <div className="d-flex align-items-center gap-2 mb-1">
-                            <Calendar size={14} className="text-muted" />
-                            <small>
-                              Asignado: {formatDate(responsable.fechaAsignacion)}
-                            </small>
-                          </div>
-                          {responsable.fechaInicio && (
-                            <small className="text-muted">
-                              {responsable.estado === 'ACTIVO' 
-                                ? `Activo desde hace ${diasActivo} días`
-                                : `Trabajó ${diasActivo} días`
-                              }
-                            </small>
-                          )}
-                        </div>
-                        
-                        {responsable.responsabilidades.length > 0 && (
-                          <div className="mb-3">
-                            <h6 className="small fw-semibold text-muted mb-1">Responsabilidades:</h6>
-                            <div className="d-flex flex-wrap gap-1">
-                              {responsable.responsabilidades.slice(0, 3).map((resp, index) => (
-                                <span key={index} className="badge bg-light text-dark small">
-                                  {resp}
-                                </span>
-                              ))}
-                              {responsable.responsabilidades.length > 3 && (
-                                <span className="badge bg-secondary small">
-                                  +{responsable.responsabilidades.length - 3} más
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {responsable.observaciones && (
-                          <div className="mb-3">
-                            <small className="text-muted">
-                              <strong>Observaciones:</strong> {responsable.observaciones.length > 60 
-                                ? `${responsable.observaciones.substring(0, 60)}...`
-                                : responsable.observaciones
-                              }
-                            </small>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="card-footer bg-transparent">
-                        <div className="d-flex justify-content-between">
-                          <div className="btn-group btn-group-sm">
-                            <Link
-                              href={`/casos/${casoId}/responsables/${responsable.id}`}
-                              className="btn btn-outline-primary"
-                              title="Ver detalles"
-                            >
-                              <Eye size={14} />
-                            </Link>
-                            <Link
-                              href={`/casos/${casoId}/responsables/${responsable.id}/editar`}
-                              className="btn btn-outline-secondary"
-                              title="Editar"
-                            >
-                              <Edit3 size={14} />
-                            </Link>
-                          </div>
-                          
-                          <button
-                            onClick={() => handleRemoveResponsable(responsable.id)}
-                            className="btn btn-outline-danger btn-sm"
-                            title="Remover del caso"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                        
-                        <div className="mt-2 text-center">
-                          <small className="text-muted">
-                            Asignado por: {responsable.asignadoPor.nombre} {responsable.asignadoPor.apellido}
+                          <small className="text-slate-500">
+                            <strong>Observaciones:</strong> {responsable.observaciones.length > 60
+                              ? `${responsable.observaciones.substring(0, 60)}...`
+                              : responsable.observaciones
+                            }
                           </small>
                         </div>
+                      )}
+                    </CardBody>
+
+                    <div className="border-t border-slate-100 px-4 py-3">
+                      <div className="flex justify-between">
+                        <div className="flex gap-1">
+                          <Link href={`/casos/${casoId}/responsables/${responsable.id}`}>
+                            <Button variant="outlinePrimary" size="icon" title="Ver detalles">
+                              <Eye size={14} />
+                            </Button>
+                          </Link>
+                          <Link href={`/casos/${casoId}/responsables/${responsable.id}/editar`}>
+                            <Button variant="outline" size="icon" title="Editar">
+                              <Edit3 size={14} />
+                            </Button>
+                          </Link>
+                        </div>
+
+                        <Button variant="outlineDanger" size="icon" onClick={() => handleRemoveResponsable(responsable.id)} title="Remover del caso">
+                          <X size={14} />
+                        </Button>
+                      </div>
+
+                      <div className="mt-2 text-center">
+                        <small className="text-slate-500">
+                          Asignado por: {responsable.asignadoPor.nombre} {responsable.asignadoPor.apellido}
+                        </small>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 )
               })}
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Modal para Asignar Responsable */}
       {showAddModal && (
-        <div className="modal show d-block" tabIndex={-1} style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Asignar Responsable</h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowAddModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">Usuario *</label>
-                  <select className="form-select" required>
-                    <option value="">Selecciona un usuario</option>
-                    {/* TODO: Cargar usuarios disponibles */}
-                    <option value="1">Juan Pérez - Abogado Senior</option>
-                    <option value="2">María García - Paralegal</option>
-                    <option value="3">Carlos López - Consultor</option>
-                  </select>
-                </div>
-                
-                <div className="row">
-                  <div className="col-md-6">
-                    <label className="form-label">Rol *</label>
-                    <select className="form-select" required>
-                      <option value="">Selecciona rol</option>
-                      <option value="PRINCIPAL">Principal</option>
-                      <option value="SECUNDARIO">Secundario</option>
-                      <option value="CONSULTOR">Consultor</option>
-                      <option value="EXTERNO">Externo</option>
-                    </select>
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Fecha de Inicio</label>
-                    <input type="date" className="form-control" />
-                  </div>
-                </div>
-                
-                <div className="mt-3">
-                  <label className="form-label">Responsabilidades</label>
-                  <div className="row">
-                    {RESPONSABILIDADES_OPCIONES.map((resp, index) => (
-                      <div key={index} className="col-md-6 mb-1">
-                        <div className="form-check">
-                          <input className="form-check-input" type="checkbox" id={`resp-${index}`} />
-                          <label className="form-check-label small" htmlFor={`resp-${index}`}>
-                            {resp}
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="mt-3">
-                  <label className="form-label">Observaciones</label>
-                  <textarea 
-                    className="form-control" 
-                    rows={3}
-                    placeholder="Observaciones sobre la asignación..."
-                  ></textarea>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => setShowAddModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                >
-                  <UserPlus size={16} className="me-2" />
-                  Asignar Responsable
-                </button>
-              </div>
+        <Modal
+          onClose={() => setShowAddModal(false)}
+          title="Asignar Responsable"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancelar</Button>
+              <Button>
+                <UserPlus size={16} />
+                Asignar Responsable
+              </Button>
+            </>
+          }
+        >
+          <div className="mb-3">
+            <Label>Usuario *</Label>
+            <Select required>
+              <option value="">Selecciona un usuario</option>
+              {/* TODO: Cargar usuarios disponibles */}
+              <option value="1">Juan Pérez - Abogado Senior</option>
+              <option value="2">María García - Paralegal</option>
+              <option value="3">Carlos López - Consultor</option>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <Label>Rol *</Label>
+              <Select required>
+                <option value="">Selecciona rol</option>
+                <option value="PRINCIPAL">Principal</option>
+                <option value="SECUNDARIO">Secundario</option>
+                <option value="CONSULTOR">Consultor</option>
+                <option value="EXTERNO">Externo</option>
+              </Select>
+            </div>
+            <div>
+              <Label>Fecha de Inicio</Label>
+              <input type="date" className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20" />
             </div>
           </div>
-        </div>
+
+          <div className="mt-3">
+            <Label>Responsabilidades</Label>
+            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+              {RESPONSABILIDADES_OPCIONES.map((resp, index) => (
+                <label key={index} className="flex items-center gap-2 text-sm text-slate-700">
+                  <input type="checkbox" id={`resp-${index}`} className="h-4 w-4 accent-blue-800" />
+                  {resp}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <Label>Observaciones</Label>
+            <textarea
+              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20"
+              rows={3}
+              placeholder="Observaciones sobre la asignación..."
+            />
+          </div>
+        </Modal>
       )}
     </>
   )

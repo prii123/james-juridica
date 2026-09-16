@@ -3,19 +3,15 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  Briefcase, 
+import {
+  Briefcase,
   Plus,
   Search,
   Filter,
   Eye,
   Edit3,
-  Calendar,
-  DollarSign,
-  User,
   AlertTriangle,
   CheckCircle,
-  Clock,
   Archive,
   Target,
   Flag,
@@ -23,6 +19,7 @@ import {
   Pause
 } from 'lucide-react'
 import { EstadoCaso, TipoInsolvencia, Prioridad } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Label, Spinner, type BadgeProps } from '@/components/ui'
 
 interface Caso {
   id: string
@@ -46,53 +43,21 @@ interface Caso {
   }
 }
 
-const ESTADO_CONFIG = {
-  ACTIVO: {
-    color: 'success',
-    icon: Play,
-    label: 'Activo'
-  },
-  CERRADO: {
-    color: 'secondary',
-    icon: CheckCircle,
-    label: 'Cerrado'
-  },
-  SUSPENDIDO: {
-    color: 'warning',
-    icon: Pause,
-    label: 'Suspendido'
-  },
-  ARCHIVADO: {
-    color: 'dark',
-    icon: Archive,
-    label: 'Archivado'
-  }
+const ESTADO_CONFIG: Record<EstadoCaso, { badge: BadgeProps['variant']; icon: typeof Play; label: string; statText: string }> = {
+  ACTIVO: { badge: 'success', icon: Play, label: 'Activo', statText: 'text-teal-700' },
+  CERRADO: { badge: 'secondary', icon: CheckCircle, label: 'Cerrado', statText: 'text-slate-600' },
+  SUSPENDIDO: { badge: 'warning', icon: Pause, label: 'Suspendido', statText: 'text-amber-600' },
+  ARCHIVADO: { badge: 'secondary', icon: Archive, label: 'Archivado', statText: 'text-slate-600' },
 }
 
-const PRIORIDAD_CONFIG = {
-  BAJA: {
-    color: 'info',
-    icon: Target,
-    label: 'Baja'
-  },
-  MEDIA: {
-    color: 'primary',
-    icon: Target,
-    label: 'Media'
-  },
-  ALTA: {
-    color: 'warning',
-    icon: Flag,
-    label: 'Alta'
-  },
-  CRITICA: {
-    color: 'danger',
-    icon: AlertTriangle,
-    label: 'Crítica'
-  }
+const PRIORIDAD_CONFIG: Record<Prioridad, { badge: BadgeProps['variant']; icon: typeof Target; label: string }> = {
+  BAJA: { badge: 'info', icon: Target, label: 'Baja' },
+  MEDIA: { badge: 'primary', icon: Target, label: 'Media' },
+  ALTA: { badge: 'warning', icon: Flag, label: 'Alta' },
+  CRITICA: { badge: 'danger', icon: AlertTriangle, label: 'Crítica' },
 }
 
-const TIPO_INSOLVENCIA_LABELS = {
+const TIPO_INSOLVENCIA_LABELS: Record<TipoInsolvencia, string> = {
   REORGANIZACION: 'Reorganización',
   LIQUIDACION_JUDICIAL: 'Liquidación Judicial',
   INSOLVENCIA_PERSONA_NATURAL: 'Insolvencia Persona Natural',
@@ -115,7 +80,7 @@ export default function CasosPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/casos')
-      
+
       if (response.ok) {
         const data = await response.json()
         // La API devuelve un objeto con estructura { casos: [], total, page, limit, totalPages }
@@ -126,15 +91,15 @@ export default function CasosPage() {
           setCasos(data)
         } else {
           console.error('La respuesta no tiene el formato esperado:', data)
-          setCasos([]) // Asegurar que casos sea un array vacío
+          setCasos([])
         }
       } else {
         console.error('Error al cargar casos')
-        setCasos([]) // Asegurar que casos sea un array vacío
+        setCasos([])
       }
     } catch (error) {
       console.error('Error al cargar casos:', error)
-      setCasos([]) // Asegurar que casos sea un array vacío
+      setCasos([])
     } finally {
       setLoading(false)
     }
@@ -148,14 +113,6 @@ export default function CasosPage() {
     })
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(value)
-  }
-
   const calculateDaysActive = (fechaInicio: string, fechaCierre?: string) => {
     const inicio = new Date(fechaInicio)
     const fin = fechaCierre ? new Date(fechaCierre) : new Date()
@@ -164,7 +121,7 @@ export default function CasosPage() {
   }
 
   const casosFiltrados = Array.isArray(casos) ? casos.filter(caso => {
-    const matchSearch = !searchTerm || 
+    const matchSearch = !searchTerm ||
       caso.numeroCaso.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (caso.cliente.apellido?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -183,139 +140,114 @@ export default function CasosPage() {
     cerrados: Array.isArray(casos) ? casos.filter(c => c.estado === 'CERRADO').length : 0,
     suspendidos: Array.isArray(casos) ? casos.filter(c => c.estado === 'SUSPENDIDO').length : 0,
     criticos: Array.isArray(casos) ? casos.filter(c => c.prioridad === 'CRITICA').length : 0,
-    // valorTotal: Array.isArray(casos) ? casos.reduce((sum, c) => sum + c.valorDeuda, 0) : 0
   }
 
   return (
     <>
-      <Breadcrumb 
-        items={[
-          { label: 'Casos' }
-        ]} 
-      />
-      
-      <div className="d-flex align-items-center justify-content-between mb-4">
+      <Breadcrumb items={[{ label: 'Casos' }]} />
+
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="h2 fw-bold text-dark mb-1">Casos Jurídicos</h1>
-          <p className="text-secondary mb-0">Gestión de procesos de insolvencia</p>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Casos Jurídicos</h1>
+          <p className="mb-0 text-slate-500">Gestión de procesos de insolvencia</p>
         </div>
-        <div className="d-flex align-items-center gap-3">
-          <Link href="/casos/nuevo" className="btn btn-primary d-flex align-items-center gap-2">
-            <Plus size={16} />
-            Nuevo Caso
+        <div className="flex items-center gap-3">
+          <Link href="/casos/nuevo">
+            <Button>
+              <Plus size={16} />
+              Nuevo Caso
+            </Button>
           </Link>
         </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="row mb-4">
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
-          <div className="card bg-light text-center">
-            <div className="card-body py-3">
-              <div className="h4 mb-0 text-dark">{estadisticas.total}</div>
-              <small className="text-muted">Total Casos</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
-          <div className="card bg-success bg-opacity-10 text-center">
-            <div className="card-body py-3">
-              <div className="h4 mb-0 text-success">{estadisticas.activos}</div>
-              <small className="text-muted">Activos</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
-          <div className="card bg-secondary bg-opacity-10 text-center">
-            <div className="card-body py-3">
-              <div className="h4 mb-0 text-secondary">{estadisticas.cerrados}</div>
-              <small className="text-muted">Cerrados</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
-          <div className="card bg-warning bg-opacity-10 text-center">
-            <div className="card-body py-3">
-              <div className="h4 mb-0 text-warning">{estadisticas.suspendidos}</div>
-              <small className="text-muted">Suspendidos</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-2 col-md-4 col-sm-6 mb-3">
-          <div className="card bg-danger bg-opacity-10 text-center">
-            <div className="card-body py-3">
-              <div className="h4 mb-0 text-danger">{estadisticas.criticos}</div>
-              <small className="text-muted">Críticos</small>
-            </div>
-          </div>
-        </div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <Card className="bg-slate-50 text-center">
+          <CardBody className="py-3">
+            <div className="mb-0 text-2xl font-bold text-slate-800">{estadisticas.total}</div>
+            <small className="text-slate-500">Total Casos</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-teal-50 text-center">
+          <CardBody className="py-3">
+            <div className="mb-0 text-2xl font-bold text-teal-700">{estadisticas.activos}</div>
+            <small className="text-slate-500">Activos</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-slate-100 text-center">
+          <CardBody className="py-3">
+            <div className="mb-0 text-2xl font-bold text-slate-600">{estadisticas.cerrados}</div>
+            <small className="text-slate-500">Cerrados</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-amber-50 text-center">
+          <CardBody className="py-3">
+            <div className="mb-0 text-2xl font-bold text-amber-600">{estadisticas.suspendidos}</div>
+            <small className="text-slate-500">Suspendidos</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-red-50 text-center">
+          <CardBody className="py-3">
+            <div className="mb-0 text-2xl font-bold text-red-600">{estadisticas.criticos}</div>
+            <small className="text-slate-500">Críticos</small>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">
-                <Search size={14} className="me-1" />
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
+            <div className="md:col-span-3">
+              <Label className="flex items-center gap-1">
+                <Search size={14} />
                 Buscar
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
-                className="form-control"
                 placeholder="Número de caso, cliente, documento..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="col-md-2">
-              <label className="form-label">
-                <Filter size={14} className="me-1" />
+            <div className="md:col-span-2">
+              <Label className="flex items-center gap-1">
+                <Filter size={14} />
                 Estado
-              </label>
-              <select 
-                className="form-select"
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-              >
+              </Label>
+              <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
                 <option value="">Todos</option>
                 <option value="ACTIVO">Activo</option>
                 <option value="CERRADO">Cerrado</option>
                 <option value="SUSPENDIDO">Suspendido</option>
                 <option value="ARCHIVADO">Archivado</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-2">
-              <label className="form-label">Prioridad</label>
-              <select 
-                className="form-select"
-                value={filtroPrioridad}
-                onChange={(e) => setFiltroPrioridad(e.target.value)}
-              >
+            <div className="md:col-span-2">
+              <Label>Prioridad</Label>
+              <Select value={filtroPrioridad} onChange={(e) => setFiltroPrioridad(e.target.value)}>
                 <option value="">Todas</option>
                 <option value="BAJA">Baja</option>
                 <option value="MEDIA">Media</option>
                 <option value="ALTA">Alta</option>
                 <option value="CRITICA">Crítica</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-3">
-              <label className="form-label">Tipo de Insolvencia</label>
-              <select 
-                className="form-select"
-                value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Label>Tipo de Insolvencia</Label>
+              <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
                 <option value="">Todos los tipos</option>
                 <option value="REORGANIZACION">Reorganización</option>
                 <option value="LIQUIDACION_JUDICIAL">Liquidación Judicial</option>
                 <option value="INSOLVENCIA_PERSONA_NATURAL">Insolvencia Persona Natural</option>
                 <option value="ACUERDO_REORGANIZACION">Acuerdo de Reorganización</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-2">
-              <button 
-                className="btn btn-outline-secondary"
+            <div className="md:col-span-2">
+              <Button
+                variant="outline"
+                className="w-full justify-center"
                 onClick={() => {
                   setSearchTerm('')
                   setFiltroEstado('')
@@ -324,134 +256,116 @@ export default function CasosPage() {
                 }}
               >
                 Limpiar
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de Casos */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0 d-flex align-items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <Briefcase size={20} />
             Casos ({casosFiltrados.length})
-          </h5>
-        </div>
-        <div className="card-body">
+          </CardTitle>
+        </CardHeader>
+        <CardBody>
           {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
-              </div>
-            </div>
+            <Spinner />
           ) : casosFiltrados.length === 0 ? (
-            <div className="text-center py-5">
-              <Briefcase size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">
+            <div className="py-5 text-center">
+              <Briefcase size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">
                 {casos.length === 0 ? 'No hay casos registrados' : 'No se encontraron casos'}
               </h5>
-              <p className="text-secondary">
-                {casos.length === 0 
+              <p className="text-slate-500">
+                {casos.length === 0
                   ? 'Los casos se crean automáticamente cuando una radicación es aceptada por el juzgado.'
                   : 'Intenta con otros filtros de búsqueda.'
                 }
               </p>
               {casos.length === 0 && (
-                <Link href="/radicaciones" className="btn btn-primary mt-3">
-                  Ir a Radicaciones
+                <Link href="/radicaciones">
+                  <Button className="mt-3">Ir a Radicaciones</Button>
                 </Link>
               )}
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Caso</th>
-                    <th>Cliente</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th>Responsable</th>
-                    <th>Días Activo</th>
-                    <th>Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Caso</th>
+                    <th className="px-4 py-3 font-semibold">Cliente</th>
+                    <th className="px-4 py-3 font-semibold">Tipo</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Prioridad</th>
+                    <th className="px-4 py-3 font-semibold">Responsable</th>
+                    <th className="px-4 py-3 font-semibold">Días Activo</th>
+                    <th className="px-4 py-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {casosFiltrados.map((caso) => {
                     const estadoConfig = ESTADO_CONFIG[caso.estado] || ESTADO_CONFIG.ACTIVO
                     const prioridadConfig = PRIORIDAD_CONFIG[caso.prioridad] || PRIORIDAD_CONFIG.MEDIA
                     const IconoEstado = estadoConfig.icon
                     const IconoPrioridad = prioridadConfig.icon
                     const diasActivo = calculateDaysActive(caso.fechaInicio, caso.fechaCierre)
-                    
+
                     return (
-                      <tr key={caso.id}>
-                        <td>
-                          <div>
-                            <Link href={`/casos/${caso.id}`} className="fw-semibold text-decoration-none">
-                              {caso.numeroCaso}
-                            </Link>
-                            <div className="small text-muted">
-                              Creado: {formatDate(caso.createdAt)}
-                            </div>
+                      <tr key={caso.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 align-middle">
+                          <Link href={`/casos/${caso.id}`} className="font-semibold text-slate-800 no-underline hover:text-blue-800">
+                            {caso.numeroCaso}
+                          </Link>
+                          <div className="text-xs text-slate-500">
+                            Creado: {formatDate(caso.createdAt)}
                           </div>
                         </td>
-                        <td>
-                          <div>
-                            <div className="fw-medium">
-                              {caso.cliente.nombre} {caso.cliente.apellido}
-                            </div>
-                            <div className="small text-muted">
-                              Doc: {caso.cliente.documento}
-                            </div>
+                        <td className="px-4 py-3 align-middle">
+                          <div className="font-medium text-slate-800">
+                            {caso.cliente.nombre} {caso.cliente.apellido}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            Doc: {caso.cliente.documento}
                           </div>
                         </td>
-                        <td>
-                          <span className="badge bg-light text-dark">
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant="outline">
                             {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`} style={{width: 'fit-content'}}>
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant={estadoConfig.badge}>
                             <IconoEstado size={12} />
                             {estadoConfig.label}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <span className={`badge bg-${prioridadConfig.color} d-flex align-items-center gap-1`} style={{width: 'fit-content'}}>
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant={prioridadConfig.badge}>
                             <IconoPrioridad size={12} />
                             {prioridadConfig.label}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <div className="small">
-                            {caso.responsable.nombre} {caso.responsable.apellido}
-                          </div>
+                        <td className="px-4 py-3 align-middle text-sm">
+                          {caso.responsable.nombre} {caso.responsable.apellido}
                         </td>
-                        <td>
-                          <div className="text-center">
-                            <span className="badge bg-info">
-                              {diasActivo} días
-                            </span>
-                          </div>
+                        <td className="px-4 py-3 text-center align-middle">
+                          <Badge variant="info">{diasActivo} días</Badge>
                         </td>
-                        <td>
-                          <div className="btn-group btn-group-sm">
-                            <Link
-                              href={`/casos/${caso.id}`}
-                              className="btn btn-outline-primary"
-                              title="Ver detalles"
-                            >
-                              <Eye size={14} />
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex gap-1">
+                            <Link href={`/casos/${caso.id}`}>
+                              <Button variant="outlinePrimary" size="icon" title="Ver detalles">
+                                <Eye size={14} />
+                              </Button>
                             </Link>
-                            <Link
-                              href={`/casos/${caso.id}/actuaciones`}
-                              className="btn btn-outline-secondary"
-                              title="Actuaciones"
-                            >
-                              <Edit3 size={14} />
+                            <Link href={`/casos/${caso.id}/actuaciones`}>
+                              <Button variant="outline" size="icon" title="Actuaciones">
+                                <Edit3 size={14} />
+                              </Button>
                             </Link>
                           </div>
                         </td>
@@ -462,8 +376,8 @@ export default function CasosPage() {
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     </>
   )
 }

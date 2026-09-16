@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Plus, 
-  FileText, 
+import {
+  ArrowLeft,
+  FileText,
   Download,
   Eye,
   Upload,
@@ -19,9 +18,10 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  X,
   Edit3
 } from 'lucide-react'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Select, Label, Alert, Spinner, Modal, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Documento {
   id: string
@@ -51,7 +51,7 @@ interface Caso {
   }
 }
 
-const TIPO_ICONS = {
+const TIPO_ICONS: Record<Documento['tipo'], typeof FileText> = {
   PDF: FileText,
   DOCX: FileText,
   XLSX: FileText,
@@ -62,14 +62,14 @@ const TIPO_ICONS = {
   OTROS: File
 }
 
-const TIPO_COLORS = {
+const TIPO_BADGE: Record<Documento['tipo'], BadgeProps['variant']> = {
   PDF: 'danger',
   DOCX: 'primary',
   XLSX: 'success',
   JPG: 'warning',
   PNG: 'warning',
   MP4: 'info',
-  ZIP: 'dark',
+  ZIP: 'secondary',
   OTROS: 'secondary'
 }
 
@@ -88,29 +88,16 @@ const CATEGORIAS_DOCUMENTO = {
   'OTROS': 'Otros'
 }
 
-const ESTADO_CONFIG = {
-  ACTIVO: {
-    color: 'success',
-    icon: CheckCircle,
-    label: 'Activo'
-  },
-  ARCHIVADO: {
-    color: 'secondary',
-    icon: Archive,
-    label: 'Archivado'
-  },
-  VENCIDO: {
-    color: 'danger',
-    icon: AlertCircle,
-    label: 'Vencido'
-  }
+const ESTADO_CONFIG: Record<Documento['estado'], { badge: BadgeProps['variant']; icon: typeof CheckCircle; label: string }> = {
+  ACTIVO: { badge: 'success', icon: CheckCircle, label: 'Activo' },
+  ARCHIVADO: { badge: 'secondary', icon: Archive, label: 'Archivado' },
+  VENCIDO: { badge: 'danger', icon: AlertCircle, label: 'Vencido' },
 }
 
 export default function DocumentosPage() {
   const params = useParams()
-  const router = useRouter()
   const casoId = params.casoId as string
-  
+
   const [caso, setCaso] = useState<Caso | null>(null)
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [loading, setLoading] = useState(true)
@@ -128,7 +115,7 @@ export default function DocumentosPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      
+
       // Obtener información del caso
       const casoResponse = await fetch(`/api/casos/${casoId}`)
       if (casoResponse.ok) {
@@ -195,7 +182,7 @@ export default function DocumentosPage() {
     activos: documentos.filter(d => d.estado === 'ACTIVO').length,
     archivados: documentos.filter(d => d.estado === 'ARCHIVADO').length,
     vencidos: documentos.filter(d => d.estado === 'VENCIDO').length,
-    proximosVencer: documentos.filter(d => 
+    proximosVencer: documentos.filter(d =>
       d.estado === 'ACTIVO' && isExpiringSoon(d.fechaVencimiento)
     ).length
   }
@@ -218,134 +205,97 @@ export default function DocumentosPage() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !caso) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Caso no encontrado'}
-        </div>
-        <Link href="/casos" className="btn btn-primary">
-          Volver a Casos
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Caso no encontrado'}</Alert>
+        <Link href="/casos"><Button>Volver a Casos</Button></Link>
       </div>
     )
   }
 
   return (
     <>
-      <Breadcrumb 
+      <Breadcrumb
         items={[
           { label: 'Casos', href: '/casos' },
           { label: caso.numeroCaso, href: `/casos/${casoId}` },
           { label: 'Documentos' }
-        ]} 
+        ]}
       />
 
-      <div className="d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Link href={`/casos/${casoId}`} className="btn btn-outline-secondary">
-            <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href={`/casos/${casoId}`}>
+            <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
           </Link>
           <div>
-            <h1 className="h3 fw-bold text-dark mb-0">Documentos</h1>
-            <p className="text-secondary mb-0">
+            <h1 className="mb-0 text-xl font-bold text-slate-800">Documentos</h1>
+            <p className="mb-0 text-slate-500">
               {caso.numeroCaso} • {caso.cliente.nombre} {caso.cliente.apellido}
             </p>
           </div>
         </div>
-        
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="btn btn-primary d-flex align-items-center gap-2"
-        >
+
+        <Button onClick={() => setShowUploadModal(true)}>
           <Upload size={16} />
           Subir Documentos
-        </button>
+        </Button>
       </div>
 
       {/* Estadísticas */}
-      <div className="row mb-4">
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-light text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-dark">{estadisticas.total}</div>
-              <small className="text-muted">Total</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-success bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-success">{estadisticas.activos}</div>
-              <small className="text-muted">Activos</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-warning bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-warning">{estadisticas.proximosVencer}</div>
-              <small className="text-muted">Por vencer</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-secondary bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-secondary">{estadisticas.archivados}</div>
-              <small className="text-muted">Archivados</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-2 col-sm-6">
-          <div className="card bg-danger bg-opacity-10 text-center">
-            <div className="card-body py-2">
-              <div className="h4 mb-0 text-danger">{estadisticas.vencidos}</div>
-              <small className="text-muted">Vencidos</small>
-            </div>
-          </div>
-        </div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+        <Card className="bg-slate-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-slate-800">{estadisticas.total}</div>
+            <small className="text-slate-500">Total</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-teal-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-teal-700">{estadisticas.activos}</div>
+            <small className="text-slate-500">Activos</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-amber-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-amber-600">{estadisticas.proximosVencer}</div>
+            <small className="text-slate-500">Por vencer</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-slate-100 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-slate-600">{estadisticas.archivados}</div>
+            <small className="text-slate-500">Archivados</small>
+          </CardBody>
+        </Card>
+        <Card className="bg-red-50 text-center">
+          <CardBody className="py-2">
+            <div className="mb-0 text-xl font-bold text-red-600">{estadisticas.vencidos}</div>
+            <small className="text-slate-500">Vencidos</small>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Filtros */}
-      <div className="card mb-4">
-        <div className="card-body">
-          <div className="row align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">
-                <Filter size={14} className="me-1" />
-                Filtrar por Categoría
-              </label>
-              <select 
-                className="form-select"
-                value={filtroCategoria}
-                onChange={(e) => setFiltroCategoria(e.target.value)}
-              >
+      <Card className="mb-4">
+        <CardBody>
+          <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
+            <div className="md:col-span-4">
+              <Label className="flex items-center gap-1"><Filter size={14} />Filtrar por Categoría</Label>
+              <Select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
                 <option value="">Todas las categorías</option>
                 {Object.entries(CATEGORIAS_DOCUMENTO).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
-            <div className="col-md-2">
-              <label className="form-label">
-                <FileText size={14} className="me-1" />
-                Tipo
-              </label>
-              <select 
-                className="form-select"
-                value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Label className="flex items-center gap-1"><FileText size={14} />Tipo</Label>
+              <Select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
                 <option value="">Todos los tipos</option>
                 <option value="PDF">PDF</option>
                 <option value="DOCX">Word</option>
@@ -354,180 +304,146 @@ export default function DocumentosPage() {
                 <option value="PNG">Imagen PNG</option>
                 <option value="MP4">Video</option>
                 <option value="ZIP">Archivo</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-2">
-              <label className="form-label">
-                Estado
-              </label>
-              <select 
-                className="form-select"
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-              >
+            <div className="md:col-span-3">
+              <Label>Estado</Label>
+              <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
                 <option value="">Todos los estados</option>
                 <option value="ACTIVO">Activo</option>
                 <option value="ARCHIVADO">Archivado</option>
                 <option value="VENCIDO">Vencido</option>
-              </select>
+              </Select>
             </div>
-            <div className="col-md-2">
-              <button 
-                className="btn btn-outline-secondary"
-                onClick={() => {
-                  setFiltroCategoria('')
-                  setFiltroTipo('')
-                  setFiltroEstado('')
-                }}
+            <div className="md:col-span-2">
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => { setFiltroCategoria(''); setFiltroTipo(''); setFiltroEstado('') }}
               >
-                Limpiar Filtros
-              </button>
+                Limpiar
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Lista de Documentos */}
-      <div className="card">
-        <div className="card-header">
-          <h5 className="mb-0">
-            Documentos ({documentosFiltrados.length})
-          </h5>
-        </div>
-        <div className="card-body">
+      <Card>
+        <CardHeader><CardTitle>Documentos ({documentosFiltrados.length})</CardTitle></CardHeader>
+        <CardBody>
           {documentosFiltrados.length === 0 ? (
-            <div className="text-center py-5">
-              <FileText size={48} className="text-muted mb-3" />
-              <h5 className="text-muted">No hay documentos</h5>
-              <p className="text-secondary">
-                {documentos.length === 0 
+            <div className="py-5 text-center">
+              <FileText size={48} className="mx-auto mb-3 text-slate-300" />
+              <h5 className="text-base font-semibold text-slate-500">No hay documentos</h5>
+              <p className="mb-3 text-slate-500">
+                {documentos.length === 0
                   ? 'Aún no se han subido documentos para este caso.'
                   : 'No se encontraron documentos con los filtros seleccionados.'
                 }
               </p>
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="btn btn-primary"
-              >
-                <Upload size={16} className="me-2" />
+              <Button onClick={() => setShowUploadModal(true)}>
+                <Upload size={16} />
                 Subir Primer Documento
-              </button>
+              </Button>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <th>Documento</th>
-                    <th>Categoría</th>
-                    <th>Estado</th>
-                    <th>Tamaño</th>
-                    <th>Subido</th>
-                    <th>Vencimiento</th>
-                    <th>Acciones</th>
+                    <th className="px-4 py-3 font-semibold">Documento</th>
+                    <th className="px-4 py-3 font-semibold">Categoría</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Tamaño</th>
+                    <th className="px-4 py-3 font-semibold">Subido</th>
+                    <th className="px-4 py-3 font-semibold">Vencimiento</th>
+                    <th className="px-4 py-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {documentosFiltrados.map((documento) => {
                     const IconoTipo = TIPO_ICONS[documento.tipo] || File
-                    const colorTipo = TIPO_COLORS[documento.tipo] || 'secondary'
+                    const badgeTipo = TIPO_BADGE[documento.tipo] || 'secondary'
                     const estadoConfig = ESTADO_CONFIG[documento.estado] || ESTADO_CONFIG.ACTIVO
                     const IconoEstado = estadoConfig.icon
                     const proximoVencer = isExpiringSoon(documento.fechaVencimiento)
                     const vencido = isExpired(documento.fechaVencimiento)
-                    
+
                     return (
-                      <tr key={documento.id} className={vencido ? 'table-danger' : proximoVencer ? 'table-warning' : ''}>
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <span className={`badge bg-${colorTipo} d-flex align-items-center justify-content-center`} style={{width: '32px', height: '32px'}}>
+                      <tr key={documento.id} className={cn(vencido ? 'bg-red-50' : proximoVencer ? 'bg-amber-50' : 'hover:bg-slate-50')}>
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={badgeTipo} className="flex h-8 w-8 items-center justify-center rounded-full p-0">
                               <IconoTipo size={16} />
-                            </span>
+                            </Badge>
                             <div>
-                              <div className="fw-medium">{documento.nombre}</div>
+                              <div className="font-medium text-slate-800">{documento.nombre}</div>
                               {documento.descripcion && (
-                                <small className="text-muted d-block">
-                                  {documento.descripcion.length > 40 
+                                <small className="block text-slate-500">
+                                  {documento.descripcion.length > 40
                                     ? `${documento.descripcion.substring(0, 40)}...`
                                     : documento.descripcion
                                   }
                                 </small>
                               )}
-                              <small className="text-muted">
+                              <small className="text-slate-500">
                                 v{documento.version} • {documento.tipo}
                               </small>
                             </div>
                           </div>
                         </td>
-                        <td>
-                          <span className="badge bg-light text-dark">
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant="outline">
                             {CATEGORIAS_DOCUMENTO[documento.categoria as keyof typeof CATEGORIAS_DOCUMENTO] || documento.categoria}
-                          </span>
+                          </Badge>
                         </td>
-                        <td>
-                          <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`} style={{width: 'fit-content'}}>
+                        <td className="px-4 py-3 align-middle">
+                          <Badge variant={estadoConfig.badge}>
                             <IconoEstado size={12} />
                             {estadoConfig.label}
-                          </span>
+                          </Badge>
                           {proximoVencer && !vencido && (
-                            <div>
-                              <small className="text-warning">
-                                <Clock size={12} className="me-1" />
-                                Vence pronto
-                              </small>
+                            <div className="mt-1 flex items-center gap-1 text-xs text-amber-600">
+                              <Clock size={12} />
+                              Vence pronto
                             </div>
                           )}
                         </td>
-                        <td>
+                        <td className="px-4 py-3 align-middle">
                           <small>{formatFileSize(documento.tamaño)}</small>
                         </td>
-                        <td>
-                          <div>
-                            <small>{formatDate(documento.fechaSubida)}</small>
-                          </div>
-                          <div>
-                            <small className="text-muted">
-                              {documento.subidoPor.nombre} {documento.subidoPor.apellido}
-                            </small>
-                          </div>
+                        <td className="px-4 py-3 align-middle">
+                          <div><small>{formatDate(documento.fechaSubida)}</small></div>
+                          <div><small className="text-slate-500">{documento.subidoPor.nombre} {documento.subidoPor.apellido}</small></div>
                         </td>
-                        <td>
+                        <td className="px-4 py-3 align-middle">
                           {documento.fechaVencimiento ? (
-                            <small className={vencido ? 'text-danger fw-bold' : proximoVencer ? 'text-warning' : 'text-muted'}>
+                            <small className={cn(vencido ? 'font-bold text-red-600' : proximoVencer ? 'text-amber-600' : 'text-slate-500')}>
                               {formatDate(documento.fechaVencimiento)}
                               {vencido && (
-                                <div className="text-danger small">
-                                  <AlertCircle size={12} className="me-1" />
+                                <div className="mt-1 flex items-center gap-1 text-red-600">
+                                  <AlertCircle size={12} />
                                   Vencido
                                 </div>
                               )}
                             </small>
                           ) : (
-                            <span className="text-muted">-</span>
+                            <span className="text-slate-400">-</span>
                           )}
                         </td>
-                        <td>
-                          <div className="btn-group btn-group-sm">
-                            <button
-                              onClick={() => handleDownload(documento)}
-                              className="btn btn-outline-primary"
-                              title="Ver/Descargar"
-                            >
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex gap-1">
+                            <Button variant="outlinePrimary" size="icon" onClick={() => handleDownload(documento)} title="Ver/Descargar">
                               <Eye size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDownload(documento)}
-                              className="btn btn-outline-success"
-                              title="Descargar"
-                            >
+                            </Button>
+                            <Button variant="outline" size="icon" className="border-teal-700 text-teal-700 hover:bg-teal-50" onClick={() => handleDownload(documento)} title="Descargar">
                               <Download size={14} />
-                            </button>
-                            <Link
-                              href={`/casos/${casoId}/documentos/${documento.id}/editar`}
-                              className="btn btn-outline-secondary"
-                              title="Editar"
-                            >
-                              <Edit3 size={14} />
+                            </Button>
+                            <Link href={`/casos/${casoId}/documentos/${documento.id}/editar`}>
+                              <Button variant="outline" size="icon" title="Editar">
+                                <Edit3 size={14} />
+                              </Button>
                             </Link>
                           </div>
                         </td>
@@ -538,96 +454,67 @@ export default function DocumentosPage() {
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* Modal de Subida */}
       {showUploadModal && (
-        <div className="modal show d-block" tabIndex={-1} style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Subir Documentos</h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowUploadModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <div className="text-center py-4">
-                  <Upload size={48} className="text-muted mb-3" />
-                  <h5>Selecciona archivos para subir</h5>
-                  <p className="text-muted">
-                    Arrastra y suelta archivos aquí o haz clic para seleccionar
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    className="form-control"
-                    onChange={handleFileUpload}
-                    accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.mp4,.zip,.rar"
-                  />
-                  <small className="text-muted mt-2 d-block">
-                    Tipos permitidos: PDF, Word, Excel, Imágenes, Videos, Archivos comprimidos
-                  </small>
-                </div>
-                
-                <div className="mt-4">
-                  <div className="row">
-                    <div className="col-md-6">
-                      <label className="form-label">Categoría *</label>
-                      <select className="form-select" required>
-                        <option value="">Selecciona una categoría</option>
-                        {Object.entries(CATEGORIAS_DOCUMENTO).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Fecha de Vencimiento</label>
-                      <input type="date" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <label className="form-label">Descripción</label>
-                    <textarea 
-                      className="form-control" 
-                      rows={3}
-                      placeholder="Descripción opcional del documento..."
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => setShowUploadModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                      Subiendo...
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={16} className="me-2" />
-                      Subir Documentos
-                    </>
-                  )}
-                </button>
-              </div>
+        <Modal
+          onClose={() => setShowUploadModal(false)}
+          title="Subir Documentos"
+          size="lg"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setShowUploadModal(false)}>Cancelar</Button>
+              <Button loading={uploading}>
+                {!uploading && <Upload size={16} />}
+                {uploading ? 'Subiendo...' : 'Subir Documentos'}
+              </Button>
+            </>
+          }
+        >
+          <div className="py-4 text-center">
+            <Upload size={48} className="mx-auto mb-3 text-slate-300" />
+            <h5 className="font-semibold text-slate-800">Selecciona archivos para subir</h5>
+            <p className="mb-3 text-slate-500">
+              Arrastra y suelta archivos aquí o haz clic para seleccionar
+            </p>
+            <input
+              type="file"
+              multiple
+              className="block w-full rounded-lg border border-slate-300 text-sm text-slate-500 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-800 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-blue-900"
+              onChange={handleFileUpload}
+              accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.mp4,.zip,.rar"
+            />
+            <small className="mt-2 block text-slate-500">
+              Tipos permitidos: PDF, Word, Excel, Imágenes, Videos, Archivos comprimidos
+            </small>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <Label>Categoría *</Label>
+              <Select required>
+                <option value="">Selecciona una categoría</option>
+                {Object.entries(CATEGORIAS_DOCUMENTO).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label>Fecha de Vencimiento</Label>
+              <input type="date" className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20" />
             </div>
           </div>
-        </div>
+          <div className="mt-3">
+            <Label>Descripción</Label>
+            <textarea
+              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800/20"
+              rows={3}
+              placeholder="Descripción opcional del documento..."
+            />
+          </div>
+        </Modal>
       )}
     </>
   )

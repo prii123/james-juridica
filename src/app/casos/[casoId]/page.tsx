@@ -1,30 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { 
-  ArrowLeft, 
-  Edit3, 
-  Calendar, 
-  Clock, 
-  User, 
-  FileText, 
-  DollarSign,
-  Building,
+import {
+  ArrowLeft,
+  Edit3,
+  Calendar,
+  User,
+  FileText,
   CheckCircle,
-  XCircle,
-  AlertTriangle,
+  AlertCircle,
   Pause,
   Archive,
   Target,
   Flag,
-  AlertCircle,
+  AlertTriangle,
   Play,
-  Eye
 } from 'lucide-react'
 import { EstadoCaso, TipoInsolvencia, Prioridad } from '@prisma/client'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Caso {
   id: string
@@ -58,74 +54,26 @@ interface Caso {
     apellido: string
     email: string
   }
-  documentos?: Array<{
-    id: string
-    nombre: string
-    tipo: string
-    fechaCreacion: string
-  }>
-  actuaciones?: Array<{
-    id: string
-    tipo: string
-    titulo: string
-    estado: string
-    fechaVencimiento?: string
-  }>
-  audiencias?: Array<{
-    id: string
-    tipo: string
-    fecha: string
-    estado: string
-  }>
+  documentos?: Array<{ id: string; nombre: string; tipo: string; fechaCreacion: string }>
+  actuaciones?: Array<{ id: string; tipo: string; titulo: string; estado: string; fechaVencimiento?: string }>
+  audiencias?: Array<{ id: string; tipo: string; fecha: string; estado: string }>
 }
 
-const ESTADO_CONFIG = {
-  ACTIVO: {
-    color: 'success',
-    icon: Play,
-    label: 'Activo'
-  },
-  CERRADO: {
-    color: 'secondary', 
-    icon: CheckCircle,
-    label: 'Cerrado'
-  },
-  SUSPENDIDO: {
-    color: 'warning',
-    icon: Pause,
-    label: 'Suspendido'
-  },
-  ARCHIVADO: {
-    color: 'dark',
-    icon: Archive,
-    label: 'Archivado'
-  }
+const ESTADO_CONFIG: Record<EstadoCaso, { badge: BadgeProps['variant']; icon: typeof Play; label: string }> = {
+  ACTIVO: { badge: 'success', icon: Play, label: 'Activo' },
+  CERRADO: { badge: 'secondary', icon: CheckCircle, label: 'Cerrado' },
+  SUSPENDIDO: { badge: 'warning', icon: Pause, label: 'Suspendido' },
+  ARCHIVADO: { badge: 'secondary', icon: Archive, label: 'Archivado' },
 }
 
-const PRIORIDAD_CONFIG = {
-  BAJA: {
-    color: 'info',
-    icon: Target,
-    label: 'Baja'
-  },
-  MEDIA: {
-    color: 'primary',
-    icon: Target,
-    label: 'Media'  
-  },
-  ALTA: {
-    color: 'warning',
-    icon: Flag,
-    label: 'Alta'
-  },
-  CRITICA: {
-    color: 'danger',
-    icon: AlertTriangle,
-    label: 'Crítica'
-  }
+const PRIORIDAD_CONFIG: Record<Prioridad, { badge: BadgeProps['variant']; icon: typeof Target; label: string }> = {
+  BAJA: { badge: 'info', icon: Target, label: 'Baja' },
+  MEDIA: { badge: 'primary', icon: Target, label: 'Media' },
+  ALTA: { badge: 'warning', icon: Flag, label: 'Alta' },
+  CRITICA: { badge: 'danger', icon: AlertTriangle, label: 'Crítica' },
 }
 
-const TIPO_INSOLVENCIA_LABELS = {
+const TIPO_INSOLVENCIA_LABELS: Record<TipoInsolvencia, string> = {
   REORGANIZACION: 'Reorganización',
   LIQUIDACION_JUDICIAL: 'Liquidación Judicial',
   INSOLVENCIA_PERSONA_NATURAL: 'Insolvencia Persona Natural',
@@ -133,7 +81,6 @@ const TIPO_INSOLVENCIA_LABELS = {
 }
 
 export default function CasoDetailPage({ params }: { params: { casoId: string } }) {
-  const router = useRouter()
   const [caso, setCaso] = useState<Caso | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -147,7 +94,7 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
     try {
       setLoading(true)
       const response = await fetch(`/api/casos/${params.casoId}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         setCaso(data)
@@ -164,7 +111,7 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
 
   const handleStatusUpdate = async (newStatus: EstadoCaso) => {
     if (!caso) return
-    
+
     try {
       setUpdating(true)
       const response = await fetch(`/api/casos/${params.casoId}`, {
@@ -198,14 +145,6 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
     })
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(value)
-  }
-
   const calculateDaysActive = (fechaInicio: string, fechaCierre?: string) => {
     const inicio = new Date(fechaInicio)
     const fin = fechaCierre ? new Date(fechaCierre) : new Date()
@@ -214,111 +153,89 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
   }
 
   if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    )
+    return <Spinner />
   }
 
   if (error || !caso) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Caso no encontrado'}
-        </div>
-        <Link href="/casos" className="btn btn-primary">
-          Volver a Casos
-        </Link>
+      <div className="py-5 text-center">
+        <Alert variant="danger" className="mb-4">{error || 'Caso no encontrado'}</Alert>
+        <Link href="/casos"><Button>Volver a Casos</Button></Link>
       </div>
     )
   }
 
-  const estadoConfig = ESTADO_CONFIG[caso.estado] || {
-    color: 'secondary',
-    icon: AlertCircle,
-    label: caso.estado
-  }
-  const prioridadConfig = PRIORIDAD_CONFIG[caso.prioridad] || {
-    color: 'secondary',
-    icon: Target,
-    label: caso.prioridad
-  }
-  
+  const estadoConfig = ESTADO_CONFIG[caso.estado] || { badge: 'secondary' as const, icon: AlertCircle, label: caso.estado }
+  const prioridadConfig = PRIORIDAD_CONFIG[caso.prioridad] || { badge: 'secondary' as const, icon: Target, label: caso.prioridad }
+
   const IconoEstado = estadoConfig.icon
   const IconoPrioridad = prioridadConfig.icon
   const diasActivo = calculateDaysActive(caso.fechaInicio, caso.fechaCierre)
 
+  const timelineItems = [
+    { color: 'bg-blue-800', title: 'Caso Creado', date: `${formatDate(caso.createdAt)} por ${caso.creadoPor.nombre} ${caso.creadoPor.apellido}` },
+    { color: 'bg-sky-600', title: 'Proceso Iniciado', date: formatDate(caso.fechaInicio) },
+    ...(caso.fechaCierre ? [{ color: 'bg-teal-600', title: 'Caso Cerrado', date: formatDate(caso.fechaCierre) }] : []),
+  ]
+
   return (
     <>
-      <Breadcrumb 
-        items={[
-          { label: 'Casos', href: '/casos' },
-          { label: caso.numeroCaso }
-        ]} 
-      />
+      <Breadcrumb items={[{ label: 'Casos', href: '/casos' }, { label: caso.numeroCaso }]} />
 
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Link href="/casos" className="btn btn-outline-secondary">
-          <ArrowLeft size={16} />
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/casos">
+          <Button variant="outline" size="icon"><ArrowLeft size={16} /></Button>
         </Link>
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center gap-2 mb-1">
-            <h1 className="h3 fw-bold text-dark mb-0">{caso.numeroCaso}</h1>
-            <span className={`badge bg-${estadoConfig.color} d-flex align-items-center gap-1`}>
+        <div className="flex-1">
+          <div className="mb-1 flex items-center gap-2">
+            <h1 className="mb-0 text-xl font-bold text-slate-800">{caso.numeroCaso}</h1>
+            <Badge variant={estadoConfig.badge}>
               <IconoEstado size={12} />
               {estadoConfig.label}
-            </span>
-            <span className={`badge bg-${prioridadConfig.color} d-flex align-items-center gap-1`}>
+            </Badge>
+            <Badge variant={prioridadConfig.badge}>
               <IconoPrioridad size={12} />
               {prioridadConfig.label}
-            </span>
+            </Badge>
           </div>
-          <p className="text-secondary mb-0">
+          <p className="mb-0 text-slate-500">
             {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]} • Cliente: {caso.cliente.nombre} {caso.cliente.apellido}
           </p>
         </div>
-        <Link 
-          href={`/casos/${params.casoId}/editar`}
-          className="btn btn-outline-primary d-flex align-items-center gap-2"
-        >
-          <Edit3 size={16} />
-          Editar
+        <Link href={`/casos/${params.casoId}/editar`}>
+          <Button variant="outlinePrimary">
+            <Edit3 size={16} />
+            Editar
+          </Button>
         </Link>
       </div>
 
-      <div className="row">
-        <div className="col-lg-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-8">
           {/* Información Principal */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Detalles del Caso</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <h6 className="text-muted mb-1">Tipo de Insolvencia</h6>
+          <Card>
+            <CardHeader><CardTitle>Detalles del Caso</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <h6 className="mb-1 text-sm text-slate-500">Tipo de Insolvencia</h6>
                   <div className="mb-3">
-                    <span className="badge bg-info text-white">
-                      {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]}
-                    </span>
+                    <Badge variant="info">{TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]}</Badge>
                   </div>
                 </div>
-                <div className="col-md-6">
-                  <h6 className="text-muted mb-1">Fecha de Inicio</h6>
-                  <div className="d-flex align-items-center gap-2 mb-3">
-                    <Calendar size={16} />
+                <div>
+                  <h6 className="mb-1 text-sm text-slate-500">Fecha de Inicio</h6>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Calendar size={16} className="text-slate-400" />
                     <span>{formatDate(caso.fechaInicio)}</span>
-                    <small className="text-muted">({diasActivo} días)</small>
+                    <small className="text-slate-500">({diasActivo} días)</small>
                   </div>
 
                   {caso.fechaCierre && (
                     <>
-                      <h6 className="text-muted mb-1">Fecha de Cierre</h6>
-                      <div className="d-flex align-items-center gap-2 mb-3">
-                        <Calendar size={16} />
+                      <h6 className="mb-1 text-sm text-slate-500">Fecha de Cierre</h6>
+                      <div className="mb-3 flex items-center gap-2">
+                        <Calendar size={16} className="text-slate-400" />
                         <span>{formatDate(caso.fechaCierre)}</span>
                       </div>
                     </>
@@ -328,256 +245,178 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
 
               {caso.observaciones && (
                 <div className="mt-3">
-                  <h6 className="text-muted mb-2">Observaciones</h6>
-                  <div className="bg-light p-3 rounded">
+                  <h6 className="mb-2 text-sm text-slate-500">Observaciones</h6>
+                  <div className="rounded-lg bg-slate-50 p-3">
                     <p className="mb-0">{caso.observaciones}</p>
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Información del Cliente */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Información del Cliente</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="d-flex align-items-start gap-3">
-                    <User size={20} className="text-primary mt-1" />
-                    <div>
-                      <h6 className="fw-semibold mb-1">
-                        {caso.cliente.nombre} {caso.cliente.apellido}
-                      </h6>
-                      <div className="small text-muted mb-1">
-                        <strong>Documento:</strong> {caso.cliente.documento}
-                      </div>
-                      <div className="small text-muted mb-1">
-                        <strong>Tipo:</strong> {caso.cliente.tipoPersona === 'NATURAL' ? 'Persona Natural' : 'Persona Jurídica'}
-                      </div>
+          <Card>
+            <CardHeader><CardTitle>Información del Cliente</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex items-start gap-3">
+                  <User size={20} className="mt-1 text-blue-800" />
+                  <div>
+                    <h6 className="mb-1 font-semibold text-slate-800">
+                      {caso.cliente.nombre} {caso.cliente.apellido}
+                    </h6>
+                    <div className="mb-1 text-sm text-slate-500">
+                      <strong>Documento:</strong> {caso.cliente.documento}
+                    </div>
+                    <div className="mb-1 text-sm text-slate-500">
+                      <strong>Tipo:</strong> {caso.cliente.tipoPersona === 'NATURAL' ? 'Persona Natural' : 'Persona Jurídica'}
                     </div>
                   </div>
                 </div>
-                <div className="col-md-6">
-                  <div className="small text-muted">
-                    <div className="mb-1">
-                      <strong>Email:</strong> {caso.cliente.email}
-                    </div>
-                    <div className="mb-1">
-                      <strong>Teléfono:</strong> {caso.cliente.telefono}
-                    </div>
+                <div>
+                  <div className="text-sm text-slate-500">
+                    <div className="mb-1"><strong>Email:</strong> {caso.cliente.email}</div>
+                    <div className="mb-1"><strong>Teléfono:</strong> {caso.cliente.telefono}</div>
                   </div>
                   <div className="mt-3">
-                    <Link 
-                      href={`/clientes/${caso.cliente.id}`}
-                      className="btn btn-outline-primary btn-sm"
-                    >
-                      Ver Perfil del Cliente
+                    <Link href={`/clientes/${caso.cliente.id}`}>
+                      <Button variant="outlinePrimary" size="sm">Ver Perfil del Cliente</Button>
                     </Link>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
           {/* Progreso y Estadísticas */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Progreso del Caso</h5>
-            </div>
-            <div className="card-body">
-              <div className="row text-center">
-                <div className="col-md-3">
-                  <div className="h4 text-primary">{caso.documentos?.length || 0}</div>
-                  <small className="text-muted">Documentos</small>
+          <Card>
+            <CardHeader><CardTitle>Progreso del Caso</CardTitle></CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
+                <div>
+                  <div className="text-2xl font-bold text-blue-800">{caso.documentos?.length || 0}</div>
+                  <small className="text-slate-500">Documentos</small>
                 </div>
-                <div className="col-md-3">
-                  <div className="h4 text-success">{caso.actuaciones?.length || 0}</div>
-                  <small className="text-muted">Actuaciones</small>
+                <div>
+                  <div className="text-2xl font-bold text-teal-700">{caso.actuaciones?.length || 0}</div>
+                  <small className="text-slate-500">Actuaciones</small>
                 </div>
-                <div className="col-md-3">
-                  <div className="h4 text-warning">{caso.audiencias?.length || 0}</div>
-                  <small className="text-muted">Audiencias</small>
+                <div>
+                  <div className="text-2xl font-bold text-amber-500">{caso.audiencias?.length || 0}</div>
+                  <small className="text-slate-500">Audiencias</small>
                 </div>
-                <div className="col-md-3">
-                  <div className="h4 text-info">{diasActivo}</div>
-                  <small className="text-muted">Días {caso.estado === 'ACTIVO' ? 'activo' : 'total'}</small>
+                <div>
+                  <div className="text-2xl font-bold text-sky-700">{diasActivo}</div>
+                  <small className="text-slate-500">Días {caso.estado === 'ACTIVO' ? 'activo' : 'total'}</small>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
-        <div className="col-lg-4">
+        <div className="space-y-4 lg:col-span-4">
           {/* Acciones */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Acciones</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-grid gap-2">
-                {caso.estado === 'ACTIVO' && (
-                  <>
-                    <button
-                      onClick={() => handleStatusUpdate('CERRADO')}
-                      className="btn btn-success d-flex align-items-center justify-content-center gap-2"
-                      disabled={updating}
-                    >
-                      <CheckCircle size={16} />
-                      Cerrar Caso
-                    </button>
-                    <button
-                      onClick={() => handleStatusUpdate('SUSPENDIDO')}
-                      className="btn btn-warning d-flex align-items-center justify-content-center gap-2"
-                      disabled={updating}
-                    >
-                      <Pause size={16} />
-                      Suspender
-                    </button>
-                  </>
-                )}
-                
-                {caso.estado === 'SUSPENDIDO' && (
-                  <button
-                    onClick={() => handleStatusUpdate('ACTIVO')}
-                    className="btn btn-success d-flex align-items-center justify-content-center gap-2"
+          <Card>
+            <CardHeader><CardTitle>Acciones</CardTitle></CardHeader>
+            <CardBody className="grid gap-2">
+              {caso.estado === 'ACTIVO' && (
+                <>
+                  <Button
+                    variant="success"
+                    className="justify-center"
+                    onClick={() => handleStatusUpdate('CERRADO')}
                     disabled={updating}
                   >
-                    <Play size={16} />
-                    Reactivar Caso
-                  </button>
-                )}
+                    <CheckCircle size={16} />
+                    Cerrar Caso
+                  </Button>
+                  <Button
+                    className="justify-center bg-amber-500 hover:bg-amber-600"
+                    onClick={() => handleStatusUpdate('SUSPENDIDO')}
+                    disabled={updating}
+                  >
+                    <Pause size={16} />
+                    Suspender
+                  </Button>
+                </>
+              )}
 
-                <Link 
-                  href={`/casos/${params.casoId}/editar`}
-                  className="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2"
+              {caso.estado === 'SUSPENDIDO' && (
+                <Button
+                  variant="success"
+                  className="justify-center"
+                  onClick={() => handleStatusUpdate('ACTIVO')}
+                  disabled={updating}
                 >
+                  <Play size={16} />
+                  Reactivar Caso
+                </Button>
+              )}
+
+              <Link href={`/casos/${params.casoId}/editar`}>
+                <Button variant="outlinePrimary" className="w-full justify-center">
                   <Edit3 size={16} />
                   Editar Caso
-                </Link>
-                
-                <Link 
-                  href={`/casos/${params.casoId}/documentos`}
-                  className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
-                >
+                </Button>
+              </Link>
+
+              <Link href={`/casos/${params.casoId}/documentos`}>
+                <Button variant="outline" className="w-full justify-center">
                   <FileText size={16} />
                   Ver Documentos
-                </Link>
+                </Button>
+              </Link>
 
-                <Link 
-                  href={`/casos/${params.casoId}/actuaciones`}
-                  className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
-                >
+              <Link href={`/casos/${params.casoId}/actuaciones`}>
+                <Button variant="outline" className="w-full justify-center">
                   <FileText size={16} />
                   Actuaciones
-                </Link>
+                </Button>
+              </Link>
 
-                <Link 
-                  href={`/casos/${params.casoId}/audiencias`}
-                  className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
-                >
+              <Link href={`/casos/${params.casoId}/audiencias`}>
+                <Button variant="outline" className="w-full justify-center">
                   <Calendar size={16} />
                   Audiencias
-                </Link>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </Link>
+            </CardBody>
+          </Card>
 
           {/* Información del Responsable */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5 className="mb-0">Responsable del Caso</h5>
-            </div>
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <User size={16} />
-                <span className="fw-semibold">
+          <Card>
+            <CardHeader><CardTitle>Responsable del Caso</CardTitle></CardHeader>
+            <CardBody>
+              <div className="mb-2 flex items-center gap-2">
+                <User size={16} className="text-slate-400" />
+                <span className="font-semibold text-slate-800">
                   {caso.responsable.nombre} {caso.responsable.apellido}
                 </span>
               </div>
-              <div className="small text-muted">
-                {caso.responsable.email}
-              </div>
-            </div>
-          </div>
+              <div className="text-sm text-slate-500">{caso.responsable.email}</div>
+            </CardBody>
+          </Card>
 
           {/* Timeline */}
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">Timeline</h5>
-            </div>
-            <div className="card-body">
-              <div className="timeline">
-                <div className="timeline-item">
-                  <div className="timeline-marker bg-primary"></div>
-                  <div className="timeline-content">
-                    <h6 className="mb-1">Caso Creado</h6>
-                    <small className="text-muted">
-                      {formatDate(caso.createdAt)} por {caso.creadoPor.nombre} {caso.creadoPor.apellido}
-                    </small>
-                  </div>
-                </div>
-                
-                <div className="timeline-item">
-                  <div className="timeline-marker bg-info"></div>
-                  <div className="timeline-content">
-                    <h6 className="mb-1">Proceso Iniciado</h6>
-                    <small className="text-muted">
-                      {formatDate(caso.fechaInicio)}
-                    </small>
-                  </div>
-                </div>
-
-                {caso.fechaCierre && (
-                  <div className="timeline-item">
-                    <div className="timeline-marker bg-success"></div>
-                    <div className="timeline-content">
-                      <h6 className="mb-1">Caso Cerrado</h6>
-                      <small className="text-muted">
-                        {formatDate(caso.fechaCierre)}
-                      </small>
+          <Card>
+            <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
+            <CardBody>
+              <div className="relative pl-8">
+                <div className="absolute bottom-0 left-2 top-0 w-0.5 bg-slate-200" />
+                {timelineItems.map((item, i) => (
+                  <div key={i} className={cn('relative', i < timelineItems.length - 1 && 'mb-6')}>
+                    <div className={cn('absolute -left-6 top-1 h-4 w-4 rounded-full border-2 border-white', item.color)} />
+                    <div className="ml-2">
+                      <h6 className="mb-1 font-semibold text-slate-800">{item.title}</h6>
+                      <small className="text-slate-500">{item.date}</small>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
-
-      <style jsx>{`
-        .timeline {
-          position: relative;
-          padding-left: 2rem;
-        }
-        .timeline::before {
-          content: '';
-          position: absolute;
-          left: 0.5rem;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: #e9ecef;
-        }
-        .timeline-item {
-          position: relative;
-          margin-bottom: 1.5rem;
-        }
-        .timeline-marker {
-          position: absolute;
-          left: -2rem;
-          top: 0.25rem;
-          width: 1rem;
-          height: 1rem;
-          border-radius: 50%;
-          border: 2px solid #fff;
-        }
-        .timeline-content {
-          margin-left: 0.5rem;
-        }
-      `}</style>
     </>
   )
 }
