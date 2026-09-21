@@ -1,0 +1,1082 @@
+{
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\.claude\\launch.json": {
+    "mtime": 1789578215.9941006,
+    "ast_hash": "de095783b03f7ff790c7bff22628f306",
+    "semantic_hash": "de095783b03f7ff790c7bff22628f306"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\eslint.config.mjs": {
+    "mtime": 1770850033.4567428,
+    "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
+    "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\next.config.mjs": {
+    "mtime": 1779546133.4109316,
+    "ast_hash": "8701b1d43853721076a5867d69585f98",
+    "semantic_hash": "8701b1d43853721076a5867d69585f98"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\package.json": {
+    "mtime": 1789577777.2135599,
+    "ast_hash": "8d49e550a67045dc060482396c751620",
+    "semantic_hash": "8d49e550a67045dc060482396c751620"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\postcss.config.js": {
+    "mtime": 1789577744.3073146,
+    "ast_hash": "854b38759e7a8b4b82306ae2d9a3a833",
+    "semantic_hash": "854b38759e7a8b4b82306ae2d9a3a833"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260212001446_init\\migration.sql": {
+    "mtime": 1770855286.0892131,
+    "ast_hash": "e4f3c1b869dec3f596aee079ccdfc54f",
+    "semantic_hash": "e4f3c1b869dec3f596aee079ccdfc54f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260213221421_add_seguimientos\\migration.sql": {
+    "mtime": 1771357626.7385488,
+    "ast_hash": "c61255bf9d42accb1a417f4f3b2376fe",
+    "semantic_hash": "c61255bf9d42accb1a417f4f3b2376fe"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260213234948_add_archivos_table\\migration.sql": {
+    "mtime": 1771357626.7491918,
+    "ast_hash": "18d67b43d551c5e98f7c0532f038589a",
+    "semantic_hash": "18d67b43d551c5e98f7c0532f038589a"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260214024005_add_iva_activado_to_facturas\\migration.sql": {
+    "mtime": 1771357626.7501993,
+    "ast_hash": "ab2a2cac36340df12b008c41d742be0e",
+    "semantic_hash": "ab2a2cac36340df12b008c41d742be0e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260214025439_add_facturacion_credito_contado\\migration.sql": {
+    "mtime": 1771357626.7501993,
+    "ast_hash": "fb1907137eedf72df371d47619019da8",
+    "semantic_hash": "fb1907137eedf72df371d47619019da8"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260215025130_add_pago_cuota_seguimiento\\migration.sql": {
+    "mtime": 1771357626.7529607,
+    "ast_hash": "d2e4abba5d9f0d5b86cc0b430a2d4109",
+    "semantic_hash": "d2e4abba5d9f0d5b86cc0b430a2d4109"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260312194755_fix_tasa_interes_precision\\migration.sql": {
+    "mtime": 1773344875.402685,
+    "ast_hash": "dbb51200bd946f8982041bdec7333c89",
+    "semantic_hash": "dbb51200bd946f8982041bdec7333c89"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260312195622_rename_conciliaciones_to_radicaciones\\migration.sql": {
+    "mtime": 1773345433.8520355,
+    "ast_hash": "ce2527cdee57420f4669407ebaa441fa",
+    "semantic_hash": "ce2527cdee57420f4669407ebaa441fa"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260312213811_remove_valor_deuda_from_casos\\migration.sql": {
+    "mtime": 1773351491.671917,
+    "ast_hash": "74b5001ed0b24a40563f10066aa05e76",
+    "semantic_hash": "74b5001ed0b24a40563f10066aa05e76"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260420021708_add_resultado_audiencia\\migration.sql": {
+    "mtime": 1776651428.7734406,
+    "ast_hash": "f3c7bb14392bc543abc0f377c686bda9",
+    "semantic_hash": "f3c7bb14392bc543abc0f377c686bda9"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260420024854_add_procesos_liquidacion\\migration.sql": {
+    "mtime": 1776653334.482416,
+    "ast_hash": "d26e68664c24c425de674c14cda6f65c",
+    "semantic_hash": "d26e68664c24c425de674c14cda6f65c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260430130609_add_calendar_event_sync\\migration.sql": {
+    "mtime": 1777554369.091163,
+    "ast_hash": "56635d0b7a388e0a3a16e320bfcde468",
+    "semantic_hash": "56635d0b7a388e0a3a16e320bfcde468"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260430134943_add_modules\\migration.sql": {
+    "mtime": 1777556983.8642232,
+    "ast_hash": "2ea490b169b21ce820305059a6462a56",
+    "semantic_hash": "2ea490b169b21ce820305059a6462a56"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260523145944_make_fks_optional_nov_2026\\migration.sql": {
+    "mtime": 1779548384.0810256,
+    "ast_hash": "1b6f17797e540164b9d7477437093e7e",
+    "semantic_hash": "1b6f17797e540164b9d7477437093e7e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\migrations\\20260523234847_add_cliente_to_factura\\migration.sql": {
+    "mtime": 1779580127.2727642,
+    "ast_hash": "6e5120e7ffed4da5239ba3872af12c30",
+    "semantic_hash": "6e5120e7ffed4da5239ba3872af12c30"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\prisma\\seed.ts": {
+    "mtime": 1789575886.1070535,
+    "ast_hash": "c342abdb06c8e457572a2858444b74db",
+    "semantic_hash": "c342abdb06c8e457572a2858444b74db"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\route_temp.ts": {
+    "mtime": 1770856861.835586,
+    "ast_hash": "d70129c7dd5bcfe9fb044614bc06be9f",
+    "semantic_hash": "d70129c7dd5bcfe9fb044614bc06be9f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\asesores\\route.ts": {
+    "mtime": 1771357626.7579408,
+    "ast_hash": "764c182e684a7e4189e389e8621bba32",
+    "semantic_hash": "764c182e684a7e4189e389e8621bba32"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\asesorias\\[id]\\route.ts": {
+    "mtime": 1776631578.5935266,
+    "ast_hash": "51a364315c4d4410e9935865b436af49",
+    "semantic_hash": "51a364315c4d4410e9935865b436af49"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\asesorias\\route.ts": {
+    "mtime": 1776631578.5935266,
+    "ast_hash": "748b42657cefb4afa115276288a95c67",
+    "semantic_hash": "748b42657cefb4afa115276288a95c67"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\audiencias\\[id]\\route.ts": {
+    "mtime": 1776651912.7395499,
+    "ast_hash": "00081dc31c0669fb38fc5f476a52b940",
+    "semantic_hash": "00081dc31c0669fb38fc5f476a52b940"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\audiencias\\route.ts": {
+    "mtime": 1776643961.2310877,
+    "ast_hash": "ee5273b5530c18e4e4c9a1e0bbb863a8",
+    "semantic_hash": "ee5273b5530c18e4e4c9a1e0bbb863a8"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\auth\\[...nextauth]\\route.ts": {
+    "mtime": 1770856148.089402,
+    "ast_hash": "d70129c7dd5bcfe9fb044614bc06be9f",
+    "semantic_hash": "d70129c7dd5bcfe9fb044614bc06be9f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\auth\\[...nextauth]\\route_new.ts": {
+    "mtime": 1770856350.2157767,
+    "ast_hash": "d70129c7dd5bcfe9fb044614bc06be9f",
+    "semantic_hash": "d70129c7dd5bcfe9fb044614bc06be9f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\bot\\[contactoId]\\copiar-lead\\route.ts": {
+    "mtime": 1789576030.506568,
+    "ast_hash": "efb65ce403b6386a3a36f964870eaa2d",
+    "semantic_hash": "efb65ce403b6386a3a36f964870eaa2d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\bot\\[contactoId]\\route.ts": {
+    "mtime": 1789576030.456274,
+    "ast_hash": "d69a3c8aca1629ba61029b56a4d4f423",
+    "semantic_hash": "d69a3c8aca1629ba61029b56a4d4f423"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\bot\\route.ts": {
+    "mtime": 1789576030.3513646,
+    "ast_hash": "eec47d421533747fce20203c3c55529a",
+    "semantic_hash": "eec47d421533747fce20203c3c55529a"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\bot\\stats\\route.ts": {
+    "mtime": 1789576030.4065585,
+    "ast_hash": "5e57a8088713a1ff4ce449e444d5a5ff",
+    "semantic_hash": "5e57a8088713a1ff4ce449e444d5a5ff"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\calendario\\sync\\route.ts": {
+    "mtime": 1777514841.9658897,
+    "ast_hash": "faeb35453989775203b3413b6076562b",
+    "semantic_hash": "faeb35453989775203b3413b6076562b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\cartera\\aplicar-pago\\route.ts": {
+    "mtime": 1779564996.7290761,
+    "ast_hash": "628dbbe70c9466358a4848fb23dcbbe8",
+    "semantic_hash": "628dbbe70c9466358a4848fb23dcbbe8"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\cartera\\cuotas\\[facturaId]\\pdf\\route.ts": {
+    "mtime": 1779582958.628899,
+    "ast_hash": "c6b9c8735b17e5a977effac208573397",
+    "semantic_hash": "c6b9c8735b17e5a977effac208573397"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\cartera\\cuotas\\[facturaId]\\route.ts": {
+    "mtime": 1779760268.948249,
+    "ast_hash": "25d9a32a622f97d4dded1c917191fd60",
+    "semantic_hash": "25d9a32a622f97d4dded1c917191fd60"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\cartera\\financiacion\\[facturaId]\\pdf\\route.ts": {
+    "mtime": 1779582340.2712724,
+    "ast_hash": "fbd59bf73dfc34f6bb29c50cdc607928",
+    "semantic_hash": "fbd59bf73dfc34f6bb29c50cdc607928"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\cartera\\financiacion\\route.ts": {
+    "mtime": 1779565152.6922624,
+    "ast_hash": "f60adbace887460e9721473ba1a8a849",
+    "semantic_hash": "f60adbace887460e9721473ba1a8a849"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\cartera\\route.ts": {
+    "mtime": 1779582284.3399124,
+    "ast_hash": "32892932d7722d6fe60a5065aa86c44f",
+    "semantic_hash": "32892932d7722d6fe60a5065aa86c44f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\casos\\[casoId]\\audiencias\\[audienciaId]\\route.ts": {
+    "mtime": 1776651869.5100038,
+    "ast_hash": "d010c0d13197ac2bf289c6401c80793b",
+    "semantic_hash": "d010c0d13197ac2bf289c6401c80793b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\casos\\[casoId]\\audiencias\\route.ts": {
+    "mtime": 1776651326.2892356,
+    "ast_hash": "03f65db07899cd331eacc1be171f5641",
+    "semantic_hash": "03f65db07899cd331eacc1be171f5641"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\casos\\[casoId]\\route.ts": {
+    "mtime": 1776651602.3060303,
+    "ast_hash": "107052f76cea116a43ab40e040167604",
+    "semantic_hash": "107052f76cea116a43ab40e040167604"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\casos\\route.ts": {
+    "mtime": 1770854086.424385,
+    "ast_hash": "bc28ade534a588804b34036f39143967",
+    "semantic_hash": "bc28ade534a588804b34036f39143967"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\clientes\\route.ts": {
+    "mtime": 1779580210.3519552,
+    "ast_hash": "1f7cd57d25959ca786393ea5a3738bb4",
+    "semantic_hash": "1f7cd57d25959ca786393ea5a3738bb4"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\dashboard\\stats\\route.ts": {
+    "mtime": 1776630762.4154117,
+    "ast_hash": "045535a136f61f53c29eaf5b44c9a7ef",
+    "semantic_hash": "045535a136f61f53c29eaf5b44c9a7ef"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\enviar\\cuotas\\[facturaId]\\route.ts": {
+    "mtime": 1779760284.5166585,
+    "ast_hash": "32d0a2ac5fd066ce821926d39937622d",
+    "semantic_hash": "32d0a2ac5fd066ce821926d39937622d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\enviar\\factura\\[facturaId]\\route.ts": {
+    "mtime": 1779759846.219504,
+    "ast_hash": "c0b1bbe3383040f3cc00554f34ba01a3",
+    "semantic_hash": "c0b1bbe3383040f3cc00554f34ba01a3"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\enviar\\financiacion\\[facturaId]\\route.ts": {
+    "mtime": 1779760320.7391024,
+    "ast_hash": "1a60c0b63b068e6eae2e7e79c952e6c8",
+    "semantic_hash": "1a60c0b63b068e6eae2e7e79c952e6c8"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\facturacion\\[facturaId]\\pdf\\route.ts": {
+    "mtime": 1779581895.2200513,
+    "ast_hash": "93cbd978e7dbe21a714c1c8d8d4e20e8",
+    "semantic_hash": "93cbd978e7dbe21a714c1c8d8d4e20e8"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\facturacion\\[facturaId]\\route.ts": {
+    "mtime": 1779581701.3683758,
+    "ast_hash": "bd447b0c789cdf5e2dd041e9f7ff1d1b",
+    "semantic_hash": "bd447b0c789cdf5e2dd041e9f7ff1d1b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\facturacion\\honorarios-disponibles\\route.ts": {
+    "mtime": 1771357626.7711215,
+    "ast_hash": "3a2be885ecac24de0b145087678d1eea",
+    "semantic_hash": "3a2be885ecac24de0b145087678d1eea"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\facturacion\\route.ts": {
+    "mtime": 1779581724.325685,
+    "ast_hash": "8fade81b18d085613f130dc46172cc28",
+    "semantic_hash": "8fade81b18d085613f130dc46172cc28"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\honorarios\\route.ts": {
+    "mtime": 1779548248.733047,
+    "ast_hash": "bd595d391d4f5a7ed2dc96c57a656cf4",
+    "semantic_hash": "bd595d391d4f5a7ed2dc96c57a656cf4"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\[leadId]\\archivos\\[archivoId]\\route.ts": {
+    "mtime": 1776631578.6026525,
+    "ast_hash": "30978553d6efe93e15318c2a86910887",
+    "semantic_hash": "30978553d6efe93e15318c2a86910887"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\[leadId]\\archivos\\route.ts": {
+    "mtime": 1776631578.60466,
+    "ast_hash": "8dcfb666bebe7e80eb58d51efa3a4278",
+    "semantic_hash": "8dcfb666bebe7e80eb58d51efa3a4278"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\[leadId]\\asesorias\\route.ts": {
+    "mtime": 1776631578.6073265,
+    "ast_hash": "064f5b03e78b1eb9241917e11883dba4",
+    "semantic_hash": "064f5b03e78b1eb9241917e11883dba4"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\[leadId]\\route.ts": {
+    "mtime": 1771357626.7745266,
+    "ast_hash": "451056b8a9c9890ac1b9593fb343d326",
+    "semantic_hash": "451056b8a9c9890ac1b9593fb343d326"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\[leadId]\\seguimiento\\[seguimientoId]\\route.ts": {
+    "mtime": 1776631578.608788,
+    "ast_hash": "8d24f0a52fe2b9d9d6f4602bdae30939",
+    "semantic_hash": "8d24f0a52fe2b9d9d6f4602bdae30939"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\[leadId]\\seguimiento\\route.ts": {
+    "mtime": 1776631578.6115718,
+    "ast_hash": "fd2d1c93f354a279bba92285adf64252",
+    "semantic_hash": "fd2d1c93f354a279bba92285adf64252"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\leads\\route.ts": {
+    "mtime": 1771357626.7845747,
+    "ast_hash": "c88cfd7746029adb3ca63525206a251a",
+    "semantic_hash": "c88cfd7746029adb3ca63525206a251a"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\permissions\\route.ts": {
+    "mtime": 1771357626.7862637,
+    "ast_hash": "f68deae7e01f5b8208dc347a1fac7cb2",
+    "semantic_hash": "f68deae7e01f5b8208dc347a1fac7cb2"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\procesos-liquidacion\\[id]\\pasos\\[pasoId]\\route.ts": {
+    "mtime": 1776653252.077389,
+    "ast_hash": "5262963115b3b448eb11de3e2874d26e",
+    "semantic_hash": "5262963115b3b448eb11de3e2874d26e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\procesos-liquidacion\\[id]\\route.ts": {
+    "mtime": 1776653242.259324,
+    "ast_hash": "5a4b795a3802f2eacbd2e3043e1f3e8d",
+    "semantic_hash": "5a4b795a3802f2eacbd2e3043e1f3e8d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\procesos-liquidacion\\audiencia\\[audienciaId]\\route.ts": {
+    "mtime": 1776653353.2720835,
+    "ast_hash": "e2c1b8b715ef6a1f5aa63f835cb12892",
+    "semantic_hash": "e2c1b8b715ef6a1f5aa63f835cb12892"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\procesos-liquidacion\\cliente\\[clienteId]\\route.ts": {
+    "mtime": 1777512908.5022357,
+    "ast_hash": "fdadd49b7b6544dc23fef02b958e5f76",
+    "semantic_hash": "fdadd49b7b6544dc23fef02b958e5f76"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\procesos-liquidacion\\route.ts": {
+    "mtime": 1776653491.6868055,
+    "ast_hash": "104af27281bf727b93a4e6e0ee768fe0",
+    "semantic_hash": "104af27281bf727b93a4e6e0ee768fe0"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\radicaciones\\[radicacionId]\\route.ts": {
+    "mtime": 1779548454.4872954,
+    "ast_hash": "0f0bea85cd6bfec6a26db00240a8fe72",
+    "semantic_hash": "0f0bea85cd6bfec6a26db00240a8fe72"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\radicaciones\\route.ts": {
+    "mtime": 1779548255.3234968,
+    "ast_hash": "30dbd0d05a6933ed10352cad82f12a43",
+    "semantic_hash": "30dbd0d05a6933ed10352cad82f12a43"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\roles\\[roleId]\\route.ts": {
+    "mtime": 1771357626.7882745,
+    "ast_hash": "19e8064b4a06d11b5b55abcbc28a9fbf",
+    "semantic_hash": "19e8064b4a06d11b5b55abcbc28a9fbf"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\roles\\route.ts": {
+    "mtime": 1771357626.7882745,
+    "ast_hash": "c22460118c8af7a5ec9e08ca2712ac6e",
+    "semantic_hash": "c22460118c8af7a5ec9e08ca2712ac6e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\search\\global\\route.ts": {
+    "mtime": 1779548455.6974487,
+    "ast_hash": "93f1344567a7e655d2d10394106bb79e",
+    "semantic_hash": "93f1344567a7e655d2d10394106bb79e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\sidebar\\route.ts": {
+    "mtime": 1789575886.1070535,
+    "ast_hash": "9ee178ed2cd8baee1a4b36eca756078e",
+    "semantic_hash": "9ee178ed2cd8baee1a4b36eca756078e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\usuarios\\[usuarioId]\\route.ts": {
+    "mtime": 1771357626.7943754,
+    "ast_hash": "1811e5db86b64d13f67f45e8b425b687",
+    "semantic_hash": "1811e5db86b64d13f67f45e8b425b687"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\api\\usuarios\\route.ts": {
+    "mtime": 1776650658.4719012,
+    "ast_hash": "e23175e878a798c1f0d8993fb113b57d",
+    "semantic_hash": "e23175e878a798c1f0d8993fb113b57d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\asesorias\\[asesoriaId]\\editar\\page.tsx": {
+    "mtime": 1789586481.998013,
+    "ast_hash": "c429185d4eb17ff08a79a5db79fa2867",
+    "semantic_hash": "c429185d4eb17ff08a79a5db79fa2867"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\asesorias\\[asesoriaId]\\page.tsx": {
+    "mtime": 1789586406.113055,
+    "ast_hash": "0628620a359143df148de5d4316cd914",
+    "semantic_hash": "0628620a359143df148de5d4316cd914"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\asesorias\\calendario\\page.tsx": {
+    "mtime": 1789586557.3557441,
+    "ast_hash": "5626ef80660c6e34de796b042e3c20a1",
+    "semantic_hash": "5626ef80660c6e34de796b042e3c20a1"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\asesorias\\layout.tsx": {
+    "mtime": 1771357626.7989597,
+    "ast_hash": "ab93a35553fee75a70fba76870ff760d",
+    "semantic_hash": "ab93a35553fee75a70fba76870ff760d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\asesorias\\nueva\\page.tsx": {
+    "mtime": 1789586298.7347233,
+    "ast_hash": "f8a269028990497229f048e9a0e1bc52",
+    "semantic_hash": "f8a269028990497229f048e9a0e1bc52"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\asesorias\\page.tsx": {
+    "mtime": 1789586213.0630825,
+    "ast_hash": "8d94192711f1897648acb035ac4b1d12",
+    "semantic_hash": "8d94192711f1897648acb035ac4b1d12"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\auth\\login\\page.tsx": {
+    "mtime": 1789577929.8095114,
+    "ast_hash": "1c4cecdfa416a9a7a3562959145fe8d7",
+    "semantic_hash": "1c4cecdfa416a9a7a3562959145fe8d7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\bot\\[contactoId]\\page.tsx": {
+    "mtime": 1789578053.072372,
+    "ast_hash": "fd3756dea4db52bd80d4413ad20b8ab0",
+    "semantic_hash": "fd3756dea4db52bd80d4413ad20b8ab0"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\bot\\layout.tsx": {
+    "mtime": 1789576068.3706102,
+    "ast_hash": "0a97da15920de8049fd82e779f7060f6",
+    "semantic_hash": "0a97da15920de8049fd82e779f7060f6"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\bot\\page.tsx": {
+    "mtime": 1789577984.4723232,
+    "ast_hash": "f25061f471bc6bcf70b2d19cb4057bfe",
+    "semantic_hash": "f25061f471bc6bcf70b2d19cb4057bfe"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\calendario\\page.tsx": {
+    "mtime": 1789591326.088083,
+    "ast_hash": "88f42553b5a37c5421daa39ec78353c7",
+    "semantic_hash": "88f42553b5a37c5421daa39ec78353c7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\financiacion\\[facturaId]\\page.tsx": {
+    "mtime": 1789581350.5042944,
+    "ast_hash": "8148289cd354902abd69d1f3f08805f7",
+    "semantic_hash": "8148289cd354902abd69d1f3f08805f7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\layout.tsx": {
+    "mtime": 1771357626.8052177,
+    "ast_hash": "0997163a75ad55a15a087bb5e5464096",
+    "semantic_hash": "0997163a75ad55a15a087bb5e5464096"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\page.tsx": {
+    "mtime": 1789581310.17775,
+    "ast_hash": "0c15224f579741e52f0fdc008bd8a6a0",
+    "semantic_hash": "0c15224f579741e52f0fdc008bd8a6a0"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\seguimiento\\[facturaId]\\components\\AplicarPago.tsx": {
+    "mtime": 1789581512.9704096,
+    "ast_hash": "cf9646ece842da001c604743b12917f9",
+    "semantic_hash": "cf9646ece842da001c604743b12917f9"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\seguimiento\\[facturaId]\\components\\HistorialPagos.tsx": {
+    "mtime": 1789581468.6937206,
+    "ast_hash": "481204cc1864c47b24d0144c4d24fe44",
+    "semantic_hash": "481204cc1864c47b24d0144c4d24fe44"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\seguimiento\\[facturaId]\\components\\ResumenCuotas.tsx": {
+    "mtime": 1789581416.3780074,
+    "ast_hash": "afa7bbbe05d0c84c957e4f4127df4b86",
+    "semantic_hash": "afa7bbbe05d0c84c957e4f4127df4b86"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\seguimiento\\[facturaId]\\components\\TimelineCuotas.tsx": {
+    "mtime": 1789581447.7475343,
+    "ast_hash": "46775319fdba2b38022447d1cf75f0ad",
+    "semantic_hash": "46775319fdba2b38022447d1cf75f0ad"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\cartera\\seguimiento\\[facturaId]\\page.tsx": {
+    "mtime": 1789581538.1544418,
+    "ast_hash": "5d97f9a6964f9899c2ccb238496b4c74",
+    "semantic_hash": "5d97f9a6964f9899c2ccb238496b4c74"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\actuaciones\\page.tsx": {
+    "mtime": 1789580508.831765,
+    "ast_hash": "5cafc885eb0c0059521084a992227a08",
+    "semantic_hash": "5cafc885eb0c0059521084a992227a08"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\audiencias\\[audienciaId]\\editar\\page.tsx": {
+    "mtime": 1789580685.3637712,
+    "ast_hash": "b6317e44d23a74bbd76176858a033a5e",
+    "semantic_hash": "b6317e44d23a74bbd76176858a033a5e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\audiencias\\nueva\\page.tsx": {
+    "mtime": 1789580620.904542,
+    "ast_hash": "8b5dd0055bfafda6c3a63205c115c35c",
+    "semantic_hash": "8b5dd0055bfafda6c3a63205c115c35c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\audiencias\\page.tsx": {
+    "mtime": 1789580583.3257422,
+    "ast_hash": "d46924b760dbcebce62ac0bf4d6594df",
+    "semantic_hash": "d46924b760dbcebce62ac0bf4d6594df"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\documentos\\page.tsx": {
+    "mtime": 1789580761.8863163,
+    "ast_hash": "c47cc4e673ee953a6a13c270459a6316",
+    "semantic_hash": "c47cc4e673ee953a6a13c270459a6316"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\honorarios\\page.tsx": {
+    "mtime": 1789580811.5568483,
+    "ast_hash": "e3cfc9b9ace4003ff9723830ab997859",
+    "semantic_hash": "e3cfc9b9ace4003ff9723830ab997859"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\page.tsx": {
+    "mtime": 1789580434.646571,
+    "ast_hash": "da94dfa1422fa4657f87920327c86eff",
+    "semantic_hash": "da94dfa1422fa4657f87920327c86eff"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\[casoId]\\responsables\\page.tsx": {
+    "mtime": 1789580886.6733952,
+    "ast_hash": "0f275070b35c701dcd9a862d71383c45",
+    "semantic_hash": "0f275070b35c701dcd9a862d71383c45"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\layout.tsx": {
+    "mtime": 1771357626.8195362,
+    "ast_hash": "720e325cdae14e589eba6054111be4a6",
+    "semantic_hash": "720e325cdae14e589eba6054111be4a6"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\nueva\\page.tsx": {
+    "mtime": 1789580392.7490582,
+    "ast_hash": "370635e6aed6bcf7e45c9d41c6bffc58",
+    "semantic_hash": "370635e6aed6bcf7e45c9d41c6bffc58"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\casos\\page.tsx": {
+    "mtime": 1789580361.9609292,
+    "ast_hash": "a73980bd2376fdaf8d407e13c75401da",
+    "semantic_hash": "a73980bd2376fdaf8d407e13c75401da"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\dashboard\\layout.tsx": {
+    "mtime": 1771357626.828611,
+    "ast_hash": "8780c2d14f1a9f852f9f05c8e1eb7149",
+    "semantic_hash": "8780c2d14f1a9f852f9f05c8e1eb7149"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\dashboard\\page.tsx": {
+    "mtime": 1789579015.9287264,
+    "ast_hash": "e9ae5981d29807af11c3ede5776c12aa",
+    "semantic_hash": "e9ae5981d29807af11c3ede5776c12aa"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\facturacion\\[facturaId]\\editar\\page.tsx": {
+    "mtime": 1789581235.9466245,
+    "ast_hash": "3df65925e49b81514d42799eada6976a",
+    "semantic_hash": "3df65925e49b81514d42799eada6976a"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\facturacion\\[facturaId]\\page.tsx": {
+    "mtime": 1789581161.039144,
+    "ast_hash": "f60e415c2ae30209044bb40b30a06004",
+    "semantic_hash": "f60e415c2ae30209044bb40b30a06004"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\facturacion\\layout.tsx": {
+    "mtime": 1771357626.828611,
+    "ast_hash": "f3a423961591288bb521f628e8a407b7",
+    "semantic_hash": "f3a423961591288bb521f628e8a407b7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\facturacion\\nueva\\page.tsx": {
+    "mtime": 1789581080.1851363,
+    "ast_hash": "4128338ab5876043e2ad5a38e5b4f50d",
+    "semantic_hash": "4128338ab5876043e2ad5a38e5b4f50d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\facturacion\\page.tsx": {
+    "mtime": 1789580997.4002743,
+    "ast_hash": "67b89a8c751902ec2c373ae0cb495b39",
+    "semantic_hash": "67b89a8c751902ec2c373ae0cb495b39"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\honorarios\\nueva\\page.tsx": {
+    "mtime": 1789580911.440399,
+    "ast_hash": "be5153c10ef9c74d061b567defccb2e7",
+    "semantic_hash": "be5153c10ef9c74d061b567defccb2e7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\layout.tsx": {
+    "mtime": 1771357626.8364327,
+    "ast_hash": "1c0e783d4cf924f91f5b7b3b96f99258",
+    "semantic_hash": "1c0e783d4cf924f91f5b7b3b96f99258"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\[leadId]\\archivos\\page.tsx": {
+    "mtime": 1789579334.7122438,
+    "ast_hash": "024ba47043ba57774748aa67b84ffd8c",
+    "semantic_hash": "024ba47043ba57774748aa67b84ffd8c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\[leadId]\\asesorias\\nueva\\page.tsx": {
+    "mtime": 1789579398.1177933,
+    "ast_hash": "11ec20445216fdf1c104ab6182ad994c",
+    "semantic_hash": "11ec20445216fdf1c104ab6182ad994c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\[leadId]\\asesorias\\page.tsx": {
+    "mtime": 1789579428.6558332,
+    "ast_hash": "ae82824333698d256f64189810d6d9aa",
+    "semantic_hash": "ae82824333698d256f64189810d6d9aa"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\[leadId]\\editar\\page.tsx": {
+    "mtime": 1789579205.892146,
+    "ast_hash": "262b687dc70430d4446fa9bf4649cf86",
+    "semantic_hash": "262b687dc70430d4446fa9bf4649cf86"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\[leadId]\\page.tsx": {
+    "mtime": 1789579174.31892,
+    "ast_hash": "60ac669859389eb79924926864e68d82",
+    "semantic_hash": "60ac669859389eb79924926864e68d82"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\[leadId]\\seguimiento\\page.tsx": {
+    "mtime": 1789579280.593948,
+    "ast_hash": "157213fbfb9f7e7192ef4e9e843f68c6",
+    "semantic_hash": "157213fbfb9f7e7192ef4e9e843f68c6"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\layout.tsx": {
+    "mtime": 1771357626.8440068,
+    "ast_hash": "bdd9a91aaa02144e069c7f8b49cc8bc1",
+    "semantic_hash": "bdd9a91aaa02144e069c7f8b49cc8bc1"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\nuevo\\page.tsx": {
+    "mtime": 1789579121.8863094,
+    "ast_hash": "a45b282af6b01e0c016293f1f569f47b",
+    "semantic_hash": "a45b282af6b01e0c016293f1f569f47b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\leads\\page.tsx": {
+    "mtime": 1789579093.139505,
+    "ast_hash": "d2f6bbf6d9a4d8b47efc6c9f27621262",
+    "semantic_hash": "d2f6bbf6d9a4d8b47efc6c9f27621262"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\page.tsx": {
+    "mtime": 1771357626.8460143,
+    "ast_hash": "40cfb1556930dfd1ae358015069ddb50",
+    "semantic_hash": "40cfb1556930dfd1ae358015069ddb50"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\radicaciones\\[radicacionId]\\editar\\page.tsx": {
+    "mtime": 1789586142.8502653,
+    "ast_hash": "0ebae1b2e053ca8f4921a51b7e7448ed",
+    "semantic_hash": "0ebae1b2e053ca8f4921a51b7e7448ed"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\radicaciones\\[radicacionId]\\page.tsx": {
+    "mtime": 1789586112.7186172,
+    "ast_hash": "e91eb99037c02f0d947f2320b256c639",
+    "semantic_hash": "e91eb99037c02f0d947f2320b256c639"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\radicaciones\\layout.tsx": {
+    "mtime": 1773345916.0807202,
+    "ast_hash": "64ae505d79b669c6d2c9589cc3068ffb",
+    "semantic_hash": "64ae505d79b669c6d2c9589cc3068ffb"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\radicaciones\\nueva\\page.tsx": {
+    "mtime": 1789586030.8940036,
+    "ast_hash": "41028c5fbdf42b8134c3f84f622df6a2",
+    "semantic_hash": "41028c5fbdf42b8134c3f84f622df6a2"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\radicaciones\\page.tsx": {
+    "mtime": 1789585997.9848287,
+    "ast_hash": "74aa92d8a1edb7106b5783ec6e84a153",
+    "semantic_hash": "74aa92d8a1edb7106b5783ec6e84a153"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\[usuarioId]\\editar\\page.tsx": {
+    "mtime": 1789582280.3339593,
+    "ast_hash": "f24de739e969f4a4b359db04bcbf048e",
+    "semantic_hash": "f24de739e969f4a4b359db04bcbf048e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\[usuarioId]\\page.tsx": {
+    "mtime": 1789582213.0599117,
+    "ast_hash": "36985b02b272d28b892f7002420efaae",
+    "semantic_hash": "36985b02b272d28b892f7002420efaae"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\layout.tsx": {
+    "mtime": 1771357626.8460143,
+    "ast_hash": "f13dc7b2c0a79b17d0c1f88a7eff179b",
+    "semantic_hash": "f13dc7b2c0a79b17d0c1f88a7eff179b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\nuevo\\page.tsx": {
+    "mtime": 1789582182.5320683,
+    "ast_hash": "09b754b8b8b14a793d7924fc1535ec96",
+    "semantic_hash": "09b754b8b8b14a793d7924fc1535ec96"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\page.tsx": {
+    "mtime": 1789582138.7190626,
+    "ast_hash": "262fa2bd1db0f20a05779308e60d0c63",
+    "semantic_hash": "262fa2bd1db0f20a05779308e60d0c63"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\permisos\\page.tsx": {
+    "mtime": 1789582308.9392476,
+    "ast_hash": "122598a823c121cf9089a6674b42c9c3",
+    "semantic_hash": "122598a823c121cf9089a6674b42c9c3"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\permisos\\roles\\[roleId]\\editar\\page.tsx": {
+    "mtime": 1789582439.0001688,
+    "ast_hash": "7b437ae218c80d6c224c8f9b878ab435",
+    "semantic_hash": "7b437ae218c80d6c224c8f9b878ab435"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\permisos\\roles\\[roleId]\\page.tsx": {
+    "mtime": 1789582402.7155013,
+    "ast_hash": "2deef98f1b43c027f9c843c100583221",
+    "semantic_hash": "2deef98f1b43c027f9c843c100583221"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\app\\usuarios\\permisos\\roles\\nuevo\\page.tsx": {
+    "mtime": 1789582370.2704,
+    "ast_hash": "a987b1a363d3e89cdb3854ce86823d0c",
+    "semantic_hash": "a987b1a363d3e89cdb3854ce86823d0c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\AppLayout.tsx": {
+    "mtime": 1789591043.722591,
+    "ast_hash": "cf7799155e17a8efb10c4b6fe2824bd3",
+    "semantic_hash": "cf7799155e17a8efb10c4b6fe2824bd3"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\Breadcrumb.tsx": {
+    "mtime": 1789591032.4770608,
+    "ast_hash": "2ea603b2ac25555480ac39ec29677585",
+    "semantic_hash": "2ea603b2ac25555480ac39ec29677585"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\CasosRecientes.tsx": {
+    "mtime": 1789578939.078675,
+    "ast_hash": "86ad798440cf8c6d518f4cc61061d124",
+    "semantic_hash": "86ad798440cf8c6d518f4cc61061d124"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\CopiarLeadModal.tsx": {
+    "mtime": 1789577947.1374118,
+    "ast_hash": "31b1ad2a0ab7ef887db781fb32b9adb1",
+    "semantic_hash": "31b1ad2a0ab7ef887db781fb32b9adb1"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\EnviarFacturaModal.tsx": {
+    "mtime": 1789580967.8705587,
+    "ast_hash": "c4e6b214054e2142474d68d4d92a72c3",
+    "semantic_hash": "c4e6b214054e2142474d68d4d92a72c3"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\FileViewerModal.tsx": {
+    "mtime": 1789579304.195767,
+    "ast_hash": "97318e62ad16a926134549c353ad4a66",
+    "semantic_hash": "97318e62ad16a926134549c353ad4a66"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\MobileSidebar.tsx": {
+    "mtime": 1789591022.4537933,
+    "ast_hash": "f2b31a1be3d676bbfd6d66f8ef74d1dd",
+    "semantic_hash": "f2b31a1be3d676bbfd6d66f8ef74d1dd"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ModalProcesosLiquidacion.tsx": {
+    "mtime": 1789580535.2649095,
+    "ast_hash": "536f4c78359504612fea6b784a7d8332",
+    "semantic_hash": "536f4c78359504612fea6b784a7d8332"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\Sidebar.tsx": {
+    "mtime": 1789591002.2937725,
+    "ast_hash": "d79f88bfc8a011d636edc253fbb5a580",
+    "semantic_hash": "d79f88bfc8a011d636edc253fbb5a580"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\TimelineLiquidacion.tsx": {
+    "mtime": 1789578970.573109,
+    "ast_hash": "bea7f57b166246c9a764ac09deb477a2",
+    "semantic_hash": "bea7f57b166246c9a764ac09deb477a2"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\TopBar.tsx": {
+    "mtime": 1789591072.8876398,
+    "ast_hash": "06d680c10eae60382fad8d23fa06faf9",
+    "semantic_hash": "06d680c10eae60382fad8d23fa06faf9"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\providers\\SessionProvider.tsx": {
+    "mtime": 1770862560.012262,
+    "ast_hash": "024a20883244527bc77101db35f79706",
+    "semantic_hash": "024a20883244527bc77101db35f79706"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Alert.tsx": {
+    "mtime": 1789590972.227913,
+    "ast_hash": "f02219e0d64e050f009953a9e22d3abb",
+    "semantic_hash": "f02219e0d64e050f009953a9e22d3abb"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Badge.tsx": {
+    "mtime": 1789590960.0226645,
+    "ast_hash": "23c7862528d43cb3b7563c1515fbc633",
+    "semantic_hash": "23c7862528d43cb3b7563c1515fbc633"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Button.tsx": {
+    "mtime": 1789590883.543835,
+    "ast_hash": "7efbfe7febd5c8511e87fe6523ecf64f",
+    "semantic_hash": "7efbfe7febd5c8511e87fe6523ecf64f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Card.tsx": {
+    "mtime": 1789590865.4189813,
+    "ast_hash": "8518bad57ee75cead6ea31527afa390d",
+    "semantic_hash": "8518bad57ee75cead6ea31527afa390d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Input.tsx": {
+    "mtime": 1789590918.8401866,
+    "ast_hash": "b5227dc0fcbc34e514b8b943e42864f2",
+    "semantic_hash": "b5227dc0fcbc34e514b8b943e42864f2"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Modal.tsx": {
+    "mtime": 1789590983.6047487,
+    "ast_hash": "a17a8cca6080fd5040e062fd53797e2b",
+    "semantic_hash": "a17a8cca6080fd5040e062fd53797e2b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\Spinner.tsx": {
+    "mtime": 1789577824.0753856,
+    "ast_hash": "d41aa6e569cbeccbdac7670d3e212ba0",
+    "semantic_hash": "d41aa6e569cbeccbdac7670d3e212ba0"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\components\\ui\\index.ts": {
+    "mtime": 1789577839.4948432,
+    "ast_hash": "837dd59ddcc2c9ca54984e4628c64fc2",
+    "semantic_hash": "837dd59ddcc2c9ca54984e4628c64fc2"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\auth.ts": {
+    "mtime": 1771459215.7948923,
+    "ast_hash": "257620505e09f9864480a5adaa497678",
+    "semantic_hash": "257620505e09f9864480a5adaa497678"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\billing.ts": {
+    "mtime": 1779548456.5685802,
+    "ast_hash": "be974c15a86ae84b9c8061ffe0565c0f",
+    "semantic_hash": "be974c15a86ae84b9c8061ffe0565c0f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\cartera\\calcular-cuotas.ts": {
+    "mtime": 1779564941.9948254,
+    "ast_hash": "57d56f5cd0a350d6253af889d3c5f0e3",
+    "semantic_hash": "57d56f5cd0a350d6253af889d3c5f0e3"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\db-bot.ts": {
+    "mtime": 1789575858.4724355,
+    "ast_hash": "f05d233c71544beaeaa09fd7e57db8b7",
+    "semantic_hash": "f05d233c71544beaeaa09fd7e57db8b7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\db.ts": {
+    "mtime": 1779562354.6585236,
+    "ast_hash": "0a79a0fac6417397b9c9790e3506638a",
+    "semantic_hash": "0a79a0fac6417397b9c9790e3506638a"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\email-templates.ts": {
+    "mtime": 1779759811.716674,
+    "ast_hash": "78d61afbd9948fd4acbfd08a495c363d",
+    "semantic_hash": "78d61afbd9948fd4acbfd08a495c363d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\notificaciones.ts": {
+    "mtime": 1779759751.431396,
+    "ast_hash": "d7ea6c4899f29af2ce4d0e4ff3297633",
+    "semantic_hash": "d7ea6c4899f29af2ce4d0e4ff3297633"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\pdf\\factura-pdf.ts": {
+    "mtime": 1779585015.549057,
+    "ast_hash": "a9717fbcef463ebae8418d077a78e614",
+    "semantic_hash": "a9717fbcef463ebae8418d077a78e614"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\pdf\\financiacion-pdf.ts": {
+    "mtime": 1779584020.5037498,
+    "ast_hash": "7b782652d254878176a13d50773b4a3c",
+    "semantic_hash": "7b782652d254878176a13d50773b4a3c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\pdf\\seguimiento-cuotas-pdf.ts": {
+    "mtime": 1779583780.9731953,
+    "ast_hash": "852bc0729104f6ee51fb0b9febf8cd38",
+    "semantic_hash": "852bc0729104f6ee51fb0b9febf8cd38"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\permissions.ts": {
+    "mtime": 1776651348.8366435,
+    "ast_hash": "171e61796daea647deab00c262b9122e",
+    "semantic_hash": "171e61796daea647deab00c262b9122e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\sidebar-icons.tsx": {
+    "mtime": 1789575858.6443255,
+    "ast_hash": "e6e052bc12de486809d394fb92cca170",
+    "semantic_hash": "e6e052bc12de486809d394fb92cca170"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\spaces.ts": {
+    "mtime": 1771357626.8702903,
+    "ast_hash": "4d58a06adca7606052772dbacf8e3ca9",
+    "semantic_hash": "4d58a06adca7606052772dbacf8e3ca9"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\utils.ts": {
+    "mtime": 1789577784.1320002,
+    "ast_hash": "1c2eb68c1cf99bc48a597fb2bce13342",
+    "semantic_hash": "1c2eb68c1cf99bc48a597fb2bce13342"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\lib\\workflows.ts": {
+    "mtime": 1779548457.5827966,
+    "ast_hash": "6edd135f1f701d7664ebe03834e04f2c",
+    "semantic_hash": "6edd135f1f701d7664ebe03834e04f2c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\middleware.ts": {
+    "mtime": 1770860585.7662241,
+    "ast_hash": "62bfd6cb67b3fc7e9a0ecde0f7a8a926",
+    "semantic_hash": "62bfd6cb67b3fc7e9a0ecde0f7a8a926"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\asesorias\\index.ts": {
+    "mtime": 1776631658.2169108,
+    "ast_hash": "af97daa759e998c986a5a4c91cd6c604",
+    "semantic_hash": "af97daa759e998c986a5a4c91cd6c604"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\asesorias\\repository.ts": {
+    "mtime": 1776631658.2169108,
+    "ast_hash": "f707c464547610cf9300b94fb08a7498",
+    "semantic_hash": "f707c464547610cf9300b94fb08a7498"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\asesorias\\services.ts": {
+    "mtime": 1776631658.218922,
+    "ast_hash": "d1f74ef0d9f8306a61345c70194856fe",
+    "semantic_hash": "d1f74ef0d9f8306a61345c70194856fe"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\asesorias\\types.ts": {
+    "mtime": 1776631658.218922,
+    "ast_hash": "ec6ad8da8f67bd410f455f69a4d62a33",
+    "semantic_hash": "ec6ad8da8f67bd410f455f69a4d62a33"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\asesorias\\validators.ts": {
+    "mtime": 1776631658.2209322,
+    "ast_hash": "52cdb2a2979dbe8bc3fcd74ba8cf0b41",
+    "semantic_hash": "52cdb2a2979dbe8bc3fcd74ba8cf0b41"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\audiencias\\index.ts": {
+    "mtime": 1776643938.7323477,
+    "ast_hash": "4ed4d311ff13d7949fe18d61ac82f7db",
+    "semantic_hash": "4ed4d311ff13d7949fe18d61ac82f7db"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\audiencias\\repository.ts": {
+    "mtime": 1776651246.8847373,
+    "ast_hash": "60adb251c4041f2658c434da717f4e41",
+    "semantic_hash": "60adb251c4041f2658c434da717f4e41"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\audiencias\\services.ts": {
+    "mtime": 1776651964.358882,
+    "ast_hash": "022a3fb7b4fe3c3647611c7dc2d4019c",
+    "semantic_hash": "022a3fb7b4fe3c3647611c7dc2d4019c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\audiencias\\types.ts": {
+    "mtime": 1776651217.3441508,
+    "ast_hash": "62fc558a52b9de806fa5b1d5912cc98f",
+    "semantic_hash": "62fc558a52b9de806fa5b1d5912cc98f"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\audiencias\\validators.ts": {
+    "mtime": 1776651958.5968416,
+    "ast_hash": "9d454fbe08116252b2e27b44c5687d4c",
+    "semantic_hash": "9d454fbe08116252b2e27b44c5687d4c"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\bot\\labels.ts": {
+    "mtime": 1789578002.3814933,
+    "ast_hash": "be918be72b66de640d44a29aa7daa825",
+    "semantic_hash": "be918be72b66de640d44a29aa7daa825"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\bot\\services.ts": {
+    "mtime": 1789576008.744179,
+    "ast_hash": "6da23a02f03c27594581f38a8120784b",
+    "semantic_hash": "6da23a02f03c27594581f38a8120784b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\casos\\repository.ts": {
+    "mtime": 1779548287.69077,
+    "ast_hash": "46c05cac72e33d095a6b481c260179b4",
+    "semantic_hash": "46c05cac72e33d095a6b481c260179b4"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\casos\\services.ts": {
+    "mtime": 1776631578.6350622,
+    "ast_hash": "1393460ccd99be370425caf622439936",
+    "semantic_hash": "1393460ccd99be370425caf622439936"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\casos\\types.ts": {
+    "mtime": 1779548242.1087103,
+    "ast_hash": "b72417e62a03aa54f363c1627d081a8a",
+    "semantic_hash": "b72417e62a03aa54f363c1627d081a8a"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\casos\\validators.ts": {
+    "mtime": 1779548033.389434,
+    "ast_hash": "2f9898973c759419ce374d93e65d40aa",
+    "semantic_hash": "2f9898973c759419ce374d93e65d40aa"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\google-calendar\\index.ts": {
+    "mtime": 1777514824.6279435,
+    "ast_hash": "dbec684343cc6f73d0a7c212e8edb01d",
+    "semantic_hash": "dbec684343cc6f73d0a7c212e8edb01d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\google-calendar\\services.ts": {
+    "mtime": 1779544178.119973,
+    "ast_hash": "1eeb33f9849d881c6eb61176eac614f0",
+    "semantic_hash": "1eeb33f9849d881c6eb61176eac614f0"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\google-calendar\\types.ts": {
+    "mtime": 1777514786.4686432,
+    "ast_hash": "001cc08d2a42b0bfc8a89e6623f1fe37",
+    "semantic_hash": "001cc08d2a42b0bfc8a89e6623f1fe37"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\leads\\repository.ts": {
+    "mtime": 1771357626.8702903,
+    "ast_hash": "e56e4b0b96fb5b99538d497738ac0e95",
+    "semantic_hash": "e56e4b0b96fb5b99538d497738ac0e95"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\leads\\services.ts": {
+    "mtime": 1770853805.3625875,
+    "ast_hash": "69bd730f967053d14015eac08fc06823",
+    "semantic_hash": "69bd730f967053d14015eac08fc06823"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\leads\\types.ts": {
+    "mtime": 1771357626.8702903,
+    "ast_hash": "b9c3f57e1b73fff0b852af14e054b191",
+    "semantic_hash": "b9c3f57e1b73fff0b852af14e054b191"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\leads\\validators.ts": {
+    "mtime": 1770853754.8466356,
+    "ast_hash": "462ff33c2357773bf11d1c0b19c6e921",
+    "semantic_hash": "462ff33c2357773bf11d1c0b19c6e921"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\procesos-liquidacion\\index.ts": {
+    "mtime": 1776653234.2900903,
+    "ast_hash": "4633a8573981ee0c8c23130ebab26650",
+    "semantic_hash": "4633a8573981ee0c8c23130ebab26650"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\procesos-liquidacion\\repository.ts": {
+    "mtime": 1776653997.1088672,
+    "ast_hash": "c7395af10bae927d529a26a8e7af1864",
+    "semantic_hash": "c7395af10bae927d529a26a8e7af1864"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\procesos-liquidacion\\services.ts": {
+    "mtime": 1776653491.6537733,
+    "ast_hash": "4b48b79ef2382eae3e4d4601600c23d7",
+    "semantic_hash": "4b48b79ef2382eae3e4d4601600c23d7"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\procesos-liquidacion\\types.ts": {
+    "mtime": 1776653222.402567,
+    "ast_hash": "ba3c27f6b7c60177a980833849b62471",
+    "semantic_hash": "ba3c27f6b7c60177a980833849b62471"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\procesos-liquidacion\\validators.ts": {
+    "mtime": 1776653222.4058921,
+    "ast_hash": "bd570fc5142b350bc14fdcc8a5e4ca7b",
+    "semantic_hash": "bd570fc5142b350bc14fdcc8a5e4ca7b"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\usuarios\\repository.ts": {
+    "mtime": 1776650179.5836027,
+    "ast_hash": "79e89e7dda2d65bf0037c666abab77c3",
+    "semantic_hash": "79e89e7dda2d65bf0037c666abab77c3"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\usuarios\\services.ts": {
+    "mtime": 1776650179.6067214,
+    "ast_hash": "1b988ad9128c444e1837244be84fe42e",
+    "semantic_hash": "1b988ad9128c444e1837244be84fe42e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\usuarios\\types.ts": {
+    "mtime": 1776652276.3634667,
+    "ast_hash": "a7a293c35474056770b570e792d6714d",
+    "semantic_hash": "a7a293c35474056770b570e792d6714d"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\usuarios\\validators.ts": {
+    "mtime": 1776650179.5378563,
+    "ast_hash": "cc5522b83a22f7806b3de338e2d99311",
+    "semantic_hash": "cc5522b83a22f7806b3de338e2d99311"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\types\\next-auth.d.ts": {
+    "mtime": 1771357626.8702903,
+    "ast_hash": "e24c827182063fb9a983a6a397888e04",
+    "semantic_hash": "e24c827182063fb9a983a6a397888e04"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\tailwind.config.ts": {
+    "mtime": 1789590851.444457,
+    "ast_hash": "0f69639e171a568029bf6bbe533cb890",
+    "semantic_hash": "0f69639e171a568029bf6bbe533cb890"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\tsconfig.json": {
+    "mtime": 1770856707.3158755,
+    "ast_hash": "4c20b373a3a6e74bd9825bb4e97fe052",
+    "semantic_hash": "4c20b373a3a6e74bd9825bb4e97fe052"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\README.md": {
+    "mtime": 1777513936.589098,
+    "ast_hash": "d8221d40c40ee32828be341d80eaf7fb",
+    "semantic_hash": "d8221d40c40ee32828be341d80eaf7fb"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\src\\modules\\asesorias\\README.md": {
+    "mtime": 1776631658.2169108,
+    "ast_hash": "460cd0ba2ea870386a322fd8c09a1661",
+    "semantic_hash": "460cd0ba2ea870386a322fd8c09a1661"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\public\\file.svg": {
+    "mtime": 1770850033.4795258,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\public\\globe.svg": {
+    "mtime": 1770850033.4807415,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\public\\next.svg": {
+    "mtime": 1770850033.487775,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\public\\vercel.svg": {
+    "mtime": 1770850033.49834,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "C:\\Users\\wowpr\\Desktop\\proyectos\\procesos-juridicos-insolvencia-next\\juridica-insolvencia\\public\\window.svg": {
+    "mtime": 1770850033.5086493,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  }
+}

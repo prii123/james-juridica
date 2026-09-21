@@ -5,9 +5,10 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import CopiarLeadModal, { LeadBorrador } from '@/components/CopiarLeadModal'
+import ResponderBotTab from '@/components/ResponderBotTab'
 import {
   ArrowLeft, Bot, Copy, Phone, Mail, MapPin, User, FileText, MessageCircle,
-  Save, ExternalLink, ClipboardList, Briefcase, CheckCircle2, Clock,
+  Save, ExternalLink, ClipboardList, Briefcase, CheckCircle2, Clock, Reply,
 } from 'lucide-react'
 import { ETAPAS_COMERCIALES, etapaInfo, label, labelList, labelRangoDinero, humanize } from '@/modules/bot/labels'
 import { Button, Card, CardHeader, CardBody, Badge, Textarea, Select, Label as FieldLabel, Alert, Spinner } from '@/components/ui'
@@ -84,7 +85,7 @@ export default function BotContactoPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCopiar, setShowCopiar] = useState(false)
-  const [tab, setTab] = useState<'conversacion' | 'respuestas'>('conversacion')
+  const [tab, setTab] = useState<'conversacion' | 'respuestas' | 'responder'>('conversacion')
 
   // Seguimiento
   const [etapa, setEtapa] = useState('nuevo')
@@ -407,10 +408,22 @@ export default function BotContactoPage() {
                   <FileText size={14} /> Respuestas capturadas
                   <Badge variant="secondary">{contacto.respuestas_captura.length}</Badge>
                 </button>
+                <button
+                  className={cn(
+                    'flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium',
+                    tab === 'responder' ? 'border-blue-800 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-700'
+                  )}
+                  onClick={() => setTab('responder')}
+                >
+                  <Reply size={14} /> Responder
+                  {esperando && <Badge variant="danger">Esperando</Badge>}
+                </button>
               </div>
             </div>
 
-            {tab === 'conversacion' ? (
+            {tab === 'responder' ? (
+              <ResponderBotTab contactoId={contacto.id} />
+            ) : tab === 'conversacion' ? (
               <div
                 ref={chatRef}
                 className="overflow-auto p-4"
