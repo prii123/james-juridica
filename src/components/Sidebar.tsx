@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Scale } from 'lucide-react'
 import { getIcon } from '@/lib/sidebar-icons'
 import { cn } from '@/lib/utils'
+import { usePendientesBot } from './PendientesBot'
 
 interface ModuleItem {
   id: string
@@ -20,6 +21,7 @@ interface ModuleItem {
 export default function Sidebar({ className = '' }: { className?: string }) {
   const pathname = usePathname()
   const [modules, setModules] = useState<ModuleItem[]>([])
+  const { total: pendientesBot } = usePendientesBot()
 
   useEffect(() => {
     fetch('/api/sidebar')
@@ -77,6 +79,14 @@ export default function Sidebar({ className = '' }: { className?: string }) {
                   </div>
                 )}
               </div>
+              {item.href === '/bot' && pendientesBot > 0 && (
+                <span
+                  className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-[0.7rem] font-bold text-white"
+                  title={`${pendientesBot} cliente(s) esperando abogado`}
+                >
+                  {pendientesBot > 99 ? '99+' : pendientesBot}
+                </span>
+              )}
             </Link>
           )
         })}

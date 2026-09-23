@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import Breadcrumb from '@/components/Breadcrumb'
 import CopiarLeadModal, { LeadBorrador } from '@/components/CopiarLeadModal'
 import { Bot, Search, Filter, Eye, Copy, Phone, Mail, MapPin, MessageCircle, UserCheck, Users, Loader2 } from 'lucide-react'
@@ -48,13 +49,24 @@ interface Filters {
   estadoConversacion?: string
 }
 
+// Los avisos de "Esperando abogado" (campana, notificaciones) enlazan a /bot?estadoConversacion=...
 export default function BotPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <BotPageContent />
+    </Suspense>
+  )
+}
+
+function BotPageContent() {
+  const searchParams = useSearchParams()
+  const estadoUrl = searchParams.get('estadoConversacion') || undefined
   const [contactos, setContactos] = useState<ContactoBot[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<Filters>({})
-  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<Filters>({ estadoConversacion: estadoUrl })
+  const [showFilters, setShowFilters] = useState(!!estadoUrl)
   const [total, setTotal] = useState(0)
   const [copiando, setCopiando] = useState<{ contactoId: string; borrador: LeadBorrador } | null>(null)
   const [cargandoBorrador, setCargandoBorrador] = useState<string | null>(null)
@@ -93,6 +105,13 @@ export default function BotPage() {
       // Las estadísticas no son críticas
     }
   }, [])
+
+  // Si ya se está en /bot y se llega desde un aviso, el filtro de la URL se aplica sin recargar.
+  useEffect(() => {
+    if (!estadoUrl) return
+    setFilters((f) => (f.estadoConversacion === estadoUrl ? f : { ...f, estadoConversacion: estadoUrl }))
+    setShowFilters(true)
+  }, [estadoUrl])
 
   useEffect(() => {
     fetchContactos()

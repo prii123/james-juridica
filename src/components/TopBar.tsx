@@ -3,8 +3,9 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Search, User, LogOut, FileText, Users, Briefcase, CreditCard, Scale, Loader2 } from 'lucide-react'
+import { Search, User, LogOut, FileText, Users, Briefcase, CreditCard, Scale, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PendientesBotBell } from './PendientesBot'
 
 interface SearchResult {
   id: string
@@ -330,13 +331,8 @@ export default function TopBar() {
         <div className="flex items-center gap-3">
           {/* Quick Actions */}
           <div className="hidden items-center gap-2 md:flex">
-            {/* Notification Badge */}
-            <div className="relative">
-              <button className="relative rounded-xl border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700">
-                <Bell size={20} />
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </button>
-            </div>
+            {/* Clientes del bot esperando abogado */}
+            <PendientesBotBell />
           </div>
 
           {/* User Menu */}

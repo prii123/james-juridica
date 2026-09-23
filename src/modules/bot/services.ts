@@ -121,6 +121,32 @@ export class BotService {
     }
   }
 
+  /**
+   * Resumen liviano de los clientes que esperan abogado, pensado para consultarse seguido
+   * desde el layout (contador del menú, campana y notificaciones).
+   */
+  async getPendientes(limit = 20) {
+    const where = { estado_conversacion: 'ESPERANDO_HUMANO' }
+    const [total, contactos] = await Promise.all([
+      prismaBot.contactos.count({ where }),
+      prismaBot.contactos.findMany({
+        where,
+        select: { id: true, nombre: true, nombre_perfil: true, telefono: true, ultimo_mensaje_at: true },
+        orderBy: { ultimo_mensaje_at: { sort: 'desc', nulls: 'last' } },
+        take: limit,
+      }),
+    ])
+
+    return {
+      total,
+      contactos: contactos.map((c) => ({
+        id: c.id,
+        nombre: c.nombre || c.nombre_perfil || c.telefono,
+        ultimoMensajeAt: c.ultimo_mensaje_at,
+      })),
+    }
+  }
+
   async getContactoById(id: string) {
     const contacto = await prismaBot.contactos.findUnique({
       where: { id },

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Send, Loader2, Bot as BotIcon, CheckCircle2 } from 'lucide-react'
 import { Alert, Button, Spinner, Textarea } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { usePendientesBot } from './PendientesBot'
 
 interface MensajeBot {
   id: string
@@ -41,6 +42,7 @@ export default function ResponderBotTab({
   const [enviando, setEnviando] = useState(false)
   const [enviarError, setEnviarError] = useState<string | null>(null)
   const [cerrando, setCerrando] = useState(false)
+  const { refrescar: refrescarPendientes } = usePendientesBot()
   const chatRef = useRef<HTMLDivElement>(null)
 
   const fetchConversacion = useCallback(async (silencioso = false) => {
@@ -110,6 +112,7 @@ export default function ResponderBotTab({
         return
       }
       await fetchConversacion(true)
+      refrescarPendientes()
       onEstadoCambiado?.()
     } catch {
       setEnviarError('Error de conexión al cerrar la atención')
