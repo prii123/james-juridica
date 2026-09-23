@@ -69,3 +69,8 @@ export function enviarMensajeBot(
     body: JSON.stringify({ texto, autor }),
   })
 }
+
+/** Termina la atención del abogado: el contacto pasa a FIN y el bot vuelve a responder. */
+export function cerrarAtencionBot(telefono: string): Promise<{ contacto: ContactoBotApi }> {
+  return llamar(`/conversaciones/${encodeURIComponent(telefono)}/cerrar`, { method: 'POST' })
+}

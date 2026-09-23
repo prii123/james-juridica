@@ -35,7 +35,7 @@ export default function Sidebar({ className = '' }: { className?: string }) {
           <Scale size={18} className="text-slate-900" />
         </div>
         <div className="min-w-0">
-          <h2 className="truncate text-[0.95rem] font-bold leading-tight text-white">ERP Jurídico</h2>
+          <h2 className="truncate text-[0.95rem] font-bold leading-tight text-white">Insolvencia Colombia</h2>
           <p className="truncate text-xs font-medium text-slate-400">Procesos de Insolvencia</p>
         </div>
       </div>

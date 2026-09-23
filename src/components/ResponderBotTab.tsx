@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Send, Loader2, Bot as BotIcon } from 'lucide-react'
+import { Send, Loader2, Bot as BotIcon, CheckCircle2 } from 'lucide-react'
 import { Alert, Button, Spinner, Textarea } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
@@ -27,13 +27,20 @@ const POLL_MS = 6000
  * "Conversación" que lee la BD del bot directamente. Así, si uno de los dos caminos falla,
  * el otro sigue funcionando.
  */
-export default function ResponderBotTab({ contactoId }: { contactoId: string }) {
+export default function ResponderBotTab({
+  contactoId,
+  onEstadoCambiado,
+}: {
+  contactoId: string
+  onEstadoCambiado?: () => void
+}) {
   const [data, setData] = useState<Conversacion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [texto, setTexto] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [enviarError, setEnviarError] = useState<string | null>(null)
+  const [cerrando, setCerrando] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
 
   const fetchConversacion = useCallback(async (silencioso = false) => {
@@ -88,6 +95,26 @@ export default function ResponderBotTab({ contactoId }: { contactoId: string }) 
       setEnviarError('Error de conexión al enviar')
     } finally {
       setEnviando(false)
+    }
+  }
+
+  const cerrarAtencion = async () => {
+    if (!confirm('¿Cerrar la atención? El bot volverá a responder los mensajes de este cliente.')) return
+    setCerrando(true)
+    setEnviarError(null)
+    try {
+      const res = await fetch(`/api/bot/${contactoId}/cerrar`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) {
+        setEnviarError(json.error || 'No se pudo cerrar la atención')
+        return
+      }
+      await fetchConversacion(true)
+      onEstadoCambiado?.()
+    } catch {
+      setEnviarError('Error de conexión al cerrar la atención')
+    } finally {
+      setCerrando(false)
     }
   }
 
@@ -159,17 +186,28 @@ export default function ResponderBotTab({ contactoId }: { contactoId: string }) 
                     enviar()
                   }
                 }}
-                disabled={enviando}
+                disabled={enviando || cerrando}
                 className="flex-1"
               />
-              <Button onClick={enviar} disabled={enviando || !texto.trim()}>
+              <Button onClick={enviar} disabled={enviando || cerrando || !texto.trim()}>
                 {enviando ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 Enviar
               </Button>
             </div>
-            <p className="mb-0 mt-1 flex items-center gap-1 text-xs text-slate-400">
-              <BotIcon size={12} /> Se envía por WhatsApp con el mismo número del despacho.
-            </p>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <p className="mb-0 flex items-center gap-1 text-xs text-slate-400">
+                <BotIcon size={12} /> Se envía por WhatsApp con el mismo número del despacho.
+              </p>
+              <Button
+                variant="outlineDanger"
+                size="sm"
+                onClick={cerrarAtencion}
+                loading={cerrando}
+                disabled={enviando}
+              >
+                <CheckCircle2 size={14} /> Cerrar atención
+              </Button>
+            </div>
           </>
         )}
       </div>

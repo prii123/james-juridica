@@ -422,7 +422,7 @@ export default function BotContactoPage() {
             </div>
 
             {tab === 'responder' ? (
-              <ResponderBotTab contactoId={contacto.id} />
+              <ResponderBotTab contactoId={contacto.id} onEstadoCambiado={fetchContacto} />
             ) : tab === 'conversacion' ? (
               <div
                 ref={chatRef}
