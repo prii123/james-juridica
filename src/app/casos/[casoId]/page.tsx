@@ -17,6 +17,7 @@ import {
   Flag,
   AlertTriangle,
   Play,
+  Receipt,
 } from 'lucide-react'
 import { EstadoCaso, TipoInsolvencia, Prioridad } from '@prisma/client'
 import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
@@ -33,6 +34,8 @@ interface Caso {
   observaciones?: string
   createdAt: string
   updatedAt: string
+  /** 0 = sin facturar, 1 = ya se le generó una factura. */
+  facturado: number
   cliente: {
     id: string
     nombre: string
@@ -197,18 +200,31 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
               <IconoPrioridad size={12} />
               {prioridadConfig.label}
             </Badge>
+            <Badge variant={caso.facturado ? 'success' : 'secondary'}>
+              {caso.facturado ? 'Facturado' : 'Sin facturar'}
+            </Badge>
           </div>
           <p className="mb-0 text-slate-500">
             {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]}
             {caso.cliente && <> • Cliente: {caso.cliente.nombre} {caso.cliente.apellido}</>}
           </p>
         </div>
-        <Link href={`/casos/${params.casoId}/editar`}>
-          <Button variant="outlinePrimary">
-            <Edit3 size={16} />
-            Editar
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          {!caso.facturado && caso.cliente && (
+            <Link href={`/facturacion/nueva?casoId=${caso.id}`}>
+              <Button variant="success">
+                <Receipt size={16} />
+                Generar Factura
+              </Button>
+            </Link>
+          )}
+          <Link href={`/casos/${params.casoId}/editar`}>
+            <Button variant="outlinePrimary">
+              <Edit3 size={16} />
+              Editar
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">

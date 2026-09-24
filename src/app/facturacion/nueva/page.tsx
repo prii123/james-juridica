@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import {
@@ -17,7 +17,7 @@ import {
   Building,
   X
 } from 'lucide-react'
-import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert } from '@/components/ui'
+import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 interface Honorario {
@@ -59,7 +59,18 @@ interface ItemFactura {
 }
 
 export default function NuevaFacturaPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <NuevaFacturaContent />
+    </Suspense>
+  )
+}
+
+function NuevaFacturaContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const casoIdParam = searchParams.get('casoId')
+  const honorarioIdParam = searchParams.get('honorarioId')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [honorarios, setHonorarios] = useState<Honorario[]>([])
@@ -101,6 +112,35 @@ export default function NuevaFacturaPage() {
     fetchHonorariosDisponibles()
   }, [])
 
+  // Llegando desde "Generar Factura" en un caso (/facturacion/nueva?casoId=...): se precarga el
+  // cliente de ese caso, y el caso queda elegido en cuanto aparezca en su lista de pendientes
+  // (ver el useEffect de casosCliente más abajo).
+  useEffect(() => {
+    if (!casoIdParam) return
+    fetch(`/api/casos/${casoIdParam}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.cliente) {
+          setSelectedCliente({
+            id: data.cliente.id,
+            nombre: data.cliente.nombre,
+            apellido: data.cliente.apellido,
+            email: data.cliente.email,
+            documento: data.cliente.documento,
+            telefono: data.cliente.telefono,
+          })
+        }
+      })
+      .catch(() => undefined)
+  }, [casoIdParam])
+
+  // Llegando desde "Nuevo Honorario" (/facturacion/nueva?honorarioId=...).
+  useEffect(() => {
+    if (honorarioIdParam) {
+      setFormData((prev) => ({ ...prev, honorarioId: honorarioIdParam }))
+    }
+  }, [honorarioIdParam])
+
   useEffect(() => {
     const nuevosItems = items.map(item => ({
       ...item,
@@ -124,9 +164,9 @@ export default function NuevaFacturaPage() {
   }, [clienteSearch])
 
   useEffect(() => {
-    setCasoId('')
     if (!selectedCliente) {
       setCasosCliente([])
+      setCasoId('')
       return
     }
     let activo = true
@@ -134,12 +174,17 @@ export default function NuevaFacturaPage() {
     fetch(`/api/casos?clienteId=${selectedCliente.id}&facturado=0&limit=50`)
       .then((res) => res.json())
       .then((data) => {
-        if (activo) setCasosCliente(data.casos || [])
+        if (!activo) return
+        const casos: CasoDelCliente[] = data.casos || []
+        setCasosCliente(casos)
+        // Si venimos de "Generar Factura" en ese caso, queda elegido apenas aparece en la lista
+        // de pendientes; si no, se limpia (cambió de cliente y el caso anterior ya no aplica).
+        setCasoId(casoIdParam && casos.some((c) => c.id === casoIdParam) ? casoIdParam : '')
       })
       .catch(() => activo && setCasosCliente([]))
       .finally(() => activo && setLoadingCasosCliente(false))
     return () => { activo = false }
-  }, [selectedCliente])
+  }, [selectedCliente, casoIdParam])
 
   const fetchHonorariosDisponibles = async () => {
     try {
