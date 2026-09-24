@@ -289,6 +289,15 @@ export async function PATCH(
       }
     })
 
+    // Si se anula una factura ligada directamente a un caso (sin honorario), ese caso vuelve a
+    // quedar sin facturar: puede volver a aparecer al generar una nueva factura para él.
+    if (body.estado === 'ANULADA' && existingFactura.casoId) {
+      await prisma.caso.update({
+        where: { id: existingFactura.casoId },
+        data: { facturado: 0 }
+      })
+    }
+
     return NextResponse.json(updatedFactura)
 
   } catch (error: any) {
@@ -336,6 +345,14 @@ export async function DELETE(
     await prisma.factura.delete({
       where: { id: params.facturaId }
     })
+
+    // Igual que al anular: si estaba ligada directamente a un caso, ese caso queda sin facturar.
+    if (existingFactura.casoId) {
+      await prisma.caso.update({
+        where: { id: existingFactura.casoId },
+        data: { facturado: 0 }
+      })
+    }
 
     return NextResponse.json({ message: 'Factura eliminada exitosamente' })
 
