@@ -7,22 +7,23 @@ import Breadcrumb from '@/components/Breadcrumb'
 import { ArrowLeft, Save, Search } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert } from '@/components/ui'
 
-interface LeadResult {
+interface ClienteResult {
   id: string
   nombre: string
+  apellido?: string | null
   email: string
   telefono: string
-  documento?: string
+  documento: string
 }
 
 export default function NuevoCasoPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [leadSearch, setLeadSearch] = useState('')
-  const [leads, setLeads] = useState<LeadResult[]>([])
+  const [clienteSearch, setClienteSearch] = useState('')
+  const [clientes, setClientes] = useState<ClienteResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [selectedLead, setSelectedLead] = useState<LeadResult | null>(null)
+  const [selectedCliente, setSelectedCliente] = useState<ClienteResult | null>(null)
 
   const [formData, setFormData] = useState({
     tipoInsolvencia: 'REORGANIZACION',
@@ -34,47 +35,45 @@ export default function NuevoCasoPage() {
     clienteDocumento: '',
   })
 
-  const searchLeads = async () => {
-    if (!leadSearch.trim()) return
+  const searchClientes = async () => {
+    if (!clienteSearch.trim()) return
     setSearching(true)
     try {
-      const res = await fetch(`/api/leads?search=${encodeURIComponent(leadSearch)}`)
+      const res = await fetch(`/api/clientes?search=${encodeURIComponent(clienteSearch)}`)
       if (res.ok) {
         const data = await res.json()
-        setLeads(data.leads || [])
+        setClientes(data.clientes || [])
       }
     } catch {
-      setLeads([])
+      setClientes([])
     } finally {
       setSearching(false)
     }
   }
 
-  const selectLead = (lead: LeadResult) => {
-    setSelectedLead(lead)
-    setFormData(prev => ({
-      ...prev,
-      clienteNombre: lead.nombre,
-      clienteEmail: lead.email,
-      clienteTelefono: lead.telefono,
-      clienteDocumento: lead.documento || '',
-    }))
-    setLeads([])
-    setLeadSearch('')
+  const selectCliente = (cliente: ClienteResult) => {
+    setSelectedCliente(cliente)
+    setClientes([])
+    setClienteSearch('')
+  }
+
+  const quitarCliente = () => {
+    setSelectedCliente(null)
+    setFormData(prev => ({ ...prev, clienteNombre: '', clienteEmail: '', clienteTelefono: '', clienteDocumento: '' }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.clienteNombre) {
-      setError('Debes seleccionar un lead o ingresar los datos del cliente')
+    if (!selectedCliente && !formData.clienteNombre) {
+      setError('Debes seleccionar un cliente existente o ingresar los datos de uno nuevo')
       return
     }
     try {
       setSaving(true)
       setError('')
 
-      // Crear o buscar cliente
-      let clienteId = selectedLead?.id
+      // Cliente ya elegido de la búsqueda, o se crea uno nuevo con los datos manuales
+      let clienteId = selectedCliente?.id
       if (!clienteId) {
         const clienteRes = await fetch('/api/clientes', {
           method: 'POST',
@@ -138,69 +137,87 @@ export default function NuevoCasoPage() {
             <Card>
               <CardHeader><CardTitle>Buscar Cliente</CardTitle></CardHeader>
               <CardBody>
-                <div className="mb-3 flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder="Buscar lead por nombre, email o teléfono..."
-                    value={leadSearch}
-                    onChange={(e) => setLeadSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchLeads())}
-                  />
-                  <Button type="button" variant="outlinePrimary" onClick={searchLeads} disabled={searching}>
-                    <Search size={16} />
-                  </Button>
-                </div>
-                {leads.length > 0 && (
-                  <div className="mb-3 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200" style={{ maxHeight: 200 }}>
-                    {leads.map(lead => (
-                      <button
-                        type="button"
-                        key={lead.id}
-                        className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                        onClick={() => selectLead(lead)}
-                      >
-                        <strong>{lead.nombre}</strong> — {lead.email} — {lead.telefono}
-                      </button>
-                    ))}
+                {selectedCliente ? (
+                  <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
+                    <div>
+                      <div className="font-medium text-slate-800">
+                        {selectedCliente.nombre} {selectedCliente.apellido || ''}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Doc: {selectedCliente.documento} · {selectedCliente.email} · {selectedCliente.telefono}
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={quitarCliente}>
+                      Cambiar
+                    </Button>
                   </div>
+                ) : (
+                  <>
+                    <div className="mb-3 flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Buscar cliente por nombre, documento, email o teléfono..."
+                        value={clienteSearch}
+                        onChange={(e) => setClienteSearch(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchClientes())}
+                      />
+                      <Button type="button" variant="outlinePrimary" onClick={searchClientes} disabled={searching}>
+                        <Search size={16} />
+                      </Button>
+                    </div>
+                    {clientes.length > 0 && (
+                      <div className="mb-3 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200" style={{ maxHeight: 200 }}>
+                        {clientes.map(cliente => (
+                          <button
+                            type="button"
+                            key={cliente.id}
+                            className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                            onClick={() => selectCliente(cliente)}
+                          >
+                            <strong>{cliente.nombre} {cliente.apellido || ''}</strong> — Doc: {cliente.documento} — {cliente.email}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <hr className="my-3 border-slate-200" />
+                    <h6 className="mb-2 font-semibold text-slate-700">O crea un cliente nuevo</h6>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <Label>Nombre Completo *</Label>
+                        <Input
+                          type="text"
+                          value={formData.clienteNombre}
+                          onChange={(e) => setFormData({ ...formData, clienteNombre: e.target.value })}
+                          required={!selectedCliente}
+                        />
+                      </div>
+                      <div>
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={formData.clienteEmail}
+                          onChange={(e) => setFormData({ ...formData, clienteEmail: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Teléfono</Label>
+                        <Input
+                          type="text"
+                          value={formData.clienteTelefono}
+                          onChange={(e) => setFormData({ ...formData, clienteTelefono: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Documento</Label>
+                        <Input
+                          type="text"
+                          value={formData.clienteDocumento}
+                          onChange={(e) => setFormData({ ...formData, clienteDocumento: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
-                <hr className="my-3 border-slate-200" />
-                <h6 className="mb-2 font-semibold text-slate-700">O ingresa los datos del cliente manualmente</h6>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <Label>Nombre Completo *</Label>
-                    <Input
-                      type="text"
-                      value={formData.clienteNombre}
-                      onChange={(e) => setFormData({ ...formData, clienteNombre: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={formData.clienteEmail}
-                      onChange={(e) => setFormData({ ...formData, clienteEmail: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Teléfono</Label>
-                    <Input
-                      type="text"
-                      value={formData.clienteTelefono}
-                      onChange={(e) => setFormData({ ...formData, clienteTelefono: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Documento</Label>
-                    <Input
-                      type="text"
-                      value={formData.clienteDocumento}
-                      onChange={(e) => setFormData({ ...formData, clienteDocumento: e.target.value })}
-                    />
-                  </div>
-                </div>
               </CardBody>
             </Card>
 
