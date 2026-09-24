@@ -10,9 +10,7 @@ import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea,
 
 interface CreateRadicacionData {
   numero: string
-  demandante: string
-  demandado: string
-  valor: number
+  clienteId: string
   fechaSolicitud: string
   fechaAudiencia?: string
   asesoriaId?: string
@@ -27,6 +25,14 @@ interface Asesoria {
     id: string
     nombre: string
   }
+}
+
+interface Cliente {
+  id: string
+  nombre: string
+  apellido?: string | null
+  documento: string
+  email: string
 }
 
 // Loading component para Suspense
@@ -67,15 +73,20 @@ function NuevaRadicacionContent() {
   const [asesoria, setAsesoria] = useState<Asesoria | null>(null)
   const [formData, setFormData] = useState<CreateRadicacionData>({
     numero: '',
-    demandante: '',
-    demandado: '',
-    valor: 0,
+    clienteId: '',
     fechaSolicitud: new Date().toISOString().split('T')[0],
     fechaAudiencia: '',
     asesoriaId: asesoriaId || '',
     estado: 'SOLICITADA',
     observaciones: ''
   })
+
+  // Búsqueda de cliente (solo aplica cuando la radicación no viene de una asesoría: si viene de
+  // una, el servidor asigna automáticamente el cliente del lead de esa asesoría).
+  const [clienteQuery, setClienteQuery] = useState('')
+  const [clienteResultados, setClienteResultados] = useState<Cliente[]>([])
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null)
+  const [buscandoClientes, setBuscandoClientes] = useState(false)
 
   useEffect(() => {
     if (asesoriaId) {
@@ -84,6 +95,41 @@ function NuevaRadicacionContent() {
 
     generateRadicacionNumber()
   }, [asesoriaId])
+
+  useEffect(() => {
+    if (clienteSeleccionado || clienteQuery.trim().length < 2) {
+      setClienteResultados([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        setBuscandoClientes(true)
+        const res = await fetch(`/api/clientes?search=${encodeURIComponent(clienteQuery)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setClienteResultados(data.clientes || [])
+        }
+      } catch (error) {
+        console.error('Error al buscar clientes:', error)
+      } finally {
+        setBuscandoClientes(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [clienteQuery, clienteSeleccionado])
+
+  const seleccionarCliente = (cliente: Cliente) => {
+    setClienteSeleccionado(cliente)
+    setClienteQuery(`${cliente.nombre} ${cliente.apellido || ''}`.trim())
+    setClienteResultados([])
+    handleInputChange('clienteId', cliente.id)
+  }
+
+  const quitarCliente = () => {
+    setClienteSeleccionado(null)
+    setClienteQuery('')
+    handleInputChange('clienteId', '')
+  }
 
   const fetchAsesoria = async () => {
     if (!asesoriaId) return
@@ -95,11 +141,7 @@ function NuevaRadicacionContent() {
       if (response.ok) {
         const data = await response.json()
         setAsesoria(data)
-        setFormData(prev => ({
-          ...prev,
-          demandante: data.lead.nombre,
-          asesoriaId: data.id
-        }))
+        setFormData(prev => ({ ...prev, asesoriaId: data.id }))
       }
     } catch (error) {
       console.error('Error al cargar asesoría:', error)
@@ -121,13 +163,19 @@ function NuevaRadicacionContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Sin asesoría de origen, el cliente es obligatorio: no hay de dónde más resolverlo.
+    if (!formData.asesoriaId && !formData.clienteId) {
+      setErrors({ cliente: 'Selecciona un cliente' })
+      return
+    }
+
     setLoading(true)
     setErrors({})
 
     try {
       const radicacionData = {
         ...formData,
-        valor: parseFloat(formData.valor.toString()),
         fechaSolicitud: new Date(formData.fechaSolicitud).toISOString(),
         fechaAudiencia: formData.fechaAudiencia
           ? new Date(formData.fechaAudiencia).toISOString()
@@ -226,47 +274,57 @@ function NuevaRadicacionContent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <Label className="font-semibold">Demandante *</Label>
-                    <Input
-                      type="text"
-                      value={formData.demandante}
-                      onChange={(e) => handleInputChange('demandante', e.target.value)}
-                      placeholder="Nombre del demandante"
-                      required
-                    />
-                    {errors.demandante && <p className="mt-1 text-xs text-red-600">{errors.demandante}</p>}
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Demandado *</Label>
-                    <Input
-                      type="text"
-                      value={formData.demandado}
-                      onChange={(e) => handleInputChange('demandado', e.target.value)}
-                      placeholder="Nombre del demandado"
-                      required
-                    />
-                    {errors.demandado && <p className="mt-1 text-xs text-red-600">{errors.demandado}</p>}
-                  </div>
-                </div>
-
                 <div>
-                  <Label className="font-semibold">Valor de la Conciliación *</Label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
-                    <Input
-                      type="number"
-                      className="pl-7"
-                      value={formData.valor}
-                      onChange={(e) => handleInputChange('valor', parseFloat(e.target.value) || 0)}
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                  {errors.valor && <p className="mt-1 text-xs text-red-600">{errors.valor}</p>}
+                  <Label className="font-semibold">Cliente {!asesoriaId && '*'}</Label>
+                  {asesoriaId ? (
+                    <p className="mb-0 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                      Se asignará automáticamente el cliente de la asesoría de origen
+                      {loadingAsesoria ? '…' : asesoria ? ` (${asesoria.lead.nombre})` : ''}.
+                    </p>
+                  ) : clienteSeleccionado ? (
+                    <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
+                      <div>
+                        <div className="font-medium text-slate-800">
+                          {clienteSeleccionado.nombre} {clienteSeleccionado.apellido || ''}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          Doc: {clienteSeleccionado.documento} · {clienteSeleccionado.email}
+                        </div>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={quitarCliente}>
+                        Cambiar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={clienteQuery}
+                        onChange={(e) => setClienteQuery(e.target.value)}
+                        placeholder="Buscar por nombre, documento o email..."
+                      />
+                      {(buscandoClientes || clienteResultados.length > 0) && (
+                        <div className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-soft-md">
+                          {buscandoClientes ? (
+                            <div className="px-3 py-2 text-sm text-slate-500">Buscando...</div>
+                          ) : (
+                            clienteResultados.map((c) => (
+                              <button
+                                type="button"
+                                key={c.id}
+                                onClick={() => seleccionarCliente(c)}
+                                className="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50"
+                              >
+                                <div className="font-medium text-slate-800">{c.nombre} {c.apellido || ''}</div>
+                                <div className="text-xs text-slate-500">Doc: {c.documento} · {c.email}</div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {errors.cliente && <p className="mt-1 text-xs text-red-600">{errors.cliente}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

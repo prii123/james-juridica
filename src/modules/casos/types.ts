@@ -20,12 +20,15 @@ export interface UpdateCasoData {
 }
 
 export interface CasoFilters {
-  estado?: EstadoCaso
+  /** Un estado, o varios para agrupar pantallas (p. ej. "Activos" = ACTIVO + SUSPENDIDO). */
+  estado?: EstadoCaso | EstadoCaso[]
   tipoInsolvencia?: TipoInsolvencia
   prioridad?: Prioridad
   responsableId?: string
   fechaInicioDesde?: Date
   fechaInicioHasta?: Date
+  /** Número de caso, nombre/apellido/documento del cliente. */
+  search?: string
 }
 
 export interface CasoWithRelations {

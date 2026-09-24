@@ -27,13 +27,16 @@ export interface UpdateLeadData {
 }
 
 export interface LeadFilters {
-  estado?: EstadoLead
+  /** Un estado, o varios para agrupar pantallas (p. ej. "En gestión" = CONTACTADO + CALIFICADO). */
+  estado?: EstadoLead | EstadoLead[]
   tipoPersona?: TipoPersona
   responsableId?: string
   origen?: string
   fechaCreacionDesde?: Date
   fechaCreacionHasta?: Date
   search?: string
+  /** 'asc' para los más antiguos primero (útil en "Nuevos", para atender lo más urgente). */
+  orden?: 'asc' | 'desc'
 }
 
 export interface LeadWithRelations {

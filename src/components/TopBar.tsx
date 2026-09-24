@@ -68,7 +68,7 @@ const getBadgeClass = (estado: string) => {
     case 'ACTIVO': case 'NUEVO': case 'GENERADA': case 'SOLICITADA': return badgeColorClasses.success
     case 'VENCIDO': case 'VENCIDA': case 'PERDIDO': case 'ANULADA': return badgeColorClasses.danger
     case 'PARCIAL': case 'EN_PROCESO': case 'PROGRAMADA': return badgeColorClasses.warning
-    case 'PAGADA': case 'CONVERTIDO': case 'CERRADO': case 'REALIZADA': return badgeColorClasses.primary
+    case 'PAGADA': case 'CERRADO': case 'REALIZADA': return badgeColorClasses.primary
     default: return badgeColorClasses.secondary
   }
 }

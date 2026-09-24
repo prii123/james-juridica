@@ -131,6 +131,11 @@ export const PERMISSIONS = {
     EDIT: 'casos.edit',
     DELETE: 'casos.delete',
   },
+  CLIENTES: {
+    VIEW: 'clientes.view',
+    CREATE: 'clientes.create',
+    EDIT: 'clientes.edit',
+  },
   ACTUACIONES: {
     VIEW: 'actuaciones.view',
     CREATE: 'actuaciones.create',

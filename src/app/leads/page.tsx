@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Breadcrumb from '@/components/Breadcrumb'
-import { Users, Plus, Search, Filter, Eye, Edit, Phone, Mail } from 'lucide-react'
+import { Users, Plus, Search, Filter, Eye, Edit, Phone, Mail, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { EstadoLead, TipoPersona } from '@prisma/client'
 import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Spinner, Alert, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Lead {
   id: string
@@ -22,10 +24,11 @@ interface Lead {
     nombre: string
     apellido: string
   } | null
+  // Se calcula en el servidor: existe un Cliente con el mismo email que este lead.
+  cliente?: { id: string; documento: string } | null
 }
 
-interface LeadsFilters {
-  estado?: EstadoLead
+interface Filters {
   tipoPersona?: TipoPersona
   search?: string
 }
@@ -33,93 +36,153 @@ interface LeadsFilters {
 const ESTADO_BADGE_VARIANT: Record<EstadoLead, BadgeProps['variant']> = {
   NUEVO: 'primary',
   CONTACTADO: 'info',
-  CALIFICADO: 'warning',
-  CONVERTIDO: 'success',
+  CALIFICADO: 'success',
   PERDIDO: 'danger',
 }
 
+// Las tres pantallas de trabajo: "Nuevos" es la bandeja de entrada, "En gestión" agrupa a
+// quienes ya se les hizo seguimiento, y "Perdidos" queda aparte para no estorbar el día a día.
+type Vista = 'nuevos' | 'gestion' | 'perdidos'
+
+const VISTAS: Record<Vista, { label: string; estados: EstadoLead[]; orden: 'asc' | 'desc' }> = {
+  nuevos: { label: 'Nuevos', estados: ['NUEVO'], orden: 'asc' },
+  gestion: { label: 'En gestión', estados: ['CONTACTADO', 'CALIFICADO'], orden: 'desc' },
+  perdidos: { label: 'Perdidos', estados: ['PERDIDO'], orden: 'desc' },
+}
+
+function esVista(v: string | null): v is Vista {
+  return v === 'nuevos' || v === 'gestion' || v === 'perdidos'
+}
+
 export default function LeadsPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <LeadsPageContent />
+    </Suspense>
+  )
+}
+
+function LeadsPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const vistaParam = searchParams.get('vista')
+  const vista: Vista = esVista(vistaParam) ? vistaParam : 'nuevos'
+
   const [leads, setLeads] = useState<Lead[]>([])
+  const [conteos, setConteos] = useState<Record<Vista, number> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<LeadsFilters>({})
+  const [filters, setFilters] = useState<Filters>({})
+  const [subEstado, setSubEstado] = useState<EstadoLead | ''>('') // solo aplica en "En gestión"
   const [showFilters, setShowFilters] = useState(false)
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    limit: 50
-  })
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 50 })
 
+  const cambiarVista = (v: Vista) => {
+    setSubEstado('')
+    router.push(`/leads?vista=${v}`)
+  }
+
+  // Cambiar de pestaña, sub-estado o filtros vuelve a la página 1: seguir en la página 3 de
+  // "Nuevos" al saltar a "Perdidos" no tendría sentido.
   useEffect(() => {
-    fetchLeads()
-  }, [filters])
+    setPage(1)
+  }, [vista, subEstado, filters])
 
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const queryParams = new URLSearchParams()
+      const { estados, orden } = VISTAS[vista]
+      const params = new URLSearchParams()
+      params.append('estado', subEstado || estados.join(','))
+      params.append('orden', orden)
+      params.append('page', String(page))
+      params.append('limit', '50')
+      if (filters.tipoPersona) params.append('tipoPersona', filters.tipoPersona)
+      if (filters.search) params.append('search', filters.search)
 
-      if (filters.estado) queryParams.append('estado', filters.estado)
-      if (filters.tipoPersona) queryParams.append('tipoPersona', filters.tipoPersona)
-      if (filters.search) queryParams.append('search', filters.search)
-
-      const response = await fetch(`/api/leads?${queryParams.toString()}`)
-      if (response.ok) {
-        const data = await response.json()
-        // Handle both array response (old format) and object response (new format)
-        if (Array.isArray(data)) {
-          setLeads(data)
-          setPagination({ total: data.length, page: 1, limit: 50 })
-        } else if (data.leads && Array.isArray(data.leads)) {
-          setLeads(data.leads)
-          setPagination({
-            total: data.total || data.leads.length,
-            page: data.page || 1,
-            limit: data.limit || 50
-          })
-        } else {
-          console.error('Unexpected API response format:', data)
-          setLeads([])
-          setError('Formato de respuesta inesperado del servidor')
-        }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Error al cargar los leads')
+      const response = await fetch(`/api/leads?${params.toString()}`)
+      const data = await response.json()
+      if (!response.ok) {
+        setError(data.error || 'Error al cargar los leads')
         setLeads([])
+        return
       }
-    } catch (error) {
-      console.error('Error al cargar leads:', error)
+      if (Array.isArray(data)) {
+        setLeads(data)
+        setPagination({ total: data.length, page: 1, limit: 50 })
+      } else if (Array.isArray(data.leads)) {
+        setLeads(data.leads)
+        setPagination({ total: data.total ?? data.leads.length, page: data.page ?? 1, limit: data.limit ?? 50 })
+      } else {
+        setLeads([])
+        setError('Formato de respuesta inesperado del servidor')
+      }
+    } catch {
       setError('Error de conexión. Por favor, inténtelo de nuevo.')
       setLeads([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [vista, subEstado, filters, page])
 
-  const getTipoPersonaText = (tipo: TipoPersona) => {
-    return tipo === 'NATURAL' ? 'Natural' : 'Jurídica'
-  }
+  const fetchConteos = useCallback(async () => {
+    try {
+      const res = await fetch('/api/leads/stats')
+      if (!res.ok) return
+      const stats = await res.json()
+      setConteos({
+        nuevos: stats.porEstado?.NUEVO ?? 0,
+        gestion: (stats.porEstado?.CONTACTADO ?? 0) + (stats.porEstado?.CALIFICADO ?? 0),
+        perdidos: stats.porEstado?.PERDIDO ?? 0,
+      })
+    } catch {
+      // Los contadores de las pestañas no son críticos.
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchLeads()
+  }, [fetchLeads])
+
+  useEffect(() => {
+    fetchConteos()
+  }, [fetchConteos, leads])
+
+  const getTipoPersonaText = (tipo: TipoPersona) => (tipo === 'NATURAL' ? 'Natural' : 'Jurídica')
 
   return (
     <>
       <Breadcrumb items={[{ label: 'Leads' }]} />
 
-      {/* Header */}
+      {/* Pestañas de estado */}
+      <div className="mb-4 flex gap-1 border-b border-slate-200">
+        {(Object.keys(VISTAS) as Vista[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => cambiarVista(v)}
+            className={cn(
+              'flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+              vista === v ? 'border-blue-800 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            {VISTAS[v].label}
+            {conteos && (
+              <Badge variant={vista === v ? 'primary' : 'secondary'}>{conteos[v]}</Badge>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h1 className="mb-2 text-2xl font-bold text-slate-800">Leads</h1>
-            <p className="mb-0 text-slate-500">Gestión de prospectos y oportunidades comerciales</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/leads/nuevo">
-              <Button>
-                <Plus size={16} />
-                Nuevo Lead
-              </Button>
-            </Link>
-          </div>
+        <div className="mb-3 flex items-center justify-end">
+          <Link href="/leads/nuevo">
+            <Button>
+              <Plus size={16} />
+              Nuevo Lead
+            </Button>
+          </Link>
         </div>
 
         {/* Search and Filters */}
@@ -144,17 +207,13 @@ export default function LeadsPage() {
 
             {showFilters && (
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                <Select
-                  value={filters.estado || ''}
-                  onChange={(e) => setFilters({ ...filters, estado: (e.target.value as EstadoLead) || undefined })}
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="NUEVO">Nuevo</option>
-                  <option value="CONTACTADO">Contactado</option>
-                  <option value="CALIFICADO">Calificado</option>
-                  <option value="CONVERTIDO">Convertido</option>
-                  <option value="PERDIDO">Perdido</option>
-                </Select>
+                {vista === 'gestion' && (
+                  <Select value={subEstado} onChange={(e) => setSubEstado(e.target.value as EstadoLead | '')}>
+                    <option value="">Contactado y Calificado</option>
+                    <option value="CONTACTADO">Solo Contactado</option>
+                    <option value="CALIFICADO">Solo Calificado</option>
+                  </Select>
+                )}
                 <Select
                   value={filters.tipoPersona || ''}
                   onChange={(e) => setFilters({ ...filters, tipoPersona: (e.target.value as TipoPersona) || undefined })}
@@ -163,7 +222,13 @@ export default function LeadsPage() {
                   <option value="NATURAL">Persona Natural</option>
                   <option value="JURIDICA">Persona Jurídica</option>
                 </Select>
-                <Button variant="outlineDanger" onClick={() => setFilters({})}>
+                <Button
+                  variant="outlineDanger"
+                  onClick={() => {
+                    setFilters({})
+                    setSubEstado('')
+                  }}
+                >
                   Limpiar Filtros
                 </Button>
               </div>
@@ -175,7 +240,7 @@ export default function LeadsPage() {
       {/* Leads Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Leads</CardTitle>
+          <CardTitle>{VISTAS[vista].label}</CardTitle>
           <Badge variant="primary">
             {pagination.total > 0 ? pagination.total : leads.length} leads
           </Badge>
@@ -200,11 +265,13 @@ export default function LeadsPage() {
           ) : leads.length === 0 ? (
             <div className="py-5 text-center">
               <Users size={48} className="mx-auto mb-3 text-slate-300" />
-              <h5 className="text-base font-semibold text-slate-700">No hay leads</h5>
+              <h5 className="text-base font-semibold text-slate-700">Sin leads en &quot;{VISTAS[vista].label}&quot;</h5>
               <p className="mb-3 text-slate-500">No se encontraron leads que coincidan con los filtros seleccionados.</p>
-              <Link href="/leads/nuevo">
-                <Button>Crear primer lead</Button>
-              </Link>
+              {vista === 'nuevos' && (
+                <Link href="/leads/nuevo">
+                  <Button>Crear primer lead</Button>
+                </Link>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -216,6 +283,7 @@ export default function LeadsPage() {
                     <th className="px-4 py-3 font-semibold">Contacto</th>
                     <th className="px-4 py-3 font-semibold">Tipo</th>
                     <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th className="px-4 py-3 font-semibold">Cliente</th>
                     <th className="px-4 py-3 font-semibold">Responsable</th>
                     <th className="px-4 py-3 font-semibold">Fecha</th>
                     <th className="px-4 py-3 font-semibold">Acciones</th>
@@ -247,6 +315,16 @@ export default function LeadsPage() {
                         <Badge variant={ESTADO_BADGE_VARIANT[lead.estado]}>{lead.estado}</Badge>
                       </td>
                       <td className="px-4 py-3 align-middle">
+                        {lead.cliente ? (
+                          <Badge variant="success" title={`Doc: ${lead.cliente.documento}`}>
+                            <CheckCircle2 size={12} />
+                            Cliente
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
                         {lead.responsable ?
                           `${lead.responsable.nombre} ${lead.responsable.apellido}` :
                           <span className="text-slate-500">Sin asignar</span>
@@ -275,6 +353,34 @@ export default function LeadsPage() {
                   ))}
                 </tbody>
               </table>
+
+              {pagination.total > pagination.limit && (
+                <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
+                  <p className="mb-0 text-xs text-slate-500">
+                    Página {pagination.page} de {Math.ceil(pagination.total / pagination.limit)} · {pagination.total} leads
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft size={14} />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= Math.ceil(pagination.total / pagination.limit)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Siguiente
+                      <ChevronRight size={14} />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardBody>

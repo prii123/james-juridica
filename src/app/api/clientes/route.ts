@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { ClientesService } from '@/modules/clientes/services'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
+    const page = searchParams.get('page')
+
+    // Con "page" en la URL se usa el listado paginado del directorio de clientes (/clientes).
+    // Sin "page", se mantiene el buscador liviano que ya usan otros formularios (radicaciones,
+    // facturación, casos) para elegir un cliente mientras se escribe: cualquier usuario con
+    // sesión puede usarlo, igual que antes de este cambio.
+    if (page) {
+      const clientesService = new ClientesService()
+      const estado = searchParams.get('estado') as 'activos' | 'inactivos' | 'todos' | null
+      const result = await clientesService.listar(
+        { search: search || undefined, estado: estado || undefined },
+        parseInt(page) || 1,
+        parseInt(searchParams.get('limit') || '20') || 20
+      )
+      return NextResponse.json(result)
+    }
 
     const clientes = await prisma.cliente.findMany({
       where: search ? {

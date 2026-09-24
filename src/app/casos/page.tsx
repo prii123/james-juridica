@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Breadcrumb from '@/components/Breadcrumb'
 import {
   Briefcase,
@@ -16,10 +17,13 @@ import {
   Target,
   Flag,
   Play,
-  Pause
+  Pause,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { EstadoCaso, TipoInsolvencia, Prioridad } from '@prisma/client'
-import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Label, Spinner, type BadgeProps } from '@/components/ui'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Label, Spinner, Alert, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Caso {
   id: string
@@ -30,12 +34,12 @@ interface Caso {
   fechaInicio: string
   fechaCierre?: string
   createdAt: string
-  cliente: {
+  cliente?: {
     id: string
     nombre: string
     apellido?: string
     documento: string
-  }
+  } | null
   responsable: {
     id: string
     nombre: string
@@ -43,11 +47,11 @@ interface Caso {
   }
 }
 
-const ESTADO_CONFIG: Record<EstadoCaso, { badge: BadgeProps['variant']; icon: typeof Play; label: string; statText: string }> = {
-  ACTIVO: { badge: 'success', icon: Play, label: 'Activo', statText: 'text-teal-700' },
-  CERRADO: { badge: 'secondary', icon: CheckCircle, label: 'Cerrado', statText: 'text-slate-600' },
-  SUSPENDIDO: { badge: 'warning', icon: Pause, label: 'Suspendido', statText: 'text-amber-600' },
-  ARCHIVADO: { badge: 'secondary', icon: Archive, label: 'Archivado', statText: 'text-slate-600' },
+const ESTADO_CONFIG: Record<EstadoCaso, { badge: BadgeProps['variant']; icon: typeof Play; label: string }> = {
+  ACTIVO: { badge: 'success', icon: Play, label: 'Activo' },
+  CERRADO: { badge: 'secondary', icon: CheckCircle, label: 'Cerrado' },
+  SUSPENDIDO: { badge: 'warning', icon: Pause, label: 'Suspendido' },
+  ARCHIVADO: { badge: 'secondary', icon: Archive, label: 'Archivado' },
 }
 
 const PRIORIDAD_CONFIG: Record<Prioridad, { badge: BadgeProps['variant']; icon: typeof Target; label: string }> = {
@@ -64,82 +68,118 @@ const TIPO_INSOLVENCIA_LABELS: Record<TipoInsolvencia, string> = {
   ACUERDO_REORGANIZACION: 'Acuerdo de Reorganización'
 }
 
+// "Activos" es el trabajo del día a día (incluye Suspendidos: siguen abiertos, solo en pausa).
+// "Cerrados" agrupa lo que ya terminó o se archivó, para no estorbar en la vista principal.
+type Vista = 'activos' | 'cerrados'
+
+const VISTAS: Record<Vista, { label: string; estados: EstadoCaso[] }> = {
+  activos: { label: 'Activos', estados: ['ACTIVO', 'SUSPENDIDO'] },
+  cerrados: { label: 'Cerrados', estados: ['CERRADO', 'ARCHIVADO'] },
+}
+
+function esVista(v: string | null): v is Vista {
+  return v === 'activos' || v === 'cerrados'
+}
+
 export default function CasosPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <CasosPageContent />
+    </Suspense>
+  )
+}
+
+function CasosPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const vistaParam = searchParams.get('vista')
+  const vista: Vista = esVista(vistaParam) ? vistaParam : 'activos'
+
   const [casos, setCasos] = useState<Caso[]>([])
+  const [conteos, setConteos] = useState<Record<Vista, number> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState('')
+  const [subEstado, setSubEstado] = useState<EstadoCaso | ''>('')
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20 })
 
+  const cambiarVista = (v: Vista) => {
+    setSubEstado('')
+    router.push(`/casos?vista=${v}`)
+  }
+
+  // Cambiar de pestaña, sub-estado o filtros vuelve a la página 1.
   useEffect(() => {
-    fetchCasos()
-  }, [])
+    setPage(1)
+  }, [vista, subEstado, searchTerm, filtroPrioridad, filtroTipo])
 
-  const fetchCasos = async () => {
+  const fetchCasos = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/casos')
+      setError(null)
+      const params = new URLSearchParams()
+      params.append('estado', subEstado || VISTAS[vista].estados.join(','))
+      params.append('page', String(page))
+      params.append('limit', '20')
+      if (searchTerm) params.append('search', searchTerm)
+      if (filtroPrioridad) params.append('prioridad', filtroPrioridad)
+      if (filtroTipo) params.append('tipoInsolvencia', filtroTipo)
 
-      if (response.ok) {
-        const data = await response.json()
-        // La API devuelve un objeto con estructura { casos: [], total, page, limit, totalPages }
-        if (data && Array.isArray(data.casos)) {
-          setCasos(data.casos)
-        } else if (Array.isArray(data)) {
-          // Fallback por si la respuesta es directamente un array
-          setCasos(data)
-        } else {
-          console.error('La respuesta no tiene el formato esperado:', data)
-          setCasos([])
-        }
-      } else {
-        console.error('Error al cargar casos')
+      const response = await fetch(`/api/casos?${params.toString()}`)
+      const data = await response.json()
+      if (!response.ok) {
+        setError(data.error || 'Error al cargar los casos')
         setCasos([])
+        return
       }
-    } catch (error) {
-      console.error('Error al cargar casos:', error)
+      const lista: Caso[] = Array.isArray(data.casos) ? data.casos : Array.isArray(data) ? data : []
+      setCasos(lista)
+      setPagination({
+        total: data.total ?? lista.length,
+        page: data.page ?? 1,
+        limit: data.limit ?? 20,
+      })
+    } catch {
+      setError('Error de conexión. Por favor, inténtelo de nuevo.')
       setCasos([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [vista, subEstado, searchTerm, filtroPrioridad, filtroTipo, page])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+  const fetchConteos = useCallback(async () => {
+    try {
+      const res = await fetch('/api/casos/stats')
+      if (!res.ok) return
+      const stats = await res.json()
+      setConteos({
+        activos: (stats.porEstado?.ACTIVO ?? 0) + (stats.porEstado?.SUSPENDIDO ?? 0),
+        cerrados: (stats.porEstado?.CERRADO ?? 0) + (stats.porEstado?.ARCHIVADO ?? 0),
+      })
+    } catch {
+      // Los contadores de las pestañas no son críticos.
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCasos()
+  }, [fetchCasos])
+
+  useEffect(() => {
+    fetchConteos()
+  }, [fetchConteos, casos])
+
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })
 
   const calculateDaysActive = (fechaInicio: string, fechaCierre?: string) => {
     const inicio = new Date(fechaInicio)
     const fin = fechaCierre ? new Date(fechaCierre) : new Date()
     const diffTime = Math.abs(fin.getTime() - inicio.getTime())
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  }
-
-  const casosFiltrados = Array.isArray(casos) ? casos.filter(caso => {
-    const matchSearch = !searchTerm ||
-      caso.numeroCaso.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      caso.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (caso.cliente.apellido?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      caso.cliente.documento.includes(searchTerm)
-
-    const matchEstado = !filtroEstado || caso.estado === filtroEstado
-    const matchPrioridad = !filtroPrioridad || caso.prioridad === filtroPrioridad
-    const matchTipo = !filtroTipo || caso.tipoInsolvencia === filtroTipo
-
-    return matchSearch && matchEstado && matchPrioridad && matchTipo
-  }) : []
-
-  const estadisticas = {
-    total: Array.isArray(casos) ? casos.length : 0,
-    activos: Array.isArray(casos) ? casos.filter(c => c.estado === 'ACTIVO').length : 0,
-    cerrados: Array.isArray(casos) ? casos.filter(c => c.estado === 'CERRADO').length : 0,
-    suspendidos: Array.isArray(casos) ? casos.filter(c => c.estado === 'SUSPENDIDO').length : 0,
-    criticos: Array.isArray(casos) ? casos.filter(c => c.prioridad === 'CRITICA').length : 0,
   }
 
   return (
@@ -151,48 +191,29 @@ export default function CasosPage() {
           <h1 className="mb-1 text-2xl font-bold text-slate-800">Casos Jurídicos</h1>
           <p className="mb-0 text-slate-500">Gestión de procesos de insolvencia</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/casos/nuevo">
-            <Button>
-              <Plus size={16} />
-              Nuevo Caso
-            </Button>
-          </Link>
-        </div>
+        <Link href="/casos/nueva">
+          <Button>
+            <Plus size={16} />
+            Nuevo Caso
+          </Button>
+        </Link>
       </div>
 
-      {/* Estadísticas */}
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Card className="bg-slate-50 text-center">
-          <CardBody className="py-3">
-            <div className="mb-0 text-2xl font-bold text-slate-800">{estadisticas.total}</div>
-            <small className="text-slate-500">Total Casos</small>
-          </CardBody>
-        </Card>
-        <Card className="bg-teal-50 text-center">
-          <CardBody className="py-3">
-            <div className="mb-0 text-2xl font-bold text-teal-700">{estadisticas.activos}</div>
-            <small className="text-slate-500">Activos</small>
-          </CardBody>
-        </Card>
-        <Card className="bg-slate-100 text-center">
-          <CardBody className="py-3">
-            <div className="mb-0 text-2xl font-bold text-slate-600">{estadisticas.cerrados}</div>
-            <small className="text-slate-500">Cerrados</small>
-          </CardBody>
-        </Card>
-        <Card className="bg-amber-50 text-center">
-          <CardBody className="py-3">
-            <div className="mb-0 text-2xl font-bold text-amber-600">{estadisticas.suspendidos}</div>
-            <small className="text-slate-500">Suspendidos</small>
-          </CardBody>
-        </Card>
-        <Card className="bg-red-50 text-center">
-          <CardBody className="py-3">
-            <div className="mb-0 text-2xl font-bold text-red-600">{estadisticas.criticos}</div>
-            <small className="text-slate-500">Críticos</small>
-          </CardBody>
-        </Card>
+      {/* Pestañas de estado */}
+      <div className="mb-4 flex gap-1 border-b border-slate-200">
+        {(Object.keys(VISTAS) as Vista[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => cambiarVista(v)}
+            className={cn(
+              'flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+              vista === v ? 'border-blue-800 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            {VISTAS[v].label}
+            {conteos && <Badge variant={vista === v ? 'primary' : 'secondary'}>{conteos[v]}</Badge>}
+          </button>
+        ))}
       </div>
 
       {/* Filtros y Búsqueda */}
@@ -216,12 +237,11 @@ export default function CasosPage() {
                 <Filter size={14} />
                 Estado
               </Label>
-              <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-                <option value="">Todos</option>
-                <option value="ACTIVO">Activo</option>
-                <option value="CERRADO">Cerrado</option>
-                <option value="SUSPENDIDO">Suspendido</option>
-                <option value="ARCHIVADO">Archivado</option>
+              <Select value={subEstado} onChange={(e) => setSubEstado(e.target.value as EstadoCaso | '')}>
+                <option value="">{VISTAS[vista].estados.map((e) => ESTADO_CONFIG[e].label).join(' y ')}</option>
+                {VISTAS[vista].estados.map((e) => (
+                  <option key={e} value={e}>Solo {ESTADO_CONFIG[e].label}</option>
+                ))}
               </Select>
             </div>
             <div className="md:col-span-2">
@@ -250,7 +270,7 @@ export default function CasosPage() {
                 className="w-full justify-center"
                 onClick={() => {
                   setSearchTerm('')
-                  setFiltroEstado('')
+                  setSubEstado('')
                   setFiltroPrioridad('')
                   setFiltroTipo('')
                 }}
@@ -267,25 +287,29 @@ export default function CasosPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Briefcase size={20} />
-            Casos ({casosFiltrados.length})
+            {VISTAS[vista].label} ({pagination.total > 0 ? pagination.total : casos.length})
           </CardTitle>
         </CardHeader>
-        <CardBody>
+        <CardBody className="p-0">
           {loading ? (
             <Spinner />
-          ) : casosFiltrados.length === 0 ? (
+          ) : error ? (
+            <div className="py-5 text-center">
+              <Alert variant="danger" title="Error al cargar casos" className="mx-4 mb-4 text-left">
+                {error}
+              </Alert>
+              <Button onClick={() => { setError(null); fetchCasos() }}>Reintentar</Button>
+            </div>
+          ) : casos.length === 0 ? (
             <div className="py-5 text-center">
               <Briefcase size={48} className="mx-auto mb-3 text-slate-300" />
-              <h5 className="text-base font-semibold text-slate-500">
-                {casos.length === 0 ? 'No hay casos registrados' : 'No se encontraron casos'}
-              </h5>
+              <h5 className="text-base font-semibold text-slate-500">Sin casos en &quot;{VISTAS[vista].label}&quot;</h5>
               <p className="text-slate-500">
-                {casos.length === 0
+                {vista === 'activos'
                   ? 'Los casos se crean automáticamente cuando una radicación es aceptada por el juzgado.'
-                  : 'Intenta con otros filtros de búsqueda.'
-                }
+                  : 'Intenta con otros filtros de búsqueda.'}
               </p>
-              {casos.length === 0 && (
+              {vista === 'activos' && (
                 <Link href="/radicaciones">
                   <Button className="mt-3">Ir a Radicaciones</Button>
                 </Link>
@@ -307,7 +331,7 @@ export default function CasosPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {casosFiltrados.map((caso) => {
+                  {casos.map((caso) => {
                     const estadoConfig = ESTADO_CONFIG[caso.estado] || ESTADO_CONFIG.ACTIVO
                     const prioridadConfig = PRIORIDAD_CONFIG[caso.prioridad] || PRIORIDAD_CONFIG.MEDIA
                     const IconoEstado = estadoConfig.icon
@@ -325,12 +349,18 @@ export default function CasosPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 align-middle">
-                          <div className="font-medium text-slate-800">
-                            {caso.cliente.nombre} {caso.cliente.apellido}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            Doc: {caso.cliente.documento}
-                          </div>
+                          {caso.cliente ? (
+                            <>
+                              <div className="font-medium text-slate-800">
+                                {caso.cliente.nombre} {caso.cliente.apellido}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                Doc: {caso.cliente.documento}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">Sin cliente</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <Badge variant="outline">
@@ -374,6 +404,34 @@ export default function CasosPage() {
                   })}
                 </tbody>
               </table>
+
+              {pagination.total > pagination.limit && (
+                <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
+                  <p className="mb-0 text-xs text-slate-500">
+                    Página {pagination.page} de {Math.ceil(pagination.total / pagination.limit)} · {pagination.total} casos
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft size={14} />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= Math.ceil(pagination.total / pagination.limit)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Siguiente
+                      <ChevronRight size={14} />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardBody>

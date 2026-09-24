@@ -138,20 +138,6 @@ function NuevaAsesoriaContent() {
       if (response.ok) {
         const asesoria = await response.json()
 
-        if (leadIdParam && selectedLead?.estado === 'CALIFICADO') {
-          try {
-            await fetch(`/api/leads/${leadIdParam}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ estado: 'CONVERTIDO' }),
-            })
-          } catch (error) {
-            console.log('No se pudo actualizar el estado del lead:', error)
-          }
-        }
-
         router.push(`/asesorias/${asesoria.id}`)
       } else {
         const error = await response.json()
@@ -422,9 +408,6 @@ function NuevaAsesoriaContent() {
                   <h6 className="mb-2 font-semibold text-slate-700">Workflow:</h6>
                   <ul className="list-none space-y-1 p-0">
                     <li>• La asesoría se asociará al lead seleccionado</li>
-                    {leadIdParam && selectedLead?.estado === 'CALIFICADO' && (
-                      <li>• El lead será marcado como CONVERTIDO</li>
-                    )}
                     <li>• Una vez REALIZADA podrá generar una radicación o caso</li>
                   </ul>
                 </div>

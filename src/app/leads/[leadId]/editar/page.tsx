@@ -259,7 +259,6 @@ export default function EditarLeadPage() {
                       <option value="NUEVO">Nuevo</option>
                       <option value="CONTACTADO">Contactado</option>
                       <option value="CALIFICADO">Calificado</option>
-                      <option value="CONVERTIDO">Convertido</option>
                       <option value="PERDIDO">Perdido</option>
                     </Select>
                   </div>

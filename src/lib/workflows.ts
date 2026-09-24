@@ -136,7 +136,7 @@ export class BusinessWorkflowService {
       await tx.lead.update({
         where: { id: data.leadId },
         data: { 
-          estado: 'CONVERTIDO',
+          estado: 'CALIFICADO',
           observaciones: `Convertido a asesoría ${asesoria.id} el ${new Date().toISOString()}`
         }
       })
@@ -151,9 +151,7 @@ export class BusinessWorkflowService {
   static async asesoriaToRadicacion(data: {
     asesoriaId: string
     radicacionData: {
-      demandante: string
-      demandado: string
-      valor: number
+      clienteId: string
       observaciones?: string
     }
   }) {
@@ -265,7 +263,8 @@ export class BusinessWorkflowService {
     }
 
     const radicacion = await prisma.radicacion.findUnique({
-      where: { id: data.radicacionId }
+      where: { id: data.radicacionId },
+      include: { cliente: true }
     })
 
     if (!radicacion) {
@@ -277,9 +276,12 @@ export class BusinessWorkflowService {
     }
 
     // Usar datos de la radicación para crear el caso
+    const nombreCliente = radicacion.cliente
+      ? `${radicacion.cliente.nombre} ${radicacion.cliente.apellido || ''}`.trim()
+      : 'cliente sin asignar'
     const casoCompleteData = {
       ...data.casoData,
-      observaciones: `${data.casoData.observaciones || ''} - Generado desde radicación ${radicacion.numero} (${radicacion.demandante} vs ${radicacion.demandado})`
+      observaciones: `${data.casoData.observaciones || ''} - Generado desde radicación ${radicacion.numero} (${nombreCliente})`
     }
 
     const casosService = new CasosService()

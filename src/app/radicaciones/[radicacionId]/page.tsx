@@ -10,7 +10,6 @@ import {
   Clock,
   User,
   FileText,
-  Building,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -24,8 +23,6 @@ import { cn } from '@/lib/utils'
 interface Radicacion {
   id: string
   numero: string
-  demandante: string
-  demandado: string
   estado: EstadoRadicacion
   resultado?: ResultadoRadicacion
   fechaSolicitud: string
@@ -33,6 +30,16 @@ interface Radicacion {
   observaciones?: string
   createdAt: string
   updatedAt: string
+  // Puede ser null: alguna radicación anterior a este campo no pudo resolverse en la migración.
+  cliente: {
+    id: string
+    nombre: string
+    apellido?: string | null
+    email: string
+    telefono: string
+    documento: string
+  } | null
+  // Puede ser null: una radicación se puede crear directamente, sin pasar por una asesoría.
   asesoria: {
     id: string
     tema: string
@@ -49,7 +56,7 @@ interface Radicacion {
       apellido: string
       email: string
     }
-  }
+  } | null
 }
 
 const ESTADO_CONFIG: Record<EstadoRadicacion, { badge: BadgeProps['variant']; icon: typeof Clock; label: string; dot: string }> = {
@@ -208,7 +215,9 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
             )}
           </div>
           <p className="mb-0 text-slate-500">
-            {radicacion.demandante} vs {radicacion.demandado}
+            {radicacion.cliente
+              ? `${radicacion.cliente.nombre} ${radicacion.cliente.apellido || ''}`.trim()
+              : 'Sin cliente asignado'}
           </p>
         </div>
       </div>
@@ -220,18 +229,14 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
             <CardHeader><CardTitle>Detalles de la Conciliación</CardTitle></CardHeader>
             <CardBody>
               <div>
-                <h6 className="mb-1 text-sm text-slate-500">Partes</h6>
-                <div className="mb-3">
-                  <div className="mb-1 flex items-center gap-2">
-                    <User size={16} className="text-slate-400" />
-                    <span className="font-semibold">Insolvente:</span>
-                    <span>{radicacion.demandante}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Building size={16} className="text-slate-400" />
-                    <span className="font-semibold">Centro de Conciliación:</span>
-                    <span>{radicacion.demandado}</span>
-                  </div>
+                <h6 className="mb-1 text-sm text-slate-500">Insolvente</h6>
+                <div className="mb-3 flex items-center gap-2">
+                  <User size={16} className="text-slate-400" />
+                  <span className="font-semibold">
+                    {radicacion.cliente
+                      ? `${radicacion.cliente.nombre} ${radicacion.cliente.apellido || ''}`.trim()
+                      : 'Sin cliente asignado'}
+                  </span>
                 </div>
               </div>
 
@@ -269,30 +274,36 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
           <Card>
             <CardHeader><CardTitle>Asesoría de Origen</CardTitle></CardHeader>
             <CardBody>
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <h6 className="mb-1 font-semibold text-slate-800">{radicacion.asesoria.tema}</h6>
-                  <p className="mb-2 text-slate-500">
-                    Realizada el {formatDate(radicacion.asesoria.fecha)}
-                  </p>
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <User size={14} />
-                    <span>Cliente: {radicacion.asesoria.lead.nombre}</span>
+              {!radicacion.asesoria ? (
+                <p className="mb-0 text-sm text-slate-500">
+                  Esta radicación se creó directamente, sin una asesoría de origen.
+                </p>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <h6 className="mb-1 font-semibold text-slate-800">{radicacion.asesoria.tema}</h6>
+                    <p className="mb-2 text-slate-500">
+                      Realizada el {formatDate(radicacion.asesoria.fecha)}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <User size={14} />
+                      <span>Cliente: {radicacion.asesoria.lead.nombre}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <User size={14} />
+                      <span>
+                        Asesor: {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <User size={14} />
-                    <span>
-                      Asesor: {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
-                    </span>
-                  </div>
+                  <Link href={`/asesorias/${radicacion.asesoria.id}`}>
+                    <Button variant="outlinePrimary" size="sm">
+                      <Eye size={14} />
+                      Ver Asesoría
+                    </Button>
+                  </Link>
                 </div>
-                <Link href={`/asesorias/${radicacion.asesoria.id}`}>
-                  <Button variant="outlinePrimary" size="sm">
-                    <Eye size={14} />
-                    Ver Asesoría
-                  </Button>
-                </Link>
-              </div>
+              )}
             </CardBody>
           </Card>
         </div>
@@ -320,12 +331,14 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
                 </Button>
               </Link>
 
-              <Link href={`/leads/${radicacion.asesoria.lead.id}/archivos`}>
-                <Button className="w-full justify-center bg-sky-600 hover:bg-sky-700">
-                  <FileText size={16} />
-                  Ver Archivos
-                </Button>
-              </Link>
+              {radicacion.asesoria && (
+                <Link href={`/leads/${radicacion.asesoria.lead.id}/archivos`}>
+                  <Button className="w-full justify-center bg-sky-600 hover:bg-sky-700">
+                    <FileText size={16} />
+                    Ver Archivos
+                  </Button>
+                </Link>
+              )}
             </CardBody>
           </Card>
 
@@ -333,19 +346,25 @@ export default function RadicacionDetailPage({ params }: { params: { radicacionI
           <Card>
             <CardHeader><CardTitle>Información del Cliente</CardTitle></CardHeader>
             <CardBody>
-              <div className="mb-2 flex items-center gap-2">
-                <User size={16} className="text-slate-400" />
-                <span className="font-semibold text-slate-800">{radicacion.asesoria.lead.nombre}</span>
-              </div>
-              <div className="mb-3 text-sm text-slate-500">
-                <div>{radicacion.asesoria.lead.email}</div>
-                <div>{radicacion.asesoria.lead.telefono}</div>
-              </div>
-              <Link href={`/leads/${radicacion.asesoria.lead.id}`}>
-                <Button variant="outlinePrimary" size="sm" className="w-full justify-center">
-                  Ver Perfil del Cliente
-                </Button>
-              </Link>
+              {!radicacion.cliente ? (
+                <p className="mb-0 text-sm text-amber-600">
+                  Esta radicación no tiene un cliente asignado. Asígnalo desde &quot;Editar Conciliación&quot;.
+                </p>
+              ) : (
+                <>
+                  <div className="mb-2 flex items-center gap-2">
+                    <User size={16} className="text-slate-400" />
+                    <span className="font-semibold text-slate-800">
+                      {radicacion.cliente.nombre} {radicacion.cliente.apellido || ''}
+                    </span>
+                  </div>
+                  <div className="text-sm text-slate-500">
+                    <div>Doc: {radicacion.cliente.documento}</div>
+                    <div>{radicacion.cliente.email}</div>
+                    <div>{radicacion.cliente.telefono}</div>
+                  </div>
+                </>
+              )}
             </CardBody>
           </Card>
 

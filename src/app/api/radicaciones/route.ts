@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { prisma } from '@/lib/db'
+import { ClientesService } from '@/modules/clientes/services'
 
 // Función auxiliar para generar número de radicación
 async function generateRadicacionNumber(): Promise<string> {
@@ -43,8 +44,9 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { numero: { contains: search, mode: 'insensitive' } },
-        { demandante: { contains: search, mode: 'insensitive' } },
-        { demandado: { contains: search, mode: 'insensitive' } }
+        { cliente: { nombre: { contains: search, mode: 'insensitive' } } },
+        { cliente: { apellido: { contains: search, mode: 'insensitive' } } },
+        { cliente: { documento: { contains: search } } }
       ]
     }
 
@@ -52,6 +54,16 @@ export async function GET(request: NextRequest) {
       prisma.radicacion.findMany({
         where,
         include: {
+          cliente: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              documento: true
+            }
+          },
           asesoria: {
             include: {
               lead: {
@@ -104,9 +116,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Si se proporciona asesoriaId, verificar que existe
+    let asesoria = null
     if (body.asesoriaId) {
-      const asesoria = await prisma.asesoria.findUnique({
-        where: { id: body.asesoriaId }
+      asesoria = await prisma.asesoria.findUnique({
+        where: { id: body.asesoriaId },
+        include: { lead: true }
       })
       if (!asesoria) {
         return NextResponse.json(
@@ -114,6 +128,29 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         )
       }
+    }
+
+    // El cliente es obligatorio. Si viene de una asesoría y no se indicó uno explícitamente,
+    // se resuelve (o se crea) a partir del lead de esa asesoría, para no obligar a elegirlo a
+    // mano cuando ya se sabe de quién se trata.
+    let clienteId: string | undefined = body.clienteId || undefined
+    if (!clienteId && asesoria) {
+      const clientesService = new ClientesService()
+      const cliente = await clientesService.obtenerOCrearDesdeLead(asesoria.lead)
+      clienteId = cliente.id
+    }
+    if (!clienteId) {
+      return NextResponse.json(
+        { error: 'El cliente es requerido' },
+        { status: 400 }
+      )
+    }
+    const cliente = await prisma.cliente.findUnique({ where: { id: clienteId } })
+    if (!cliente) {
+      return NextResponse.json(
+        { error: 'Cliente no encontrado' },
+        { status: 404 }
+      )
     }
 
     // Generar número automáticamente si no se proporciona o es temporal
@@ -138,16 +175,24 @@ export async function POST(request: NextRequest) {
     const radicacion = await prisma.radicacion.create({
       data: {
         numero,
-        demandante: body.demandante,
-        demandado: body.demandado,
-        valor: body.valor,
+        clienteId,
         estado: body.estado || 'SOLICITADA',
         fechaSolicitud: body.fechaSolicitud || new Date(),
         fechaAudiencia: body.fechaAudiencia ? new Date(body.fechaAudiencia) : null,
         observaciones: body.observaciones,
         ...(body.asesoriaId ? { asesoriaId: body.asesoriaId } : {}),
-      } as any,
+      },
       include: {
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            telefono: true,
+            documento: true
+          }
+        },
         asesoria: {
           include: {
             lead: {

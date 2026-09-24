@@ -204,23 +204,26 @@ model Asesoria {
 model Radicacion {
   id              String    @id @default(cuid())
   numero          String    @unique
-  demandante      String
-  demandado       String
-  valor           Decimal   @db.Decimal(10, 2)
   estado          EstadoRadicacion @default(SOLICITADA)
   resultado       ResultadoRadicacion?
   fechaSolicitud  DateTime  @default(now())
   fechaAudiencia  DateTime?
   observaciones   String?
-  
+
+  // Cliente al que pertenece la radicación. Nullable a nivel de BD por las radicaciones que ya
+  // existían antes de este campo (se migran con el cliente que se pudo resolver, o quedan sin
+  // asignar); el formulario de creación sí lo exige siempre.
+  clienteId       String?
+  cliente         Cliente?  @relation(fields: [clienteId], references: [id])
+
   // Relaciones opcionales - Puede nacer de una asesoría o crearse directamente
   asesoriaId      String?
   asesoria        Asesoria? @relation(fields: [asesoriaId], references: [id])
-  
+
   // Timestamps
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
+
   @@map("radicaciones")
 }
 
@@ -249,7 +252,8 @@ model Cliente {
   // Relaciones inversas
   casos           Caso[]
   facturas        Factura[]
-  
+  radicaciones    Radicacion[]
+
   @@map("clientes")
 }
 
@@ -711,7 +715,6 @@ enum EstadoLead {
   NUEVO
   CONTACTADO
   CALIFICADO
-  CONVERTIDO
   PERDIDO
 }
 

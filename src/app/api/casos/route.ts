@@ -13,12 +13,15 @@ export async function GET(request: NextRequest) {
     const tipoInsolvencia = searchParams.get('tipoInsolvencia')
     const prioridad = searchParams.get('prioridad')
     const responsableId = searchParams.get('responsableId')
+    const search = searchParams.get('search')
 
     const filters: any = {}
-    if (estado) filters.estado = estado
+    // "estado=ACTIVO,SUSPENDIDO" agrupa varios estados en una sola pantalla (vista "Activos").
+    if (estado) filters.estado = estado.includes(',') ? estado.split(',') : estado
     if (tipoInsolvencia) filters.tipoInsolvencia = tipoInsolvencia
     if (prioridad) filters.prioridad = prioridad
     if (responsableId) filters.responsableId = responsableId
+    if (search) filters.search = search
 
     const casosService = new CasosService()
     const result = await casosService.getCasos(filters, page, limit)

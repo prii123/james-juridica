@@ -13,12 +13,15 @@ export async function GET(request: NextRequest) {
     const tipoPersona = searchParams.get('tipoPersona')
     const responsableId = searchParams.get('responsableId')
     const search = searchParams.get('search')
+    const orden = searchParams.get('orden')
 
     const filters: any = {}
-    if (estado) filters.estado = estado
+    // "estado=CONTACTADO,CALIFICADO" agrupa varios estados en una sola pantalla (vista "En gestión").
+    if (estado) filters.estado = estado.includes(',') ? estado.split(',') : estado
     if (tipoPersona) filters.tipoPersona = tipoPersona
     if (responsableId) filters.responsableId = responsableId
     if (search) filters.search = search
+    if (orden === 'asc' || orden === 'desc') filters.orden = orden
 
     const leadsService = new LeadsService()
     const result = await leadsService.getLeads(filters, page, limit)

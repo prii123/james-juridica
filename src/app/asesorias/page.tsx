@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Breadcrumb from '@/components/Breadcrumb'
 import {
   Scale,
@@ -10,15 +11,15 @@ import {
   Search,
   Filter,
   Eye,
-  Clock,
   Phone,
   Video,
   Users,
-  CheckCircle,
-  AlertCircle
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { TipoAsesoria, EstadoAsesoria, ModalidadAsesoria, ResultadoAsesoria } from '@prisma/client'
 import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Spinner, Alert, type BadgeProps } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 interface Asesoria {
   id: string
@@ -45,14 +46,11 @@ interface Asesoria {
   createdAt: Date
 }
 
-interface AsesoriaFilters {
-  estado?: EstadoAsesoria
+interface Filters {
   tipo?: TipoAsesoria
   modalidad?: ModalidadAsesoria
   asesorId?: string
   search?: string
-  fechaInicio?: string
-  fechaFin?: string
 }
 
 const ESTADO_BADGE: Record<EstadoAsesoria, BadgeProps['variant']> = {
@@ -63,72 +61,113 @@ const ESTADO_BADGE: Record<EstadoAsesoria, BadgeProps['variant']> = {
   REPROGRAMADA: 'info',
 }
 
+// "Agenda" agrupa lo que aún necesita atención (por venir o por reprogramar) y se ordena por
+// fecha ascendente para que lo más próximo salga primero. Las otras dos son historial.
+type Vista = 'agenda' | 'realizadas' | 'canceladas'
+
+const VISTAS: Record<Vista, { label: string; estados: EstadoAsesoria[]; orden: 'asc' | 'desc' }> = {
+  agenda: { label: 'Agenda', estados: ['PENDIENTE', 'PROGRAMADA', 'REPROGRAMADA'], orden: 'asc' },
+  realizadas: { label: 'Realizadas', estados: ['REALIZADA'], orden: 'desc' },
+  canceladas: { label: 'Canceladas', estados: ['CANCELADA'], orden: 'desc' },
+}
+
+function esVista(v: string | null): v is Vista {
+  return v === 'agenda' || v === 'realizadas' || v === 'canceladas'
+}
+
 export default function AsesoriaPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <AsesoriaPageContent />
+    </Suspense>
+  )
+}
+
+function AsesoriaPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const vistaParam = searchParams.get('vista')
+  const vista: Vista = esVista(vistaParam) ? vistaParam : 'agenda'
+
   const [asesorias, setAsesorias] = useState<Asesoria[]>([])
+  const [conteos, setConteos] = useState<Record<Vista, number> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<AsesoriaFilters>({})
+  const [filters, setFilters] = useState<Filters>({})
+  const [subEstado, setSubEstado] = useState<EstadoAsesoria | ''>('') // solo aplica en "Agenda"
   const [showFilters, setShowFilters] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 50 })
 
-  // Estadísticas
-  const [stats, setStats] = useState({
-    total: 0,
-    programadas: 0,
-    realizadas: 0,
-    canceladas: 0,
-    pendientesHoy: 0
-  })
+  const cambiarVista = (v: Vista) => {
+    setSubEstado('')
+    router.push(`/asesorias?vista=${v}`)
+  }
 
+  // Cambiar de pestaña, sub-estado o filtros vuelve a la página 1.
   useEffect(() => {
-    fetchAsesorias()
-  }, [filters])
+    setPage(1)
+  }, [vista, subEstado, filters])
 
-  const fetchAsesorias = async () => {
+  const fetchAsesorias = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
+      const { estados, orden } = VISTAS[vista]
+      const params = new URLSearchParams()
+      params.append('estado', subEstado || estados.join(','))
+      params.append('orden', orden)
+      params.append('page', String(page))
+      params.append('limit', '50')
+      if (filters.tipo) params.append('tipo', filters.tipo)
+      if (filters.modalidad) params.append('modalidad', filters.modalidad)
+      if (filters.asesorId) params.append('asesorId', filters.asesorId)
+      if (filters.search) params.append('search', filters.search)
 
-      const queryParams = new URLSearchParams()
-
-      if (filters.estado) queryParams.append('estado', filters.estado)
-      if (filters.tipo) queryParams.append('tipo', filters.tipo)
-      if (filters.modalidad) queryParams.append('modalidad', filters.modalidad)
-      if (filters.asesorId) queryParams.append('asesorId', filters.asesorId)
-      if (filters.search) queryParams.append('search', filters.search)
-      if (filters.fechaInicio) queryParams.append('fechaInicio', filters.fechaInicio)
-      if (filters.fechaFin) queryParams.append('fechaFin', filters.fechaFin)
-
-      const response = await fetch(`/api/asesorias?${queryParams.toString()}`)
-
-      if (response.ok) {
-        const data = await response.json()
-        setAsesorias(data.asesorias || data)
-
-        const list: Asesoria[] = data.asesorias || data
-        const total = list.length
-        const programadas = list.filter((a) => a.estado === 'PROGRAMADA').length
-        const realizadas = list.filter((a) => a.estado === 'REALIZADA').length
-        const canceladas = list.filter((a) => a.estado === 'CANCELADA').length
-
-        const hoy = new Date().toDateString()
-        const pendientesHoy = list.filter((a) =>
-          new Date(a.fecha).toDateString() === hoy && a.estado === 'PROGRAMADA'
-        ).length
-
-        setStats({ total, programadas, realizadas, canceladas, pendientesHoy })
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Error al cargar las asesorías')
+      const response = await fetch(`/api/asesorias?${params.toString()}`)
+      const data = await response.json()
+      if (!response.ok) {
+        setError(data.error || 'Error al cargar las asesorías')
         setAsesorias([])
+        return
       }
-    } catch (error) {
-      console.error('Error al cargar asesorías:', error)
+      const lista: Asesoria[] = data.asesorias ?? data
+      setAsesorias(lista)
+      setPagination({
+        total: data.total ?? lista.length,
+        page: data.page ?? 1,
+        limit: data.limit ?? 50,
+      })
+    } catch {
       setError('Error de conexión. Por favor, inténtelo de nuevo.')
       setAsesorias([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [vista, subEstado, filters, page])
+
+  const fetchConteos = useCallback(async () => {
+    try {
+      const res = await fetch('/api/asesorias/stats')
+      if (!res.ok) return
+      const stats = await res.json()
+      setConteos({
+        agenda: (stats.porEstado?.PENDIENTE ?? 0) + (stats.porEstado?.PROGRAMADA ?? 0) + (stats.porEstado?.REPROGRAMADA ?? 0),
+        realizadas: stats.porEstado?.REALIZADA ?? 0,
+        canceladas: stats.porEstado?.CANCELADA ?? 0,
+      })
+    } catch {
+      // Los contadores de las pestañas no son críticos.
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchAsesorias()
+  }, [fetchAsesorias])
+
+  useEffect(() => {
+    fetchConteos()
+  }, [fetchConteos, asesorias])
 
   const getTipoText = (tipo: TipoAsesoria) => {
     switch (tipo) {
@@ -148,55 +187,43 @@ export default function AsesoriaPage() {
     }
   }
 
-  const statCards: Array<{ icon: typeof Scale; value: number; label: string; bg: string }> = [
-    { icon: Scale, value: stats.total, label: 'Total Asesorías', bg: 'bg-blue-800' },
-    { icon: Clock, value: stats.programadas, label: 'Programadas', bg: 'bg-amber-500' },
-    { icon: CheckCircle, value: stats.realizadas, label: 'Realizadas', bg: 'bg-teal-700' },
-    { icon: AlertCircle, value: stats.pendientesHoy, label: 'Pendientes Hoy', bg: 'bg-sky-600' },
-  ]
-
   return (
     <>
       <Breadcrumb items={[{ label: 'Asesorías' }]} />
 
-      {/* Header */}
-      <div className="mb-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h1 className="mb-2 text-2xl font-bold text-slate-800">Asesorías</h1>
-            <p className="mb-0 text-slate-500">Gestión de asesorías y consultas jurídicas</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/asesorias/nueva">
-              <Button>
-                <Plus size={16} />
-                Nueva Asesoría
-              </Button>
-            </Link>
-            <Link href="/calendario">
-              <Button variant="outline">
-                <Calendar size={16} />
-                Calendario
-              </Button>
-            </Link>
-          </div>
-        </div>
+      {/* Pestañas de estado */}
+      <div className="mb-4 flex gap-1 border-b border-slate-200">
+        {(Object.keys(VISTAS) as Vista[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => cambiarVista(v)}
+            className={cn(
+              'flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+              vista === v ? 'border-blue-800 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            {VISTAS[v].label}
+            {conteos && (
+              <Badge variant={vista === v ? 'primary' : 'secondary'}>{conteos[v]}</Badge>
+            )}
+          </button>
+        ))}
+      </div>
 
-        {/* Estadísticas */}
-        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {statCards.map((stat) => (
-            <Card key={stat.label} className={`${stat.bg} border-0 text-white`}>
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="mb-1 text-2xl font-bold">{stat.value}</h4>
-                    <small>{stat.label}</small>
-                  </div>
-                  <stat.icon size={32} />
-                </div>
-              </CardBody>
-            </Card>
-          ))}
+      <div className="mb-4">
+        <div className="mb-3 flex items-center justify-end gap-2">
+          <Link href="/asesorias/nueva">
+            <Button>
+              <Plus size={16} />
+              Nueva Asesoría
+            </Button>
+          </Link>
+          <Link href="/calendario">
+            <Button variant="outline">
+              <Calendar size={16} />
+              Calendario
+            </Button>
+          </Link>
         </div>
 
         {/* Filtros */}
@@ -221,16 +248,14 @@ export default function AsesoriaPage() {
 
             {showFilters && (
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
-                <Select
-                  value={filters.estado || ''}
-                  onChange={(e) => setFilters({ ...filters, estado: (e.target.value as EstadoAsesoria) || undefined })}
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="PROGRAMADA">Programada</option>
-                  <option value="REALIZADA">Realizada</option>
-                  <option value="CANCELADA">Cancelada</option>
-                  <option value="REPROGRAMADA">Reprogramada</option>
-                </Select>
+                {vista === 'agenda' && (
+                  <Select value={subEstado} onChange={(e) => setSubEstado(e.target.value as EstadoAsesoria | '')}>
+                    <option value="">Pendiente, Programada y Reprogramada</option>
+                    <option value="PENDIENTE">Solo Pendiente</option>
+                    <option value="PROGRAMADA">Solo Programada</option>
+                    <option value="REPROGRAMADA">Solo Reprogramada</option>
+                  </Select>
+                )}
                 <Select
                   value={filters.tipo || ''}
                   onChange={(e) => setFilters({ ...filters, tipo: (e.target.value as TipoAsesoria) || undefined })}
@@ -249,7 +274,13 @@ export default function AsesoriaPage() {
                   <option value="VIRTUAL">Virtual</option>
                   <option value="TELEFONICA">Telefónica</option>
                 </Select>
-                <Button variant="outlineDanger" onClick={() => setFilters({})}>
+                <Button
+                  variant="outlineDanger"
+                  onClick={() => {
+                    setFilters({})
+                    setSubEstado('')
+                  }}
+                >
                   Limpiar Filtros
                 </Button>
               </div>
@@ -261,8 +292,10 @@ export default function AsesoriaPage() {
       {/* Lista de Asesorías */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Asesorías</CardTitle>
-          <Badge variant="primary">{asesorias.length} asesorías</Badge>
+          <CardTitle>{VISTAS[vista].label}</CardTitle>
+          <Badge variant="primary">
+            {pagination.total > 0 ? pagination.total : asesorias.length} asesorías
+          </Badge>
         </CardHeader>
         <CardBody className="p-0">
           {loading ? (
@@ -284,11 +317,13 @@ export default function AsesoriaPage() {
           ) : asesorias.length === 0 ? (
             <div className="py-5 text-center">
               <Scale size={48} className="mx-auto mb-3 text-slate-300" />
-              <h5 className="text-base font-semibold text-slate-700">No hay asesorías</h5>
+              <h5 className="text-base font-semibold text-slate-700">Sin asesorías en &quot;{VISTAS[vista].label}&quot;</h5>
               <p className="mb-3 text-slate-500">No se encontraron asesorías que coincidan con los filtros.</p>
-              <Link href="/asesorias/nueva">
-                <Button>Crear primera asesoría</Button>
-              </Link>
+              {vista === 'agenda' && (
+                <Link href="/asesorias/nueva">
+                  <Button>Crear primera asesoría</Button>
+                </Link>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -345,6 +380,34 @@ export default function AsesoriaPage() {
                   ))}
                 </tbody>
               </table>
+
+              {pagination.total > pagination.limit && (
+                <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
+                  <p className="mb-0 text-xs text-slate-500">
+                    Página {pagination.page} de {Math.ceil(pagination.total / pagination.limit)} · {pagination.total} asesorías
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft size={14} />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= Math.ceil(pagination.total / pagination.limit)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Siguiente
+                      <ChevronRight size={14} />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardBody>

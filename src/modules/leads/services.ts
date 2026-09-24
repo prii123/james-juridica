@@ -2,12 +2,15 @@ import { EstadoLead } from '@prisma/client'
 import { LeadsRepository } from './repository'
 import { CreateLeadData, UpdateLeadData, LeadFilters } from './types'
 import { createLeadSchema, updateLeadSchema, validateDocumentoColombia, validateTelefonoColombia } from './validators'
+import { ClientesService } from '@/modules/clientes/services'
 
 export class LeadsService {
   private repository: LeadsRepository
+  private clientesService: ClientesService
 
   constructor() {
     this.repository = new LeadsRepository()
+    this.clientesService = new ClientesService()
   }
 
   async createLead(data: CreateLeadData) {
@@ -76,7 +79,20 @@ export class LeadsService {
       }
     }
 
-    return await this.repository.update(id, validatedData)
+    const lead = await this.repository.update(id, validatedData)
+
+    // Un lead CALIFICADO ya está listo para asesoría/radicación, que ahora se relacionan con un
+    // Cliente. Se crea aquí para que exista de una vez, sin esperar a la primera factura. No
+    // bloquea el cambio de estado si falla: es una comodidad, no un requisito del flujo comercial.
+    if (validatedData.estado === 'CALIFICADO' && existingLead.estado !== 'CALIFICADO') {
+      try {
+        await this.clientesService.obtenerOCrearDesdeLead(lead)
+      } catch (err) {
+        console.error('[Leads] No se pudo crear el cliente al calificar el lead:', err)
+      }
+    }
+
+    return lead
   }
 
   async getLeadById(id: string) {
@@ -84,11 +100,22 @@ export class LeadsService {
     if (!lead) {
       throw new Error('Lead no encontrado')
     }
-    return lead
+    const clientes = await this.clientesService.mapaPorEmails([lead.email])
+    return { ...lead, cliente: clientes.get(lead.email.toLowerCase()) ?? null }
   }
 
   async getLeads(filters: LeadFilters = {}, page: number = 1, limit: number = 10) {
-    return await this.repository.findAll(filters, page, limit)
+    const resultado = await this.repository.findAll(filters, page, limit)
+
+    // Se marca qué leads ya son clientes (por email) para que el ERP lo muestre en la lista,
+    // sin consultar la tabla de clientes lead por lead.
+    const clientes = await this.clientesService.mapaPorEmails(resultado.leads.map((l) => l.email))
+    const leads = resultado.leads.map((lead) => ({
+      ...lead,
+      cliente: clientes.get(lead.email.toLowerCase()) ?? null,
+    }))
+
+    return { ...resultado, leads }
   }
 
   async deleteLead(id: string) {
@@ -132,7 +159,7 @@ export class LeadsService {
 
   async convertLeadToAsesoria(leadId: string) {
     // Esta función se llamaría cuando se crea una asesoría desde un lead
-    return await this.updateLeadStatus(leadId, 'CONVERTIDO', 'Lead convertido a asesoría')
+    return await this.updateLeadStatus(leadId, 'CALIFICADO', 'Lead convertido a asesoría')
   }
 
   async getLeadsForFollowUp() {

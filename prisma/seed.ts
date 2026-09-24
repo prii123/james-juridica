@@ -10,9 +10,10 @@ const modules = [
   { name: 'Asesorías', href: '/asesorias', icon: 'Scale', description: 'Consultas y asesorías jurídicas', permission: 'asesorias.view', order: 5 },
   { name: 'Radicaciones', href: '/radicaciones', icon: 'FileText', description: 'Procesos de radicación', permission: 'radicaciones.view', order: 6 },
   { name: 'Casos', href: '/casos', icon: 'Briefcase', description: 'Gestión de casos de insolvencia', permission: 'casos.view', order: 7 },
-  { name: 'Facturación', href: '/facturacion', icon: 'BarChart3', description: 'Facturación y reportes financieros', permission: 'facturacion.view', order: 8 },
-  { name: 'Cartera', href: '/cartera', icon: 'CreditCard', description: 'Gestión de cobros y pagos', permission: 'cartera.view', order: 9 },
-  { name: 'Usuarios', href: '/usuarios', icon: 'Users', description: 'Gestión de usuarios y permisos', permission: 'usuarios.view', order: 10 },
+  { name: 'Clientes', href: '/clientes', icon: 'UserCheck', description: 'Directorio de clientes', permission: 'clientes.view', order: 8 },
+  { name: 'Facturación', href: '/facturacion', icon: 'BarChart3', description: 'Facturación y reportes financieros', permission: 'facturacion.view', order: 9 },
+  { name: 'Cartera', href: '/cartera', icon: 'CreditCard', description: 'Gestión de cobros y pagos', permission: 'cartera.view', order: 10 },
+  { name: 'Usuarios', href: '/usuarios', icon: 'Users', description: 'Gestión de usuarios y permisos', permission: 'usuarios.view', order: 11 },
 ]
 
 async function main() {

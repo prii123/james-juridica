@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requirePermission, PERMISSIONS } from '@/lib/permissions'
+import { requirePermission, getCurrentUser, PERMISSIONS } from '@/lib/permissions'
 import { prisma } from '@/lib/db'
 
 export async function GET(
@@ -12,6 +12,16 @@ export async function GET(
     const radicacion = await prisma.radicacion.findUnique({
       where: { id: params.radicacionId },
       include: {
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            telefono: true,
+            documento: true
+          }
+        },
         asesoria: {
           include: {
             lead: {
@@ -65,13 +75,7 @@ export async function PATCH(
     // Verificar que la conciliación existe
     const existingRadicacion = await prisma.radicacion.findUnique({
       where: { id: params.radicacionId },
-      include: {
-        asesoria: {
-          include: {
-            lead: true
-          }
-        }
-      }
+      include: { cliente: true }
     })
 
     if (!existingRadicacion) {
@@ -86,9 +90,7 @@ export async function PATCH(
 
     if (body.estado !== undefined) updateData.estado = body.estado
     if (body.resultado !== undefined) updateData.resultado = body.resultado
-    if (body.demandante !== undefined) updateData.demandante = body.demandante
-    if (body.demandado !== undefined) updateData.demandado = body.demandado
-    if (body.valor !== undefined) updateData.valor = parseFloat(body.valor)
+    if (body.clienteId !== undefined) updateData.clienteId = body.clienteId
     if (body.fechaSolicitud !== undefined) updateData.fechaSolicitud = new Date(body.fechaSolicitud)
     if (body.fechaAudiencia !== undefined) {
       updateData.fechaAudiencia = body.fechaAudiencia ? new Date(body.fechaAudiencia) : null
@@ -97,17 +99,23 @@ export async function PATCH(
 
     // Variables para el resultado
     let casoCreado = null
-    let honorarioCreado = null
-    let facturaCreada = null
     let casoExistente = null
-    
-    // Si se está aceptando la conciliación (estado REALIZADA) y se solicita crear caso  
+
+    // Si se está aceptando la conciliación (estado REALIZADA) y se solicita crear caso
     if (body.createCase && body.estado === 'REALIZADA' && existingRadicacion.estado !== 'REALIZADA') {
-      if (!existingRadicacion.asesoria) {
+      const clienteId = body.clienteId || existingRadicacion.clienteId
+      if (!clienteId) {
         return NextResponse.json(
-          { error: 'La conciliación no tiene una asesoría asociada' },
+          { error: 'La conciliación no tiene un cliente asignado' },
           { status: 400 }
         )
+      }
+
+      // Quién queda como responsable/creador del caso: el usuario que acepta la conciliación
+      // (antes se tomaba el asesor de la asesoría, que ahora es opcional).
+      const usuario = await getCurrentUser()
+      if (!usuario) {
+        return NextResponse.json({ error: 'Usuario no autenticado' }, { status: 401 })
       }
 
       // Generar número de caso
@@ -115,32 +123,10 @@ export async function PATCH(
       const randomNum = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
       const numeroCaso = `CASO-${year}-${randomNum}`
 
-      // Verificar si ya existe un cliente para este lead
-      let clienteId = null
-      const leadData = existingRadicacion.asesoria.lead
-      
-      // Buscar cliente existente por email
-      let cliente = await prisma.cliente.findUnique({
-        where: { email: leadData.email }
-      })
-
-      if (!cliente) {
-        // Crear cliente si no existe
-        cliente = await prisma.cliente.create({
-          data: {
-            nombre: leadData.nombre,
-            email: leadData.email,
-            telefono: leadData.telefono || '',
-            documento: leadData.documento || `TEMP-${Date.now()}`, // Generar documento temporal si no existe
-            tipoPersona: 'NATURAL'
-          }
-        })
-      }
-
       // Verificar si ya existe un caso activo para este cliente
       casoExistente = await prisma.caso.findFirst({
         where: {
-          clienteId: cliente.id,
+          clienteId,
           tipoInsolvencia: 'LIQUIDACION_JUDICIAL',
           estado: 'ACTIVO'
         }
@@ -151,7 +137,7 @@ export async function PATCH(
         casoCreado = await prisma.caso.update({
           where: { id: casoExistente.id },
           data: {
-            observaciones: `${casoExistente.observaciones}\n\nConciliación adicional aceptada: ${existingRadicacion.numero} - ${existingRadicacion.demandante} vs ${existingRadicacion.demandado} por ${existingRadicacion.valor}`,
+            observaciones: `${casoExistente.observaciones}\n\nConciliación adicional aceptada: ${existingRadicacion.numero}`,
             updatedAt: new Date()
           }
         })
@@ -164,66 +150,33 @@ export async function PATCH(
             estado: 'ACTIVO',
             prioridad: 'MEDIA',
             fechaInicio: new Date(),
-            observaciones: `Caso creado automáticamente al aceptar conciliación ${existingRadicacion.numero}. Demandante: ${existingRadicacion.demandante} vs ${existingRadicacion.demandado}`,
-            clienteId: cliente.id,
-            responsableId: existingRadicacion.asesoria.asesorId,
-            creadoPorId: existingRadicacion.asesoria.asesorId
+            observaciones: `Caso creado automáticamente al aceptar conciliación ${existingRadicacion.numero}.`,
+            clienteId,
+            responsableId: usuario.id,
+            creadoPorId: usuario.id
           }
         })
       }
 
-      // Crear honorario automáticamente (valor base de la conciliación como honorario)
-      const valorHonorario = Number(existingRadicacion.valor) * 0.15 // 15% del valor de la conciliación como honorario
-      
-      honorarioCreado = await prisma.honorario.create({
-        data: {
-          tipo: 'REPRESENTACION',
-          modalidadPago: 'CONTADO',
-          valor: valorHonorario,
-          estado: 'PENDIENTE',
-          fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para pagar
-          observaciones: `Honorario generado automáticamente por aceptación de conciliación ${existingRadicacion.numero}`,
-          casoId: casoCreado.id
-        }
-      })
-
-      // Crear factura automática pendiente por facturar
-      const numeroFactura = `FACT-${year}-${randomNum}`
-      const subtotal = valorHonorario
-      const impuestos = subtotal * 0.19 // IVA del 19%
-      const total = subtotal + impuestos
-
-      facturaCreada = await prisma.factura.create({
-        data: {
-          numero: numeroFactura,
-          fecha: new Date(),
-          fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
-          subtotal: subtotal,
-          impuestos: impuestos,
-          total: total,
-          estado: 'GENERADA', // Factura generada, pendiente de envío
-          observaciones: `Factura generada automáticamente por caso ${numeroCaso} - Conciliación aceptada`,
-          ivaActivado: true, // IVA activado por defecto en facturas automáticas
-          honorarioId: honorarioCreado.id,
-          creadoPorId: existingRadicacion.asesoria.asesorId,
-          items: {
-            create: [
-              {
-                descripcion: `Honorarios profesionales - Representación en proceso de insolvencia - Caso ${numeroCaso}`,
-                cantidad: 1,
-                valorUnitario: subtotal,
-                valorTotal: subtotal
-              }
-            ]
-          }
-        }
-      })
+      // Ya no se genera honorario/factura automáticos aquí: dependían del valor de la
+      // conciliación (15%), campo que se quitó del modelo. El honorario se crea a mano desde
+      // el caso, con el valor real que se acuerde.
     }
 
     const updatedRadicacion = await prisma.radicacion.update({
       where: { id: params.radicacionId },
       data: updateData,
       include: {
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            telefono: true,
+            documento: true
+          }
+        },
         asesoria: {
           include: {
             lead: {
@@ -254,19 +207,8 @@ export async function PATCH(
 
     if (casoCreado) {
       response.casoCreado = casoCreado
-      
-      if (honorarioCreado) {
-        response.honorarioCreado = honorarioCreado
-      }
-      
-      if (facturaCreada) {
-        response.facturaCreada = facturaCreada
-        const casoAction = casoExistente ? 'actualizado' : 'creado'
-        response.message = `¡Conciliación aceptada exitosamente! Se ${casoAction} automáticamente:
-        - Caso: ${casoCreado.numeroCaso} ${casoExistente ? '(actualizado con nueva deuda)' : '(nuevo)'}
-        - Honorario por representación: $${Number(honorarioCreado?.valor).toLocaleString('es-CO')}
-        - Factura pendiente: ${facturaCreada.numero} (Total: $${Number(facturaCreada.total).toLocaleString('es-CO')})`
-      }
+      const casoAction = casoExistente ? 'actualizado' : 'creado'
+      response.message = `¡Conciliación aceptada exitosamente! Se ${casoAction} automáticamente el caso ${casoCreado.numeroCaso}${casoExistente ? ' (actualizado con esta nueva conciliación)' : ''}. Recuerda registrar el honorario correspondiente desde el caso.`
     }
 
     return NextResponse.json(response)

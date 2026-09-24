@@ -89,7 +89,7 @@ export class CasosRepository {
     const where: any = {}
 
     if (filters.estado) {
-      where.estado = filters.estado
+      where.estado = Array.isArray(filters.estado) ? { in: filters.estado } : filters.estado
     }
 
     if (filters.tipoInsolvencia) {
@@ -112,6 +112,15 @@ export class CasosRepository {
       if (filters.fechaInicioHasta) {
         where.fechaInicio.lte = filters.fechaInicioHasta
       }
+    }
+
+    if (filters.search) {
+      where.OR = [
+        { numeroCaso: { contains: filters.search, mode: 'insensitive' } },
+        { cliente: { nombre: { contains: filters.search, mode: 'insensitive' } } },
+        { cliente: { apellido: { contains: filters.search, mode: 'insensitive' } } },
+        { cliente: { documento: { contains: filters.search } } }
+      ]
     }
 
     const skip = (page - 1) * limit
@@ -178,6 +187,16 @@ export class CasosRepository {
       where: { id },
       data: data,
       include: {
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            documento: true,
+            email: true,
+            telefono: true
+          }
+        },
         responsable: {
           select: {
             id: true,

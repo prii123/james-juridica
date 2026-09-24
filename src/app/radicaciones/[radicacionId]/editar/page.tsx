@@ -10,13 +10,19 @@ import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea,
 
 interface UpdateRadicacionData {
     numero: string
-    demandante: string
-    demandado: string
     estado: EstadoRadicacion
     resultado?: ResultadoRadicacion
     fechaSolicitud: string
     fechaAudiencia?: string
     observaciones?: string
+}
+
+interface ClienteInfo {
+    id: string
+    nombre: string
+    apellido?: string | null
+    documento: string
+    email: string
 }
 
 export default function EditarRadicacionPage() {
@@ -28,15 +34,49 @@ export default function EditarRadicacionPage() {
     const [loadingData, setLoadingData] = useState(true)
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [successMessage, setSuccessMessage] = useState('')
+    const [cliente, setCliente] = useState<ClienteInfo | null>(null)
+    const [clienteId, setClienteId] = useState<string | undefined>(undefined)
+    const [cambiandoCliente, setCambiandoCliente] = useState(false)
+    const [clienteQuery, setClienteQuery] = useState('')
+    const [clienteResultados, setClienteResultados] = useState<ClienteInfo[]>([])
+    const [buscandoClientes, setBuscandoClientes] = useState(false)
     const [formData, setFormData] = useState<UpdateRadicacionData>({
         numero: '',
-        demandante: '',
-        demandado: '',
         estado: 'SOLICITADA',
         fechaSolicitud: new Date().toISOString().split('T')[0],
         fechaAudiencia: '',
         observaciones: ''
     })
+
+    useEffect(() => {
+        if (!cambiandoCliente || clienteQuery.trim().length < 2) {
+            setClienteResultados([])
+            return
+        }
+        const timer = setTimeout(async () => {
+            try {
+                setBuscandoClientes(true)
+                const res = await fetch(`/api/clientes?search=${encodeURIComponent(clienteQuery)}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setClienteResultados(data.clientes || [])
+                }
+            } catch (error) {
+                console.error('Error al buscar clientes:', error)
+            } finally {
+                setBuscandoClientes(false)
+            }
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [clienteQuery, cambiandoCliente])
+
+    const seleccionarCliente = (c: ClienteInfo) => {
+        setCliente(c)
+        setClienteId(c.id)
+        setCambiandoCliente(false)
+        setClienteQuery('')
+        setClienteResultados([])
+    }
 
     useEffect(() => {
         if (radicacionId) {
@@ -53,14 +93,13 @@ export default function EditarRadicacionPage() {
                 const data = await response.json()
                 setFormData({
                     numero: data.numero || '',
-                    demandante: data.demandante || '',
-                    demandado: data.demandado || '',
                     estado: data.estado || 'SOLICITADA',
                     resultado: data.resultado,
                     fechaSolicitud: data.fechaSolicitud?.split('T')[0] || '',
                     fechaAudiencia: data.fechaAudiencia?.split('T')[0] || '',
                     observaciones: data.observaciones || ''
                 })
+                setCliente(data.cliente || null)
             } else {
                 setErrors({ general: 'No se pudo cargar la conciliación' })
             }
@@ -92,14 +131,6 @@ export default function EditarRadicacionPage() {
             newErrors.numero = 'El número de conciliación es requerido'
         }
 
-        if (!formData.demandante.trim()) {
-            newErrors.demandante = 'El insolvente es requerido'
-        }
-
-        if (!formData.demandado.trim()) {
-            newErrors.demandado = 'El centro de conciliación es requerido'
-        }
-
         if (!formData.fechaSolicitud) {
             newErrors.fechaSolicitud = 'La fecha de solicitud es requerida'
         }
@@ -126,7 +157,7 @@ export default function EditarRadicacionPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, ...(clienteId ? { clienteId } : {}) })
             })
 
             if (response.ok) {
@@ -215,32 +246,71 @@ export default function EditarRadicacionPage() {
                                     {errors.numero && <p className="mt-1 text-xs text-red-600">{errors.numero}</p>}
                                 </div>
 
-                                {/* Demandante */}
+                                {/* Cliente */}
                                 <div>
-                                    <Label htmlFor="demandante" className="font-semibold">Insolvente</Label>
-                                    <Input
-                                        type="text"
-                                        id="demandante"
-                                        name="demandante"
-                                        value={formData.demandante}
-                                        onChange={handleChange}
-                                        placeholder="Nombre del insolvente"
-                                    />
-                                    {errors.demandante && <p className="mt-1 text-xs text-red-600">{errors.demandante}</p>}
-                                </div>
-
-                                {/* Demandado */}
-                                <div>
-                                    <Label htmlFor="demandado" className="font-semibold">Centro de Conciliación</Label>
-                                    <Input
-                                        type="text"
-                                        id="demandado"
-                                        name="demandado"
-                                        value={formData.demandado}
-                                        onChange={handleChange}
-                                        placeholder="Nombre del centro de conciliación"
-                                    />
-                                    {errors.demandado && <p className="mt-1 text-xs text-red-600">{errors.demandado}</p>}
+                                    <Label className="font-semibold">Cliente</Label>
+                                    {!cambiandoCliente ? (
+                                        cliente ? (
+                                            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                                                <div>
+                                                    <div className="font-medium text-slate-800">
+                                                        {cliente.nombre} {cliente.apellido || ''}
+                                                    </div>
+                                                    <div className="text-xs text-slate-500">
+                                                        Doc: {cliente.documento} · {cliente.email}
+                                                    </div>
+                                                </div>
+                                                <Button type="button" variant="outline" size="sm" onClick={() => setCambiandoCliente(true)}>
+                                                    Cambiar
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p className="mb-2 text-sm text-amber-600">
+                                                    Esta radicación no tiene un cliente asignado.
+                                                </p>
+                                                <Button type="button" variant="outline" size="sm" onClick={() => setCambiandoCliente(true)}>
+                                                    Asignar cliente
+                                                </Button>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="relative">
+                                            <Input
+                                                type="text"
+                                                value={clienteQuery}
+                                                onChange={(e) => setClienteQuery(e.target.value)}
+                                                placeholder="Buscar por nombre, documento o email..."
+                                                autoFocus
+                                            />
+                                            {(buscandoClientes || clienteResultados.length > 0) && (
+                                                <div className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-soft-md">
+                                                    {buscandoClientes ? (
+                                                        <div className="px-3 py-2 text-sm text-slate-500">Buscando...</div>
+                                                    ) : (
+                                                        clienteResultados.map((c) => (
+                                                            <button
+                                                                type="button"
+                                                                key={c.id}
+                                                                onClick={() => seleccionarCliente(c)}
+                                                                className="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50"
+                                                            >
+                                                                <div className="font-medium text-slate-800">{c.nombre} {c.apellido || ''}</div>
+                                                                <div className="text-xs text-slate-500">Doc: {c.documento} · {c.email}</div>
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => { setCambiandoCliente(false); setClienteQuery('') }}
+                                                className="mt-1 text-xs text-slate-500 hover:underline"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Fechas */}

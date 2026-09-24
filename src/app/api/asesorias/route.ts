@@ -18,11 +18,13 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const fechaInicio = searchParams.get('fechaInicio')
     const fechaFin = searchParams.get('fechaFin')
+    const orden = searchParams.get('orden') === 'asc' ? 'asc' : 'desc'
 
     // Construir filtros para la consulta
     const where: any = {}
 
-    if (estado) where.estado = estado
+    // "estado=PENDIENTE,PROGRAMADA,REPROGRAMADA" agrupa varios estados en una sola pantalla.
+    if (estado) where.estado = estado.includes(',') ? { in: estado.split(',') } : estado
     if (tipo) where.tipo = tipo
     if (modalidad) where.modalidad = modalidad
     if (asesorId) where.asesorId = asesorId
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
           }
         },
         orderBy: {
-          fecha: 'desc'
+          fecha: orden
         },
         skip: (page - 1) * limit,
         take: limit

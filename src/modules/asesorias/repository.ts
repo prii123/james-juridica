@@ -282,12 +282,13 @@ export class AsesoriasRepository {
   }
 
   async getAsesoriasStats() {
-    const [total, programadas, realizadas, canceladas, pendientes] = await Promise.all([
+    const [total, programadas, realizadas, canceladas, pendientes, reprogramadas] = await Promise.all([
       prisma.asesoria.count(),
       prisma.asesoria.count({ where: { estado: EstadoAsesoria.PROGRAMADA } }),
       prisma.asesoria.count({ where: { estado: EstadoAsesoria.REALIZADA } }),
       prisma.asesoria.count({ where: { estado: EstadoAsesoria.CANCELADA } }),
-      prisma.asesoria.count({ where: { estado: EstadoAsesoria.PENDIENTE } })
+      prisma.asesoria.count({ where: { estado: EstadoAsesoria.PENDIENTE } }),
+      prisma.asesoria.count({ where: { estado: EstadoAsesoria.REPROGRAMADA } })
     ])
 
     return {
@@ -296,7 +297,8 @@ export class AsesoriasRepository {
         PROGRAMADA: programadas,
         REALIZADA: realizadas,
         CANCELADA: canceladas,
-        PENDIENTE: pendientes
+        PENDIENTE: pendientes,
+        REPROGRAMADA: reprogramadas
       }
     }
   }

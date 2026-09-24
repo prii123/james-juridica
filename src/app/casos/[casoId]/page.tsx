@@ -199,7 +199,8 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
             </Badge>
           </div>
           <p className="mb-0 text-slate-500">
-            {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]} • Cliente: {caso.cliente.nombre} {caso.cliente.apellido}
+            {TIPO_INSOLVENCIA_LABELS[caso.tipoInsolvencia]}
+            {caso.cliente && <> • Cliente: {caso.cliente.nombre} {caso.cliente.apellido}</>}
           </p>
         </div>
         <Link href={`/casos/${params.casoId}/editar`}>
@@ -258,33 +259,37 @@ export default function CasoDetailPage({ params }: { params: { casoId: string } 
           <Card>
             <CardHeader><CardTitle>Información del Cliente</CardTitle></CardHeader>
             <CardBody>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="flex items-start gap-3">
-                  <User size={20} className="mt-1 text-blue-800" />
+              {!caso.cliente ? (
+                <p className="mb-0 text-sm text-slate-500">Este caso no tiene un cliente asociado.</p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-start gap-3">
+                    <User size={20} className="mt-1 text-blue-800" />
+                    <div>
+                      <h6 className="mb-1 font-semibold text-slate-800">
+                        {caso.cliente.nombre} {caso.cliente.apellido}
+                      </h6>
+                      <div className="mb-1 text-sm text-slate-500">
+                        <strong>Documento:</strong> {caso.cliente.documento}
+                      </div>
+                      <div className="mb-1 text-sm text-slate-500">
+                        <strong>Tipo:</strong> {caso.cliente.tipoPersona === 'NATURAL' ? 'Persona Natural' : 'Persona Jurídica'}
+                      </div>
+                    </div>
+                  </div>
                   <div>
-                    <h6 className="mb-1 font-semibold text-slate-800">
-                      {caso.cliente.nombre} {caso.cliente.apellido}
-                    </h6>
-                    <div className="mb-1 text-sm text-slate-500">
-                      <strong>Documento:</strong> {caso.cliente.documento}
+                    <div className="text-sm text-slate-500">
+                      <div className="mb-1"><strong>Email:</strong> {caso.cliente.email}</div>
+                      <div className="mb-1"><strong>Teléfono:</strong> {caso.cliente.telefono}</div>
                     </div>
-                    <div className="mb-1 text-sm text-slate-500">
-                      <strong>Tipo:</strong> {caso.cliente.tipoPersona === 'NATURAL' ? 'Persona Natural' : 'Persona Jurídica'}
+                    <div className="mt-3">
+                      <Link href={`/clientes/${caso.cliente.id}`}>
+                        <Button variant="outlinePrimary" size="sm">Ver Perfil del Cliente</Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-slate-500">
-                    <div className="mb-1"><strong>Email:</strong> {caso.cliente.email}</div>
-                    <div className="mb-1"><strong>Teléfono:</strong> {caso.cliente.telefono}</div>
-                  </div>
-                  <div className="mt-3">
-                    <Link href={`/clientes/${caso.cliente.id}`}>
-                      <Button variant="outlinePrimary" size="sm">Ver Perfil del Cliente</Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardBody>
           </Card>
 

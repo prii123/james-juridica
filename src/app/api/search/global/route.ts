@@ -168,18 +168,17 @@ export async function GET(request: NextRequest) {
         where: {
           OR: [
             { numero: { contains: query, mode: 'insensitive' } },
-            { demandante: { contains: query, mode: 'insensitive' } },
-            { demandado: { contains: query, mode: 'insensitive' } }
+            { cliente: { nombre: { contains: query, mode: 'insensitive' } } },
+            { cliente: { apellido: { contains: query, mode: 'insensitive' } } },
+            { cliente: { documento: { contains: query } } }
           ]
         },
         select: {
           id: true,
           numero: true,
-          demandante: true,
-          demandado: true,
           estado: true,
-          valor: true,
-          fechaSolicitud: true
+          fechaSolicitud: true,
+          cliente: { select: { nombre: true, apellido: true } }
         },
         take: limit,
         orderBy: { fechaSolicitud: 'desc' }
@@ -205,7 +204,7 @@ export async function GET(request: NextRequest) {
         subtitulo: cliente.documento,
         estado: cliente.activo ? 'ACTIVO' : 'INACTIVO',
         detalles: `${cliente._count.casos} casos • ${cliente.empresa || 'Sin empresa'}`,
-        url: `/casos?cliente=${cliente.id}`
+        url: `/clientes/${cliente.id}`
       })),
 
       casos: casos.map(caso => ({
@@ -232,9 +231,11 @@ export async function GET(request: NextRequest) {
         id: radicacion.id,
         tipo: 'radicacion',
         titulo: radicacion.numero,
-        subtitulo: `${radicacion.demandante} vs ${radicacion.demandado}`,
+        subtitulo: radicacion.cliente
+          ? `${radicacion.cliente.nombre} ${radicacion.cliente.apellido || ''}`.trim()
+          : 'Sin cliente asignado',
         estado: radicacion.estado,
-        detalles: `$${Number(radicacion.valor).toLocaleString()}`,
+        detalles: new Date(radicacion.fechaSolicitud).toLocaleDateString('es-CO'),
         url: `/radicaciones/${radicacion.id}`
       }))
     }

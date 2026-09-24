@@ -150,9 +150,7 @@ export default function AsesoriaDetailPage({ params }: { params: { asesoriaId: s
         },
         body: JSON.stringify({
           numero: tempNumero,
-          demandante: asesoria.lead.nombre,
-          demandado: 'Por definir',
-          valor: 0,
+          // Sin clienteId: el servidor lo resuelve (o lo crea) a partir del lead de esta asesoría.
           estado: 'SOLICITADA',
           fechaSolicitud: new Date().toISOString(),
           observaciones: 'Radicación creada desde asesoría',

@@ -56,7 +56,7 @@ export class LeadsRepository {
     const where: any = {}
 
     if (filters.estado) {
-      where.estado = filters.estado
+      where.estado = Array.isArray(filters.estado) ? { in: filters.estado } : filters.estado
     }
 
     if (filters.tipoPersona) {
@@ -141,7 +141,7 @@ export class LeadsRepository {
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          createdAt: filters.orden ?? 'desc'
         }
       }),
       prisma.lead.count({ where })
@@ -290,22 +290,23 @@ export class LeadsRepository {
   }
 
   async getLeadsStats() {
-    const [total, nuevo, contactado, calificado, convertido, perdido] = await Promise.all([
+    const [total, nuevo, contactado, calificado, perdido, convertidos] = await Promise.all([
       prisma.lead.count(),
       prisma.lead.count({ where: { estado: 'NUEVO' } }),
       prisma.lead.count({ where: { estado: 'CONTACTADO' } }),
       prisma.lead.count({ where: { estado: 'CALIFICADO' } }),
-      prisma.lead.count({ where: { estado: 'CONVERTIDO' } }),
-      prisma.lead.count({ where: { estado: 'PERDIDO' } })
+      prisma.lead.count({ where: { estado: 'PERDIDO' } }),
+      // Ya no hay estado CONVERTIDO: un lead convertido es el que tiene asesorías.
+      prisma.lead.count({ where: { asesorias: { some: {} } } })
     ])
 
     return {
       total,
+      convertidos,
       porEstado: {
         NUEVO: nuevo,
         CONTACTADO: contactado,
         CALIFICADO: calificado,
-        CONVERTIDO: convertido,
         PERDIDO: perdido
       }
     }
@@ -327,7 +328,7 @@ export class LeadsRepository {
           gte: startDate,
           lte: endDate
         },
-        estado: 'CONVERTIDO'
+        asesorias: { some: {} }
       }
     })
 

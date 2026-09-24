@@ -15,7 +15,8 @@ import {
   FileText,
   MessageSquare,
   Plus,
-  Eye
+  Eye,
+  CheckCircle2
 } from 'lucide-react'
 import { EstadoLead, TipoPersona } from '@prisma/client'
 import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
@@ -51,13 +52,14 @@ interface Lead {
       apellido: string
     }
   }>
+  // Se calcula en el servidor: existe un Cliente con el mismo email que este lead.
+  cliente?: { id: string; documento: string; telefono: string } | null
 }
 
 const ESTADO_BADGE_VARIANT: Record<EstadoLead, BadgeProps['variant']> = {
   NUEVO: 'primary',
   CONTACTADO: 'info',
-  CALIFICADO: 'warning',
-  CONVERTIDO: 'success',
+  CALIFICADO: 'success',
   PERDIDO: 'danger',
 }
 
@@ -159,6 +161,12 @@ export default function LeadDetailPage() {
               {getTipoPersonaIcon(lead.tipoPersona)}
               <h1 className="mb-0 text-2xl font-bold text-slate-800">{lead.nombre}</h1>
               <Badge variant={ESTADO_BADGE_VARIANT[lead.estado]}>{lead.estado}</Badge>
+              {lead.cliente && (
+                <Badge variant="success" title={`Doc: ${lead.cliente.documento}`}>
+                  <CheckCircle2 size={12} />
+                  Ya es cliente
+                </Badge>
+              )}
             </div>
             <p className="mb-0 text-slate-500">{lead.empresa || 'Sin empresa'}</p>
           </div>
@@ -310,18 +318,24 @@ export default function LeadDetailPage() {
                   Seguimiento
                 </Button>
               </Link>
-              <a href={`tel:${lead.telefono}`}>
-                <Button variant="outline" className="w-full justify-center border-teal-700 text-teal-700 hover:bg-teal-50">
-                  <Phone size={16} />
-                  Llamar
-                </Button>
-              </a>
-              <a href={`mailto:${lead.email}`}>
-                <Button variant="outline" className="w-full justify-center border-amber-500 text-amber-600 hover:bg-amber-50">
-                  <Mail size={16} />
-                  Enviar Email
-                </Button>
-              </a>
+              <Button
+                variant="outline"
+                disabled
+                title="Deshabilitado"
+                className="w-full justify-center border-teal-700 text-teal-700 hover:bg-teal-50 disabled:opacity-50"
+              >
+                <Phone size={16} />
+                Llamar
+              </Button>
+              <Button
+                variant="outline"
+                disabled
+                title="Deshabilitado"
+                className="w-full justify-center border-amber-500 text-amber-600 hover:bg-amber-50 disabled:opacity-50"
+              >
+                <Mail size={16} />
+                Enviar Email
+              </Button>
             </CardBody>
           </Card>
 
@@ -353,16 +367,6 @@ export default function LeadDetailPage() {
                     onClick={() => updateEstado('CALIFICADO')}
                   >
                     Marcar como Calificado
-                  </Button>
-                )}
-                {lead.estado !== 'CONVERTIDO' && (
-                  <Button
-                    variant="success"
-                    size="sm"
-                    className="justify-center"
-                    onClick={() => updateEstado('CONVERTIDO')}
-                  >
-                    Convertir a Cliente
                   </Button>
                 )}
                 {lead.estado !== 'PERDIDO' && (

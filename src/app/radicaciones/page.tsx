@@ -23,13 +23,18 @@ import { cn } from '@/lib/utils'
 interface Radicacion {
   id: string
   numero: string
-  demandante: string
-  demandado: string
-  valor: number
   estado: EstadoRadicacion
   fechaSolicitud: string
   fechaAudiencia?: string
   createdAt: string
+  // Puede ser null: alguna radicación anterior a este campo no pudo resolverse en la migración.
+  cliente: {
+    id: string
+    nombre: string
+    apellido?: string | null
+    documento: string
+  } | null
+  // Puede ser null: una radicación se puede crear directamente, sin pasar por una asesoría.
   asesoria: {
     id: string
     tema: string
@@ -43,7 +48,7 @@ interface Radicacion {
       nombre: string
       apellido: string
     }
-  }
+  } | null
 }
 
 const ESTADO_CONFIG: Record<EstadoRadicacion, { badge: BadgeProps['variant']; icon: typeof Clock; label: string }> = {
@@ -140,7 +145,7 @@ export default function RadicacionesPage() {
               <Input
                 type="text"
                 className="pl-9"
-                placeholder="Buscar por número, demandante o demandado..."
+                placeholder="Buscar por número, cliente o documento..."
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
               />
@@ -192,7 +197,7 @@ export default function RadicacionesPage() {
                 <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Número</th>
-                    <th className="px-4 py-3 font-semibold">Partes</th>
+                    <th className="px-4 py-3 font-semibold">Cliente</th>
                     <th className="px-4 py-3 font-semibold">Estado</th>
                     <th className="px-4 py-3 font-semibold">Fecha Solicitud</th>
                     <th className="px-4 py-3 font-semibold">Días</th>
@@ -216,8 +221,16 @@ export default function RadicacionesPage() {
                           </Link>
                         </td>
                         <td className="px-4 py-3 align-middle text-xs">
-                          <div className="font-semibold text-slate-800">{radicacion.demandante}</div>
-                          <div className="text-slate-500">vs {radicacion.demandado}</div>
+                          {radicacion.cliente ? (
+                            <>
+                              <div className="font-semibold text-slate-800">
+                                {radicacion.cliente.nombre} {radicacion.cliente.apellido || ''}
+                              </div>
+                              <div className="text-slate-500">Doc: {radicacion.cliente.documento}</div>
+                            </>
+                          ) : (
+                            <span className="text-amber-600">Sin cliente asignado</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <Badge variant={estadoConfig.badge}>
@@ -238,13 +251,21 @@ export default function RadicacionesPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 align-middle text-xs">
-                          <Link href={`/asesorias/${radicacion.asesoria.id}`} className="text-blue-800 no-underline hover:underline">
-                            {radicacion.asesoria.tema}
-                          </Link>
-                          <div className="text-slate-500">Cliente: {radicacion.asesoria.lead.nombre}</div>
+                          {radicacion.asesoria ? (
+                            <>
+                              <Link href={`/asesorias/${radicacion.asesoria.id}`} className="text-blue-800 no-underline hover:underline">
+                                {radicacion.asesoria.tema}
+                              </Link>
+                              <div className="text-slate-500">Cliente: {radicacion.asesoria.lead.nombre}</div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">Directa (sin asesoría)</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 align-middle text-xs font-semibold text-slate-800">
-                          {radicacion.asesoria.asesor.nombre} {radicacion.asesoria.asesor.apellido}
+                          {radicacion.asesoria
+                            ? `${radicacion.asesoria.asesor.nombre} ${radicacion.asesoria.asesor.apellido}`
+                            : <span className="font-normal text-slate-400">—</span>}
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <Link href={`/radicaciones/${radicacion.id}`}>
