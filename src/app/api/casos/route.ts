@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
     const tipoInsolvencia = searchParams.get('tipoInsolvencia')
     const prioridad = searchParams.get('prioridad')
     const responsableId = searchParams.get('responsableId')
+    const clienteId = searchParams.get('clienteId')
+    const facturado = searchParams.get('facturado')
     const search = searchParams.get('search')
 
     const filters: any = {}
@@ -21,6 +23,9 @@ export async function GET(request: NextRequest) {
     if (tipoInsolvencia) filters.tipoInsolvencia = tipoInsolvencia
     if (prioridad) filters.prioridad = prioridad
     if (responsableId) filters.responsableId = responsableId
+    if (clienteId) filters.clienteId = clienteId
+    // "facturado=0" filtra los casos aún no facturados (usado al elegir cliente en Facturación).
+    if (facturado === '0' || facturado === '1') filters.facturado = Number(facturado) as 0 | 1
     if (search) filters.search = search
 
     const casosService = new CasosService()

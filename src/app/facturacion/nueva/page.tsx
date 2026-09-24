@@ -45,6 +45,12 @@ interface Cliente {
   telefono: string
 }
 
+interface CasoDelCliente {
+  id: string
+  numeroCaso: string
+  tipoInsolvencia: string
+}
+
 interface ItemFactura {
   descripcion: string
   cantidad: number
@@ -66,6 +72,12 @@ export default function NuevaFacturaPage() {
   const [showClientList, setShowClientList] = useState(false)
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   const [clienteNombre, setClienteNombre] = useState('')
+
+  // Casos sin facturar del cliente elegido, para poder asociar la factura a uno (facturación
+  // directa, sin pasar por un Honorario).
+  const [casosCliente, setCasosCliente] = useState<CasoDelCliente[]>([])
+  const [loadingCasosCliente, setLoadingCasosCliente] = useState(false)
+  const [casoId, setCasoId] = useState('')
 
   const [formData, setFormData] = useState({
     honorarioId: '',
@@ -110,6 +122,24 @@ export default function NuevaFacturaPage() {
     }, 300)
     return () => clearTimeout(timer)
   }, [clienteSearch])
+
+  useEffect(() => {
+    setCasoId('')
+    if (!selectedCliente) {
+      setCasosCliente([])
+      return
+    }
+    let activo = true
+    setLoadingCasosCliente(true)
+    fetch(`/api/casos?clienteId=${selectedCliente.id}&facturado=0&limit=50`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (activo) setCasosCliente(data.casos || [])
+      })
+      .catch(() => activo && setCasosCliente([]))
+      .finally(() => activo && setLoadingCasosCliente(false))
+    return () => { activo = false }
+  }, [selectedCliente])
 
   const fetchHonorariosDisponibles = async () => {
     try {
@@ -218,6 +248,9 @@ export default function NuevaFacturaPage() {
       if (clienteNombre.trim()) {
         body.clienteNombre = clienteNombre.trim()
       }
+      if (casoId) {
+        body.casoId = casoId
+      }
       const response = await fetch('/api/facturacion', {
         method: 'POST',
         headers: {
@@ -310,7 +343,34 @@ export default function NuevaFacturaPage() {
                           <X size={14} />
                         </Button>
                       </div>
-                    ) : (
+                    ) : null}
+
+                    {/* Casos sin facturar del cliente elegido */}
+                    {selectedCliente && (
+                      <div className="mb-3">
+                        <Label>
+                          Caso a Facturar <span className="text-slate-400">(opcional)</span>
+                        </Label>
+                        {loadingCasosCliente ? (
+                          <div className="py-2 text-center">
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-800 border-t-transparent" />
+                          </div>
+                        ) : casosCliente.length === 0 ? (
+                          <p className="mb-0 text-sm text-slate-500">
+                            Este cliente no tiene casos pendientes de facturar.
+                          </p>
+                        ) : (
+                          <Select value={casoId} onChange={(e) => setCasoId(e.target.value)}>
+                            <option value="">-- No asociar a un caso --</option>
+                            {casosCliente.map((c) => (
+                              <option key={c.id} value={c.id}>{c.numeroCaso}</option>
+                            ))}
+                          </Select>
+                        )}
+                      </div>
+                    )}
+
+                    {!selectedCliente && (
                       <div className="relative mb-3">
                         <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <Input

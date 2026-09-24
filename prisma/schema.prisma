@@ -267,7 +267,11 @@ model Caso {
   fechaInicio       DateTime  @default(now())
   fechaCierre       DateTime?
   observaciones     String?
-  
+  // 0 = sin facturar, 1 = ya se le generó una factura. Int en vez de Boolean por pedido
+  // explícito (tinyint/int); se guarda en el caso porque un caso puede facturarse sin pasar
+  // por un Honorario (ver Factura.casoId).
+  facturado         Int       @default(0)
+
   // Relaciones
   clienteId         String
   cliente           Cliente   @relation(fields: [clienteId], references: [id])
@@ -285,8 +289,9 @@ model Caso {
   actuaciones       Actuacion[]
   audiencias        Audiencia[]
   honorarios        Honorario[]
+  facturas          Factura[]
   procesosLiquidacion ProcesoLiquidacion[]
-  
+
   @@map("casos")
 }
 
@@ -468,6 +473,9 @@ model Factura {
   clienteId       String?
   cliente         Cliente?   @relation(fields: [clienteId], references: [id])
   clienteNombre   String?    // Nombre del cliente cuando no hay cliente registrado ni honorario
+  // Caso que se factura cuando no se pasa por un Honorario (facturación directa a un cliente).
+  casoId          String?
+  caso            Caso?      @relation(fields: [casoId], references: [id])
   creadoPorId     String
   creadoPor       User      @relation(fields: [creadoPorId], references: [id])
   

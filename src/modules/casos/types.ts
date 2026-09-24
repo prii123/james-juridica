@@ -25,6 +25,9 @@ export interface CasoFilters {
   tipoInsolvencia?: TipoInsolvencia
   prioridad?: Prioridad
   responsableId?: string
+  clienteId?: string
+  /** 0 = sin facturar, 1 = ya facturado. */
+  facturado?: 0 | 1
   fechaInicioDesde?: Date
   fechaInicioHasta?: Date
   /** Número de caso, nombre/apellido/documento del cliente. */

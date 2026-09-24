@@ -65,6 +65,12 @@ export async function GET(request: NextRequest) {
             email: true
           }
         },
+        caso: {
+          select: {
+            id: true,
+            numeroCaso: true
+          }
+        },
         creadoPor: {
           select: {
             id: true,
@@ -100,7 +106,7 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.FACTURACION.CREATE)
 
     const body = await request.json()
-    const { honorarioId, clienteId, clienteNombre, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
+    const { honorarioId, clienteId, clienteNombre, casoId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
 
     // Validar datos requeridos
     if (!fechaVencimiento || !items || items.length === 0) {
@@ -127,9 +133,17 @@ export async function POST(request: NextRequest) {
         where: { id: clienteId }
       })
       if (!cliente) {
-        return NextResponse.json({ 
-          error: 'Cliente no encontrado' 
+        return NextResponse.json({
+          error: 'Cliente no encontrado'
         }, { status: 404 })
+      }
+    }
+
+    // Si se proporciona casoId (facturación directa, sin honorario), verificar que existe
+    if (casoId) {
+      const caso = await prisma.caso.findUnique({ where: { id: casoId } })
+      if (!caso) {
+        return NextResponse.json({ error: 'Caso no encontrado' }, { status: 404 })
       }
     }
 
@@ -173,6 +187,7 @@ export async function POST(request: NextRequest) {
         ...(honorarioId ? { honorarioId } : {}),
         ...(clienteId ? { clienteId } : {}),
         ...(clienteNombre ? { clienteNombre } : {}),
+        ...(casoId ? { casoId } : {}),
         creadoPorId: session.user.id,
         items: {
           create: items.map((item: any) => ({
@@ -204,6 +219,13 @@ export async function POST(request: NextRequest) {
             documento: true
           }
         },
+        caso: {
+          select: {
+            id: true,
+            numeroCaso: true,
+            tipoInsolvencia: true
+          }
+        },
         creadoPor: {
           select: {
             id: true,
@@ -213,6 +235,12 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Facturación directa de un caso (sin honorario): se marca como facturado para que ya no
+    // aparezca al elegir cliente en una próxima factura.
+    if (casoId) {
+      await prisma.caso.update({ where: { id: casoId }, data: { facturado: 1 } })
+    }
 
     return NextResponse.json({ factura }, { status: 201 })
 

@@ -104,6 +104,14 @@ export class CasosRepository {
       where.responsableId = filters.responsableId
     }
 
+    if (filters.clienteId) {
+      where.clienteId = filters.clienteId
+    }
+
+    if (filters.facturado !== undefined) {
+      where.facturado = filters.facturado
+    }
+
     if (filters.fechaInicioDesde || filters.fechaInicioHasta) {
       where.fechaInicio = {}
       if (filters.fechaInicioDesde) {
