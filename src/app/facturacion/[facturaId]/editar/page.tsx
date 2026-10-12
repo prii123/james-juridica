@@ -29,21 +29,7 @@ interface Factura {
   tasaInteres?: number
   observaciones?: string
   ivaActivado?: boolean
-  honorario: {
-    id: string
-    tipo: string
-    valor: number
-    caso: {
-      id: string
-      numeroCaso: string
-      cliente: {
-        id: string
-        nombre: string
-        apellido?: string
-        email: string
-      }
-    }
-  } | null
+  caso?: { id: string; numeroCaso: string } | null
   cliente?: {
     id: string
     nombre: string
@@ -282,11 +268,9 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
         <div className="flex-1">
           <h1 className="mb-1 text-xl font-bold text-slate-800">Editar Factura</h1>
           <p className="mb-0 text-slate-500">
-            {factura.numero} - {factura.honorario
-              ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
-              : factura.cliente
-                ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
-                : factura.clienteNombre || 'Sin cliente asociado'}
+            {factura.numero} - {factura.cliente
+              ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+              : factura.clienteNombre || 'Sin cliente asociado'}
           </p>
         </div>
       </div>
@@ -402,18 +386,7 @@ export default function EditarFacturaPage({ params }: { params: { facturaId: str
                 {/* Información del caso (solo lectura) */}
                 <div className="mt-3 rounded-lg bg-slate-50 p-3">
                   <h6 className="mb-2 font-semibold text-slate-700">Información del Cliente</h6>
-                  {factura.honorario ? (
-                    <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
-                      <div>
-                        <div><strong>Cliente:</strong> {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}</div>
-                        <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
-                      </div>
-                      <div>
-                        <div><strong>Caso:</strong> {factura.honorario.caso.numeroCaso}</div>
-                        <div><strong>Tipo Honorario:</strong> {factura.honorario.tipo}</div>
-                      </div>
-                    </div>
-                  ) : factura.cliente ? (
+                  {factura.cliente ? (
                     <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
                       <div>
                         <div><strong>Cliente:</strong> {factura.cliente.nombre} {factura.cliente.apellido || ''}</div>

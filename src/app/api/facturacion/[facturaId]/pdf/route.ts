@@ -21,23 +21,7 @@ export async function GET(
       where: { id: params.facturaId },
       include: {
         items: true,
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: {
-                  select: {
-                    nombre: true,
-                    apellido: true,
-                    documento: true,
-                    email: true,
-                    telefono: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: {
             nombre: true,
@@ -66,13 +50,7 @@ export async function GET(
       ivaActivado: factura.ivaActivado,
       observaciones: factura.observaciones,
       clienteNombre: factura.clienteNombre,
-      honorario: factura.honorario ? {
-        tipo: factura.honorario.tipo,
-        caso: {
-          numeroCaso: factura.honorario.caso!.numeroCaso,
-          cliente: factura.honorario.caso!.cliente,
-        },
-      } : null,
+      caso: factura.caso ? { numeroCaso: factura.caso.numeroCaso } : null,
       cliente: factura.cliente ? {
         nombre: factura.cliente.nombre,
         apellido: factura.cliente.apellido,

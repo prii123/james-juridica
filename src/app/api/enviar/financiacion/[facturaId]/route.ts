@@ -29,7 +29,7 @@ export async function POST(
       include: {
         cuotasFactura: { orderBy: { numeroCuota: 'asc' } },
         pagos: { select: { valor: true } },
-        honorario: { include: { caso: { include: { cliente: true } } } },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: { select: { id: true, nombre: true, apellido: true, email: true, telefono: true, documento: true } }
       }
     })
@@ -38,7 +38,7 @@ export async function POST(
       return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
     }
 
-    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+    const clienteData = factura.cliente
     const clienteNombre = clienteData
       ? `${clienteData.nombre} ${clienteData.apellido || ''}`.trim()
       : factura.clienteNombre || 'Sin cliente'
@@ -91,7 +91,7 @@ export async function POST(
           apellido: clienteData?.apellido ?? '',
           documento: clienteData?.documento ?? '',
         },
-        caso: { numeroCaso: factura.honorario?.caso?.numeroCaso ?? '' },
+        caso: { numeroCaso: factura.caso?.numeroCaso ?? '' },
         totalFinanciado: saldoPendiente,
         numeroCuotas,
         tasaInteresMensual,

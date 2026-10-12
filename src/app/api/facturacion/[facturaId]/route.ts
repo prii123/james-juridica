@@ -22,24 +22,7 @@ export async function GET(
       where: { id: params.facturaId },
       include: {
         items: true,
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: {
-                  select: {
-                    id: true,
-                    nombre: true,
-                    apellido: true,
-                    email: true,
-                    telefono: true,
-                    documento: true
-                  }
-                }
-              }
-            }
-          }
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: {
             id: true,
@@ -102,9 +85,6 @@ export async function PATCH(
     // Verificar que la factura existe
     const existingFactura = await prisma.factura.findUnique({
       where: { id: params.facturaId },
-      include: {
-        honorario: true
-      }
     })
 
     if (!existingFactura) {
@@ -136,16 +116,6 @@ export async function PATCH(
     if (body.estado !== undefined) {
       updateData.estado = body.estado
       
-      // Si se marca como pagada, actualizar el honorario también
-      if (body.estado === 'PAGADA' && existingFactura.honorario) {
-        await prisma.honorario.update({
-          where: { id: existingFactura.honorario.id },
-          data: {
-            estado: 'PAGADO',
-            fechaPago: new Date()
-          }
-        })
-      }
     }
 
     if (body.observaciones !== undefined) {
@@ -259,15 +229,7 @@ export async function PATCH(
       },
       include: {
         items: true,
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: true
-              }
-            }
-          }
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: {
             id: true,
@@ -289,7 +251,7 @@ export async function PATCH(
       }
     })
 
-    // Si se anula una factura ligada directamente a un caso (sin honorario), ese caso vuelve a
+    // Si se anula una factura ligada directamente a un caso , ese caso vuelve a
     // quedar sin facturar: puede volver a aparecer al generar una nueva factura para él.
     if (body.estado === 'ANULADA' && existingFactura.casoId) {
       await prisma.caso.update({

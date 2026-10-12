@@ -46,13 +46,7 @@ export async function GET(
     const factura = await prisma.factura.findUnique({
       where: { id: facturaId },
       include: {
-        honorario: {
-          include: {
-            caso: {
-              include: { cliente: true }
-            }
-          }
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: { nombre: true, apellido: true }
         },
@@ -124,7 +118,7 @@ export async function GET(
     const cuotasParciales = cuotasConSeguimiento.filter(c => c.estado === 'PARCIAL').length
     const cuotasPendientes = cuotasConSeguimiento.length - cuotasPagadas - cuotasVencidas - cuotasParciales
 
-    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+    const clienteData = factura.cliente
 
     const pdfData = {
       factura: {
@@ -140,7 +134,7 @@ export async function GET(
           apellido: clienteData?.apellido ?? ''
         },
         caso: {
-          numeroCaso: factura.honorario?.caso?.numeroCaso ?? 'N/A'
+          numeroCaso: factura.caso?.numeroCaso ?? 'N/A'
         }
       },
       resumen: {

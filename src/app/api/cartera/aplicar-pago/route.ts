@@ -92,6 +92,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (factura.estado === 'ANULADA') {
+      return NextResponse.json(
+        { error: 'No se pueden registrar pagos en una factura anulada' },
+        { status: 400 }
+      )
+    }
+
     if (!factura.cuotasFactura || factura.cuotasFactura.length === 0) {
       return NextResponse.json(
         { error: 'Esta factura no tiene cuotas configuradas' },

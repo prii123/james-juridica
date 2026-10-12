@@ -21,45 +21,29 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros - solo facturas financiadas (a crédito)
     let whereClause: any = {
-      modalidadPago: 'FINANCIADO' as const
+      modalidadPago: 'FINANCIADO' as const,
+      // Una factura anulada no es cartera: no se cobra ni cuenta en los totales.
+      estado: { not: 'ANULADA' } as any
     }
 
     if (search) {
       whereClause.OR = [
         { numero: { contains: search, mode: 'insensitive' } },
-        { honorario: { caso: { numeroCaso: { contains: search, mode: 'insensitive' } } } },
-        { honorario: { caso: { cliente: { nombre: { contains: search, mode: 'insensitive' } } } } },
-        { honorario: { caso: { cliente: { apellido: { contains: search, mode: 'insensitive' } } } } },
+        { caso: { numeroCaso: { contains: search, mode: 'insensitive' } } },
         { cliente: { nombre: { contains: search, mode: 'insensitive' } } },
         { cliente: { apellido: { contains: search, mode: 'insensitive' } } },
         { clienteNombre: { contains: search, mode: 'insensitive' } }
       ]
     }
 
-    if (estado && estado !== 'TODAS') {
-      if (estado === 'VENCIDAS') {
-        whereClause.fechaVencimiento = { lt: new Date() }
-        whereClause.estado = { not: 'PAGADA' }
-      } else if (estado === 'PROXIMAS') {
-        whereClause.fechaVencimiento = { gte: new Date() }
-        whereClause.estado = { not: 'PAGADA' }
-      } else if (estado === 'PAGADAS') {
-        whereClause.estado = 'PAGADA'
-      }
-    }
+    // vista=historial lista las facturas ya pagadas; por defecto solo las que tienen saldo.
+    // Los filtros VENCIDAS / PROXIMAS se aplican abajo, en memoria, porque dependen de las cuotas.
+    const historial = searchParams.get('vista') === 'historial'
 
     const facturas = await prisma.factura.findMany({
       where: whereClause as any,
       include: {
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: true
-              }
-            }
-          }
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: {
             id: true,
@@ -68,7 +52,8 @@ export async function GET(request: NextRequest) {
             email: true
           }
         },
-        pagos: true
+        pagos: true,
+        cuotasFactura: { select: { fechaVencimiento: true, estado: true } }
       },
       orderBy: {
         createdAt: 'desc'
@@ -79,15 +64,25 @@ export async function GET(request: NextRequest) {
     const facturasCartera = facturas.map((factura: any) => {
       const totalPagos = factura.pagos.reduce((sum: number, pago: any) => sum + Number(pago.valor), 0)
       const saldoPendiente = Number(factura.total) - totalPagos
-      const fechaVencimiento = new Date(factura.fechaVencimiento)
       const hoy = new Date()
-      const diasVencida = fechaVencimiento < hoy ? Math.floor((hoy.getTime() - fechaVencimiento.getTime()) / (1000 * 60 * 60 * 24)) : 0
+      const msDia = 1000 * 60 * 60 * 24
+
+      // Vencimiento = fecha de la última cuota pendiente; sin cuotas, el de la factura.
+      // Los días vencidos se cuentan desde la cuota pendiente vencida más antigua (lo que
+      // importa para el cobro), no desde esa última fecha.
+      const cuotasPendientes = (factura.cuotasFactura || []).filter((c: any) => c.estado !== 'PAGADA')
+      const fechasPendientes = cuotasPendientes.map((c: any) => new Date(c.fechaVencimiento).getTime())
+      const fechaVencimiento = new Date(fechasPendientes.length ? Math.max(...fechasPendientes) : factura.fechaVencimiento)
+      const masAntigua = new Date(fechasPendientes.length ? Math.min(...fechasPendientes) : factura.fechaVencimiento)
+      const diasVencida = saldoPendiente > 0.01 && masAntigua < hoy ? Math.floor((hoy.getTime() - masAntigua.getTime()) / msDia) : 0
+      const ultimoPago = factura.pagos.reduce((max: Date | null, p: any) => (!max || p.fecha > max ? p.fecha : max), null as Date | null)
 
       return {
         id: factura.id,
         numero: factura.numero,
         fecha: factura.fecha.toISOString().split('T')[0],
-        fechaVencimiento: factura.fechaVencimiento.toISOString().split('T')[0],
+        fechaVencimiento: fechaVencimiento.toISOString().split('T')[0],
+        fechaUltimoPago: ultimoPago ? new Date(ultimoPago).toISOString().split('T')[0] : null,
         total: Number(factura.total),
         saldoPendiente,
         diasVencida,
@@ -95,12 +90,7 @@ export async function GET(request: NextRequest) {
         modalidadPago: factura.modalidadPago,
         numeroCuotas: factura.numeroCuotas ?? 1,
         valorCuota: factura.valorCuota ? Number(factura.valorCuota) : Number(factura.total),
-        cliente: factura.honorario?.caso?.cliente ? {
-          id: factura.honorario.caso.cliente.id,
-          nombre: factura.honorario.caso.cliente.nombre,
-          apellido: factura.honorario.caso.cliente.apellido || '',
-          email: factura.honorario.caso.cliente.email
-        } : factura.cliente ? {
+        cliente: factura.cliente ? {
           id: factura.cliente.id,
           nombre: factura.cliente.nombre,
           apellido: factura.cliente.apellido || '',
@@ -111,9 +101,9 @@ export async function GET(request: NextRequest) {
           apellido: '',
           email: ''
         },
-        caso: factura.honorario?.caso ? {
-          id: factura.honorario.caso.id,
-          numeroCaso: factura.honorario.caso.numeroCaso
+        caso: factura.caso ? {
+          id: factura.caso.id,
+          numeroCaso: factura.caso.numeroCaso
         } : {
           id: '',
           numeroCaso: 'N/A'
@@ -121,7 +111,16 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ facturas: facturasCartera })
+    const resultado = facturasCartera.filter((f: any) => {
+      const pagada = f.estado === 'PAGADA' || f.saldoPendiente <= 0.01
+      if (historial) return pagada
+      if (pagada) return false
+      if (estado === 'VENCIDAS') return f.diasVencida > 0
+      if (estado === 'PROXIMAS') return f.diasVencida === 0
+      return true
+    })
+
+    return NextResponse.json({ facturas: resultado })
   } catch (error: any) {
     console.error('Error al obtener carrtera:', error)
     return NextResponse.json(

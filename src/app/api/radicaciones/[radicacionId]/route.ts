@@ -158,9 +158,9 @@ export async function PATCH(
         })
       }
 
-      // Ya no se genera honorario/factura automáticos aquí: dependían del valor de la
-      // conciliación (15%), campo que se quitó del modelo. El honorario se crea a mano desde
-      // el caso, con el valor real que se acuerde.
+      // No se genera factura automática aquí: dependía del valor de la
+      // conciliación (15%), campo que se quitó del modelo. La factura se crea a mano desde
+      // Facturación, con los productos o servicios acordados.
     }
 
     const updatedRadicacion = await prisma.radicacion.update({

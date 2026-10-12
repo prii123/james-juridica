@@ -51,7 +51,7 @@ export async function POST(
     const factura = await prisma.factura.findUnique({
       where: { id: params.facturaId },
       include: {
-        honorario: { include: { caso: { include: { cliente: true } } } },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: { select: { id: true, nombre: true, apellido: true, email: true, telefono: true } },
         cuotasFactura: {
           include: { abonosPagos: { include: { pago: true } } },
@@ -68,7 +68,7 @@ export async function POST(
       return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
     }
 
-    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+    const clienteData = factura.cliente
     const clienteNombre = clienteData
       ? `${clienteData.nombre} ${clienteData.apellido || ''}`.trim()
       : factura.clienteNombre || 'Sin cliente'
@@ -141,7 +141,7 @@ export async function POST(
             nombre: clienteData?.nombre ?? factura.clienteNombre ?? '',
             apellido: clienteData?.apellido ?? ''
           },
-          caso: { numeroCaso: factura.honorario?.caso?.numeroCaso ?? 'N/A' }
+          caso: { numeroCaso: factura.caso?.numeroCaso ?? 'N/A' }
         },
         resumen: {
           totalPagado, saldoPendiente,

@@ -20,20 +20,11 @@ import {
 import { Button, Card, CardHeader, CardTitle, CardBody, Input, Select, Textarea, Label, Alert, Spinner } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
-interface Honorario {
+interface Producto {
   id: string
-  tipo: string
-  valor: number
-  caso: {
-    id: string
-    numeroCaso: string
-    cliente: {
-      id: string
-      nombre: string
-      apellido?: string
-      email: string
-    }
-  }
+  nombre: string
+  tipo: 'PRODUCTO' | 'SERVICIO'
+  precio: string | number
 }
 
 interface Cliente {
@@ -52,6 +43,7 @@ interface CasoDelCliente {
 }
 
 interface ItemFactura {
+  productoId: string
   descripcion: string
   cantidad: number
   valorUnitario: number
@@ -70,37 +62,38 @@ function NuevaFacturaContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const casoIdParam = searchParams.get('casoId')
-  const honorarioIdParam = searchParams.get('honorarioId')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [honorarios, setHonorarios] = useState<Honorario[]>([])
-  const [loadingHonorarios, setLoadingHonorarios] = useState(true)
+  const [productos, setProductos] = useState<Producto[]>([])
+  const [loadingProductos, setLoadingProductos] = useState(true)
+  // IVA opcional: por defecto en 0 (sin IVA).
+  const [ivaActivado, setIvaActivado] = useState(false)
 
-  const [searchTerm, setSearchTerm] = useState('')
   const [clienteSearch, setClienteSearch] = useState('')
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loadingClientes, setLoadingClientes] = useState(false)
   const [showClientList, setShowClientList] = useState(false)
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
-  const [clienteNombre, setClienteNombre] = useState('')
 
   // Casos sin facturar del cliente elegido, para poder asociar la factura a uno (facturación
-  // directa, sin pasar por un Honorario).
+  // directa).
   const [casosCliente, setCasosCliente] = useState<CasoDelCliente[]>([])
   const [loadingCasosCliente, setLoadingCasosCliente] = useState(false)
   const [casoId, setCasoId] = useState('')
 
   const [formData, setFormData] = useState({
-    honorarioId: '',
     fechaVencimiento: '',
     observaciones: '',
     modalidadPago: 'CONTADO',
     numeroCuotas: 6,
     tasaInteres: 2.5,
+    valorPagado: '',
+    metodoPago: 'EFECTIVO',
   })
 
   const [items, setItems] = useState<ItemFactura[]>([
     {
+      productoId: '',
       descripcion: '',
       cantidad: 1,
       valorUnitario: 0,
@@ -109,7 +102,7 @@ function NuevaFacturaContent() {
   ])
 
   useEffect(() => {
-    fetchHonorariosDisponibles()
+    fetchProductos()
   }, [])
 
   // Llegando desde "Generar Factura" en un caso (/facturacion/nueva?casoId=...): se precarga el
@@ -133,13 +126,6 @@ function NuevaFacturaContent() {
       })
       .catch(() => undefined)
   }, [casoIdParam])
-
-  // Llegando desde "Nuevo Honorario" (/facturacion/nueva?honorarioId=...).
-  useEffect(() => {
-    if (honorarioIdParam) {
-      setFormData((prev) => ({ ...prev, honorarioId: honorarioIdParam }))
-    }
-  }, [honorarioIdParam])
 
   useEffect(() => {
     const nuevosItems = items.map(item => ({
@@ -186,18 +172,31 @@ function NuevaFacturaContent() {
     return () => { activo = false }
   }, [selectedCliente, casoIdParam])
 
-  const fetchHonorariosDisponibles = async () => {
+  const fetchProductos = async () => {
     try {
-      const response = await fetch('/api/facturacion/honorarios-disponibles')
+      const response = await fetch('/api/productos')
       if (response.ok) {
         const data = await response.json()
-        setHonorarios(data.honorarios || [])
+        setProductos(data.productos || [])
       }
     } catch (error) {
-      console.error('Error al cargar honorarios:', error)
+      console.error('Error al cargar productos:', error)
     } finally {
-      setLoadingHonorarios(false)
+      setLoadingProductos(false)
     }
+  }
+
+  // Al elegir un producto/servicio se copian su nombre y precio al item (el precio sigue editable).
+  const seleccionarProducto = (index: number, productoId: string) => {
+    const producto = productos.find((p) => p.id === productoId)
+    const nuevosItems = [...items]
+    nuevosItems[index] = {
+      ...nuevosItems[index],
+      productoId,
+      descripcion: producto?.nombre || '',
+      valorUnitario: producto ? Number(producto.precio) : 0,
+    }
+    setItems(nuevosItems)
   }
 
   const fetchClientes = async (search: string) => {
@@ -221,12 +220,10 @@ function NuevaFacturaContent() {
     setClienteSearch('')
     setClientes([])
     setShowClientList(false)
-    setClienteNombre('')
   }
 
   const clearCliente = () => {
     setSelectedCliente(null)
-    setClienteNombre('')
   }
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -247,6 +244,7 @@ function NuevaFacturaContent() {
 
   const agregarItem = () => {
     setItems([...items, {
+      productoId: '',
       descripcion: '',
       cantidad: 1,
       valorUnitario: 0,
@@ -263,13 +261,18 @@ function NuevaFacturaContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!selectedCliente) {
+      setError('Selecciona un cliente. Si no existe, créalo primero en Clientes.')
+      return
+    }
+
     if (!formData.fechaVencimiento) {
       setError('Ingresa la fecha de vencimiento')
       return
     }
 
     if (items.some(item => !item.descripcion || item.valorUnitario <= 0)) {
-      setError('Completa todos los items de la factura')
+      setError('Selecciona un producto o servicio en todos los items de la factura')
       return
     }
 
@@ -277,22 +280,22 @@ function NuevaFacturaContent() {
       setLoading(true)
       setError('')
 
-      const { modalidadPago, numeroCuotas, tasaInteres, ...restForm } = formData
+      const { modalidadPago, numeroCuotas, tasaInteres, valorPagado, metodoPago, ...restForm } = formData
       const body: Record<string, any> = {
         ...restForm,
         modalidadPago,
+        ivaActivado,
         items: items.filter(item => item.descripcion && item.valorUnitario > 0),
       }
       if (modalidadPago === 'CREDITO') {
         body.numeroCuotas = numeroCuotas
         body.tasaInteres = tasaInteres
+        if (Number(valorPagado) > 0) {
+          body.valorPagado = Number(valorPagado)
+          body.metodoPago = metodoPago
+        }
       }
-      if (selectedCliente) {
-        body.clienteId = selectedCliente.id
-      }
-      if (clienteNombre.trim()) {
-        body.clienteNombre = clienteNombre.trim()
-      }
+      body.clienteId = selectedCliente.id
       if (casoId) {
         body.casoId = casoId
       }
@@ -327,19 +330,9 @@ function NuevaFacturaContent() {
   }
 
   const subtotal = items.reduce((sum, item) => sum + item.valorTotal, 0)
-  const impuestos = subtotal * 0.19
+  const impuestos = ivaActivado ? subtotal * 0.19 : 0
   const total = subtotal + impuestos
-
-  const honorarioSeleccionado = honorarios.find(h => h.id === formData.honorarioId)
-
-  const honorariosFiltrados = honorarios.filter(h => {
-    if (!searchTerm) return true
-    const q = searchTerm.toLowerCase()
-    const c = h.caso.cliente
-    return c.nombre.toLowerCase().includes(q) ||
-      (c.apellido?.toLowerCase() || '').includes(q) ||
-      h.caso.numeroCaso.toLowerCase().includes(q)
-  })
+  const saldoFinanciar = Math.max(0, total - (Number(formData.valorPagado) || 0))
 
   return (
     <>
@@ -357,7 +350,7 @@ function NuevaFacturaContent() {
         <div className="flex-1">
           <h1 className="mb-1 text-xl font-bold text-slate-800">Nueva Factura</h1>
           <p className="mb-0 text-slate-500">
-            Crear una nueva factura para honorarios pendientes o clientes
+            Crear una nueva factura seleccionando productos o servicios
           </p>
         </div>
       </div>
@@ -374,7 +367,7 @@ function NuevaFacturaContent() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     {/* Selección de Cliente */}
-                    <Label>Cliente</Label>
+                    <Label>Cliente *</Label>
                     {selectedCliente ? (
                       <div className="mb-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
                         <User size={16} className="text-slate-500" />
@@ -452,68 +445,12 @@ function NuevaFacturaContent() {
                         )}
                         {showClientList && clientes.length === 0 && clienteSearch.length >= 2 && !loadingClientes && (
                           <div className="absolute z-10 w-full rounded-b-lg border border-t-0 border-slate-200 bg-white p-2 shadow-sm">
-                            <small className="text-slate-500">No se encontraron clientes. Puedes crear la factura igual.</small>
+                            <small className="text-slate-500">No se encontraron clientes. Créalo primero en Clientes.</small>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Nombre libre si no hay cliente registrado */}
-                    {!selectedCliente && (
-                      <div className="mb-3">
-                        <Label>O escribe el nombre del cliente</Label>
-                        <Input
-                          type="text"
-                          placeholder="Nombre del cliente (opcional)"
-                          value={clienteNombre}
-                          onChange={(e) => setClienteNombre(e.target.value)}
-                        />
-                      </div>
-                    )}
-
-                    {/* Honorario */}
-                    <Label>
-                      Honorario a Facturar <span className="text-slate-400">(opcional)</span>
-                    </Label>
-                    <div className="relative mb-2">
-                      <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <Input
-                        type="text"
-                        className="pl-9"
-                        placeholder="Filtrar por nombre o número de caso..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                    {loadingHonorarios ? (
-                      <div className="py-3 text-center">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-800 border-t-transparent" />
-                      </div>
-                    ) : (
-                      <Select
-                        size={5}
-                        value={formData.honorarioId}
-                        onChange={(e) => handleInputChange('honorarioId', e.target.value)}
-                        style={{ minHeight: '130px' }}
-                      >
-                        <option value="">-- Sin honorario (factura libre) --</option>
-                        {honorariosFiltrados.map((honorario) => (
-                          <option key={honorario.id} value={honorario.id}>
-                            {honorario.caso.cliente.nombre} {honorario.caso.cliente.apellido} | {honorario.caso.numeroCaso} | {formatCurrency(honorario.valor)}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                    {honorarios.length === 0 && !loadingHonorarios && (
-                      <Alert variant="info" className="mt-2 py-2 text-sm">
-                        No hay honorarios pendientes. Puedes crear la factura sin asociar un honorario.
-                      </Alert>
-                    )}
-                    {honorariosFiltrados.length === 0 && searchTerm && (
-                      <Alert variant="info" className="mt-2 py-2 text-sm">
-                        No se encontraron honorarios con ese criterio de búsqueda.
-                      </Alert>
-                    )}
                   </div>
                   <div>
                     <Label>Fecha de Vencimiento *</Label>
@@ -571,38 +508,43 @@ function NuevaFacturaContent() {
                             onChange={(e) => handleInputChange('tasaInteres', parseFloat(e.target.value) || 0)}
                           />
                         </div>
+                        <div>
+                          <Label className="text-xs">Valor pagado (abono inicial)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={total}
+                            step="0.01"
+                            placeholder="0"
+                            value={formData.valorPagado}
+                            onChange={(e) => handleInputChange('valorPagado', e.target.value)}
+                          />
+                        </div>
+                        {Number(formData.valorPagado) > 0 && (
+                          <div>
+                            <Label className="text-xs">Método del pago</Label>
+                            <Select value={formData.metodoPago} onChange={(e) => handleInputChange('metodoPago', e.target.value)}>
+                              <option value="EFECTIVO">Efectivo</option>
+                              <option value="TRANSFERENCIA">Transferencia</option>
+                              <option value="CONSIGNACION">Consignación</option>
+                              <option value="CHEQUE">Cheque</option>
+                              <option value="TARJETA_CREDITO">Tarjeta de crédito</option>
+                              <option value="TARJETA_DEBITO">Tarjeta de débito</option>
+                            </Select>
+                          </div>
+                        )}
+                        {saldoFinanciar > 0 && formData.numeroCuotas >= 2 && (
+                          <p className="mb-0 text-xs text-slate-500">
+                            Saldo a financiar: <strong>{formatCurrency(saldoFinanciar)}</strong> en {formData.numeroCuotas} cuotas.
+                          </p>
+                        )}
+                        {Number(formData.valorPagado) > total && (
+                          <p className="mb-0 text-xs text-red-600">El valor pagado no puede superar el total de la factura.</p>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
-
-                {honorarioSeleccionado && (
-                  <div className="mt-3">
-                    <div className="rounded-lg bg-slate-50 p-3">
-                      <h6 className="mb-2 font-semibold text-slate-700">Información del Honorario Seleccionado</h6>
-                      <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
-                        <div>
-                          <div className="mb-1 flex items-center gap-2">
-                            <User size={14} className="text-slate-400" />
-                            <span className="font-semibold">Cliente:</span>
-                            <span>{honorarioSeleccionado.caso.cliente.nombre} {honorarioSeleccionado.caso.cliente.apellido}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <FileText size={14} className="text-slate-400" />
-                            <span className="font-semibold">Caso:</span>
-                            <span>{honorarioSeleccionado.caso.numeroCaso}</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-teal-700">
-                            Valor: {formatCurrency(honorarioSeleccionado.valor)}
-                          </div>
-                          <div className="text-slate-500">Tipo: {honorarioSeleccionado.tipo}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div className="mt-3">
                   <Label>Observaciones</Label>
@@ -638,14 +580,25 @@ function NuevaFacturaContent() {
                     </div>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
                       <div className="md:col-span-6">
-                        <Label>Descripción *</Label>
-                        <Input
-                          type="text"
-                          value={item.descripcion}
-                          onChange={(e) => handleItemChange(index, 'descripcion', e.target.value)}
-                          placeholder="Descripción del servicio o producto"
+                        <Label>Producto o servicio *</Label>
+                        <Select
+                          value={item.productoId}
+                          onChange={(e) => seleccionarProducto(index, e.target.value)}
                           required
-                        />
+                        >
+                          <option value="">-- Selecciona --</option>
+                          {productos.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.nombre} ({p.tipo === 'SERVICIO' ? 'Servicio' : 'Producto'}) - {formatCurrency(Number(p.precio))}
+                            </option>
+                          ))}
+                        </Select>
+                        {!loadingProductos && productos.length === 0 && (
+                          <small className="text-slate-500">
+                            No hay productos ni servicios.{' '}
+                            <Link href="/facturacion/productos" className="text-blue-800">Créalos aquí</Link>.
+                          </small>
+                        )}
                       </div>
                       <div className="md:col-span-2">
                         <Label>Cantidad</Label>
@@ -688,13 +641,11 @@ function NuevaFacturaContent() {
               </CardHeader>
               <CardBody>
                 {/* Cliente en resumen */}
-                {(selectedCliente || clienteNombre) && (
+                {selectedCliente && (
                   <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
                     <div className="text-sm text-slate-500">Cliente</div>
                     <div className="font-semibold text-slate-800">
-                      {selectedCliente
-                        ? `${selectedCliente.nombre} ${selectedCliente.apellido || ''}`
-                        : clienteNombre}
+                      {selectedCliente.nombre} {selectedCliente.apellido || ''}
                     </div>
                   </div>
                 )}
@@ -702,9 +653,20 @@ function NuevaFacturaContent() {
                   <span>Subtotal:</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
+                <label htmlFor="ivaActivado" className="mb-2 flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    id="ivaActivado"
+                    type="checkbox"
+                    checked={ivaActivado}
+                    onChange={(e) => setIvaActivado(e.target.checked)}
+                  />
+                  Aplicar IVA (19%)
+                </label>
                 <div className="mb-2 flex justify-between">
-                  <span>IVA (19%):</span>
-                  <span>{formatCurrency(impuestos)}</span>
+                  <span>IVA:</span>
+                  <span className={cn(!ivaActivado && 'text-slate-400')}>
+                    {ivaActivado ? formatCurrency(impuestos) : formatCurrency(0)}
+                  </span>
                 </div>
                 <hr className="my-3 border-slate-200" />
                 <div className="flex justify-between">

@@ -157,18 +157,26 @@ export default function CarteraPage() {
             Gestión de facturas financiadas y financiación
           </p>
         </div>
+        <div className="flex gap-2">
+          <Link href="/cartera/historial">
+            <Button variant="outline">Historial</Button>
+          </Link>
+          <Link href="/cartera/pagos-masivos">
+            <Button variant="outline">Pagos masivos</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         {statCards.map((stat) => (
           <Card key={stat.label} className={`${stat.bg} border-0 text-white`}>
-            <CardBody>
-              <div className="flex items-center">
-                <stat.icon size={32} className="mr-3" />
-                <div>
-                  <div className="text-xl font-bold">{stat.value}</div>
-                  <small>{stat.label}</small>
+            <CardBody className="px-3 py-2">
+              <div className="flex items-center gap-2">
+                <stat.icon size={20} className="shrink-0" />
+                <div className="min-w-0">
+                  <div className="truncate text-base font-bold leading-tight">{stat.value}</div>
+                  <small className="text-xs opacity-90">{stat.label}</small>
                 </div>
               </div>
             </CardBody>
@@ -192,10 +200,9 @@ export default function CarteraPage() {
             </div>
             <div className="md:col-span-3">
               <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-                <option value="TODAS">Todas las facturas financiadas</option>
+                <option value="TODAS">Todas con saldo</option>
                 <option value="PROXIMAS">Por vencer/al día</option>
                 <option value="VENCIDAS">Vencidos</option>
-                <option value="PAGADAS">Pagados</option>
               </Select>
             </div>
             <div className="text-right text-slate-500 md:col-span-5">
@@ -217,7 +224,7 @@ export default function CarteraPage() {
                 <th className="px-4 py-3 font-semibold">Modalidad</th>
                 <th className="px-4 py-3 font-semibold">Total</th>
                 <th className="px-4 py-3 font-semibold">Saldo</th>
-                <th className="px-4 py-3 font-semibold">Vencimiento</th>
+                <th className="px-4 py-3 font-semibold" title="Fecha de la última cuota pendiente">Vencimiento</th>
                 <th className="px-4 py-3 font-semibold">Estado</th>
                 <th className="px-4 py-3 font-semibold">Acciones</th>
               </tr>
@@ -276,7 +283,7 @@ export default function CarteraPage() {
                     <td className="px-4 py-3 align-middle">
                       <div>{new Date(factura.fechaVencimiento).toLocaleDateString()}</div>
                       {factura.diasVencida > 0 && (
-                        <small className="text-red-600">Vencida hace {factura.diasVencida} días</small>
+                        <small className="text-red-600">Cuota vencida hace {factura.diasVencida} días</small>
                       )}
                     </td>
                     <td className="px-4 py-3 align-middle">

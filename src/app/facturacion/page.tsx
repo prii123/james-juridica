@@ -29,20 +29,7 @@ interface Factura {
   estado: 'GENERADA' | 'ENVIADA' | 'PAGADA' | 'VENCIDA' | 'ANULADA'
   modalidadPago: 'CONTADO' | 'FINANCIADO'
   observaciones?: string
-  honorario: {
-    id: string
-    tipo: string
-    caso: {
-      id: string
-      numeroCaso: string
-      cliente: {
-        id: string
-        nombre: string
-        apellido?: string
-        email: string
-      }
-    }
-  } | null
+  caso?: { id: string; numeroCaso: string } | null
   cliente?: {
     id: string
     nombre: string
@@ -144,12 +131,20 @@ export default function FacturacionPage() {
             Gestión de facturas y pagos del sistema jurídico
           </p>
         </div>
-        <Link href="/facturacion/nueva">
-          <Button>
-            <Plus size={16} />
-            Nueva Factura
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/facturacion/masiva">
+            <Button variant="outline">Carga masiva</Button>
+          </Link>
+          <Link href="/facturacion/productos">
+            <Button variant="outline">Productos y servicios</Button>
+          </Link>
+          <Link href="/facturacion/nueva">
+            <Button>
+              <Plus size={16} />
+              Nueva Factura
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
@@ -235,21 +230,17 @@ export default function FacturacionPage() {
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <div className="font-semibold text-slate-800">
-                            {factura.honorario
-                              ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
-                              : factura.cliente
-                                ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
-                                : factura.clienteNombre || '—'}
+                            {factura.cliente
+                              ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+                              : factura.clienteNombre || '—'}
                           </div>
                           <div className="text-xs text-slate-500">
-                            {factura.honorario?.caso.cliente.email
-                              ?? factura.cliente?.email
-                              ?? '—'}
+                            {factura.cliente?.email ?? '—'}
                           </div>
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <Badge variant="outline">
-                            {factura.honorario?.caso.numeroCaso ?? '—'}
+                            {factura.caso?.numeroCaso ?? '—'}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 align-middle">

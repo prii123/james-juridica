@@ -68,7 +68,7 @@ export class CasosRepository {
             documentos: true,
             actuaciones: true,
             audiencias: true,
-            honorarios: true
+            facturas: true
           }
         }
       }
@@ -169,7 +169,7 @@ export class CasosRepository {
               documentos: true,
               actuaciones: true,
               audiencias: true,
-              honorarios: true
+              facturas: true
             }
           }
         },

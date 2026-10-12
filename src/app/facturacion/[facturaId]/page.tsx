@@ -31,23 +31,7 @@ interface Factura {
   estado: 'GENERADA' | 'ENVIADA' | 'PAGADA' | 'VENCIDA' | 'ANULADA'
   observaciones?: string
   ivaActivado?: boolean
-  honorario: {
-    id: string
-    tipo: string
-    valor: number
-    caso: {
-      id: string
-      numeroCaso: string
-      cliente: {
-        id: string
-        nombre: string
-        apellido?: string
-        email: string
-        telefono: string
-        documento: string
-      }
-    }
-  } | null
+  caso?: { id: string; numeroCaso: string } | null
   cliente: {
     id: string
     nombre: string
@@ -206,11 +190,8 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
 
   const getClienteDisplay = () => {
     if (!factura) return ''
-    if (factura.honorario) {
-      return `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido} - ${factura.honorario.caso.numeroCaso}`
-    }
     if (factura.cliente) {
-      return `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+      return `${factura.cliente.nombre} ${factura.cliente.apellido || ''}${factura.caso ? ` - ${factura.caso.numeroCaso}` : ''}`
     }
     if (factura.clienteNombre) {
       return factura.clienteNombre
@@ -416,24 +397,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
           <Card>
             <CardHeader><CardTitle>Información del Cliente</CardTitle></CardHeader>
             <CardBody>
-              {factura.honorario ? (
-                <>
-                  <div className="mb-2 flex items-center gap-2">
-                    <User size={16} className="text-slate-400" />
-                    <span className="font-semibold text-slate-800">
-                      {factura.honorario.caso.cliente.nombre} {factura.honorario.caso.cliente.apellido}
-                    </span>
-                  </div>
-                  <div className="mb-1 text-sm text-slate-500">
-                    <div><strong>Email:</strong> {factura.honorario.caso.cliente.email}</div>
-                    <div><strong>Teléfono:</strong> {factura.honorario.caso.cliente.telefono}</div>
-                    <div><strong>Documento:</strong> {factura.honorario.caso.cliente.documento}</div>
-                  </div>
-                  <div className="mt-3">
-                    <Badge variant="outline">Caso: {factura.honorario.caso.numeroCaso}</Badge>
-                  </div>
-                </>
-              ) : factura.cliente ? (
+              {factura.cliente ? (
                 <>
                   <div className="mb-2 flex items-center gap-2">
                     <User size={16} className="text-slate-400" />
@@ -532,13 +496,11 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
         <EnviarFacturaModal
           facturaId={params.facturaId}
           tipo="factura"
-          clienteNombre={factura.honorario
-            ? `${factura.honorario.caso.cliente.nombre} ${factura.honorario.caso.cliente.apellido}`
-            : factura.cliente
-              ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
-              : factura.clienteNombre || 'Sin cliente'}
-          email={factura.honorario?.caso?.cliente?.email || factura.cliente?.email || ''}
-          telefono={factura.honorario?.caso?.cliente?.telefono || factura.cliente?.telefono || ''}
+          clienteNombre={factura.cliente
+            ? `${factura.cliente.nombre} ${factura.cliente.apellido || ''}`
+            : factura.clienteNombre || 'Sin cliente'}
+          email={factura.cliente?.email || ''}
+          telefono={factura.cliente?.telefono || ''}
           onClose={() => setShowSendModal(false)}
         />
       )}

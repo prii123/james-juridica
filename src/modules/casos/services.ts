@@ -73,11 +73,11 @@ export class CasosService {
       existingCaso._count.documentos > 0 ||
       existingCaso._count.actuaciones > 0 ||
       existingCaso._count.audiencias > 0 ||
-      existingCaso._count.honorarios > 0
+      existingCaso._count.facturas > 0
     )
 
     if (hasRelations) {
-      throw new Error('No se puede eliminar un caso que tiene documentos, actuaciones, audiencias u honorarios asociados')
+      throw new Error('No se puede eliminar un caso que tiene documentos, actuaciones, audiencias o facturas asociadas')
     }
 
     return await this.repository.delete(id)
@@ -178,12 +178,10 @@ export class CasosService {
   async getCasoSummary(casoId: string) {
     const caso = await this.getCasoById(casoId)
     
-    const [actuacionesPendientes, proximasAudiencias, honorariosPendientes] = await Promise.all([
+    const [actuacionesPendientes, proximasAudiencias] = await Promise.all([
       // Obtener actuaciones pendientes (esto requiere el repositorio de actuaciones)
       Promise.resolve([]), // Placeholder
       // Obtener próximas audiencias (esto requiere el repositorio de audiencias) 
-      Promise.resolve([]), // Placeholder
-      // Obtener honorarios pendientes (esto requiere el repositorio de honorarios)
       Promise.resolve([]) // Placeholder
     ])
 
@@ -191,7 +189,6 @@ export class CasosService {
       caso,
       actuacionesPendientes: actuacionesPendientes.length,
       proximasAudiencias: proximasAudiencias.length,
-      honorariosPendientes: honorariosPendientes.length,
       // Más métricas según sea necesario
     }
   }

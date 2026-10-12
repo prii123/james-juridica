@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
-import { UserCheck, Search, Eye, Edit, Briefcase, FileText, Receipt, ChevronLeft, ChevronRight } from 'lucide-react'
+import { UserCheck, Search, Eye, Edit, Briefcase, FileText, Receipt, ChevronLeft, ChevronRight, UserPlus, Upload } from 'lucide-react'
+import { NuevoClienteModal, CargaMasivaModal } from './ClienteModales'
 import { TipoPersona } from '@prisma/client'
 import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Input, Select, Spinner, Alert } from '@/components/ui'
 
@@ -30,6 +31,7 @@ export default function ClientesPage() {
   const [search, setSearch] = useState('')
   const [estado, setEstado] = useState<EstadoFiltro>('activos')
   const [page, setPage] = useState(1)
+  const [modal, setModal] = useState<'nuevo' | 'masivo' | null>(null)
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20 })
 
   useEffect(() => {
@@ -68,11 +70,21 @@ export default function ClientesPage() {
     <>
       <Breadcrumb items={[{ label: 'Clientes' }]} />
 
-      <div className="mb-4">
-        <h1 className="mb-1 text-2xl font-bold text-slate-800">Clientes</h1>
-        <p className="mb-0 text-slate-500">
-          Directorio de clientes: se crean automáticamente al calificar un lead o al aceptar una radicación.
-        </p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="mb-1 text-2xl font-bold text-slate-800">Clientes</h1>
+          <p className="mb-0 text-slate-500">
+            Directorio de clientes: se crean al calificar un lead, al aceptar una radicación, o manualmente desde aquí.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setModal('masivo')}>
+            <Upload size={16} /> Carga masiva
+          </Button>
+          <Button onClick={() => setModal('nuevo')}>
+            <UserPlus size={16} /> Nuevo cliente
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-4">
@@ -209,6 +221,9 @@ export default function ClientesPage() {
           )}
         </CardBody>
       </Card>
+
+      {modal === 'nuevo' && <NuevoClienteModal onClose={() => setModal(null)} onCreated={fetchClientes} />}
+      {modal === 'masivo' && <CargaMasivaModal onClose={() => setModal(null)} onCreated={fetchClientes} />}
     </>
   )
 }

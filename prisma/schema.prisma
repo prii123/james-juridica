@@ -269,7 +269,7 @@ model Caso {
   observaciones     String?
   // 0 = sin facturar, 1 = ya se le generó una factura. Int en vez de Boolean por pedido
   // explícito (tinyint/int); se guarda en el caso porque un caso puede facturarse sin pasar
-  // por un Honorario (ver Factura.casoId).
+  // por una factura directa (ver Factura.casoId).
   facturado         Int       @default(0)
 
   // Relaciones
@@ -288,7 +288,6 @@ model Caso {
   documentos        Documento[]
   actuaciones       Actuacion[]
   audiencias        Audiencia[]
-  honorarios        Honorario[]
   facturas          Factura[]
   procesosLiquidacion ProcesoLiquidacion[]
 
@@ -393,62 +392,6 @@ model Documento {
   @@map("documentos")
 }
 
-// ========================================
-// HONORARIOS → FACTURACIÓN → CARTERA
-// ========================================
-
-// REGLA: Honorarios se generan tras respuesta positiva
-model Honorario {
-  id              String    @id @default(cuid())
-  tipo            TipoHonorario
-  modalidadPago   ModalidadPago
-  valor           Decimal   @db.Decimal(10, 2)
-  estado          EstadoHonorario @default(PENDIENTE)
-  fechaVencimiento DateTime?
-  fechaPago       DateTime?
-  observaciones   String?
-  
-  // Para honorarios financiados
-  numeroCuotas    Int?
-  valorCuota      Decimal?  @db.Decimal(10, 2)
-  
-  // Relaciones opcionales - Puede pertenecer a un caso o crearse directamente
-  casoId          String?
-  caso            Caso?     @relation(fields: [casoId], references: [id])
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  // Relaciones inversas
-  cuotas          CuotaHonorario[]
-  facturas        Factura[]
-  cartera         Cartera[]
-  
-  @@map("honorarios")
-}
-
-model CuotaHonorario {
-  id              String    @id @default(cuid())
-  numeroCuota     Int
-  valor           Decimal   @db.Decimal(10, 2)
-  fechaVencimiento DateTime
-  fechaPago       DateTime?
-  estado          EstadoCuota @default(PENDIENTE)
-  observaciones   String?
-  
-  // Relaciones
-  honorarioId     String
-  honorario       Honorario @relation(fields: [honorarioId], references: [id], onDelete: Cascade)
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  @@map("cuotas_honorarios")
-}
-
-// REGLA: Facturación nace de honorarios
 model Factura {
   id              String    @id @default(cuid())
   numero          String    @unique
@@ -467,13 +410,11 @@ model Factura {
   valorCuota      Decimal?  @db.Decimal(10, 2) // Valor de cada cuota
   tasaInteres     Decimal?  @db.Decimal(6, 4) // Tasa de interés mensual (hasta 99.9999%)
   
-  // Relaciones opcionales - Puede nacer de un honorario o crearse directamente
-  honorarioId     String?
-  honorario       Honorario? @relation(fields: [honorarioId], references: [id])
+  // Relaciones opcionales
   clienteId       String?
   cliente         Cliente?   @relation(fields: [clienteId], references: [id])
-  clienteNombre   String?    // Nombre del cliente cuando no hay cliente registrado ni honorario
-  // Caso que se factura cuando no se pasa por un Honorario (facturación directa a un cliente).
+  clienteNombre   String?    // Nombre del cliente cuando no hay cliente registrado
+  // Caso que se factura (facturación directa a un cliente).
   casoId          String?
   caso            Caso?      @relation(fields: [casoId], references: [id])
   creadoPorId     String
@@ -502,8 +443,34 @@ model ItemFactura {
   // Relaciones
   facturaId       String
   factura         Factura   @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  // Producto/servicio del catálogo del que salió el item (la descripción y el valor se copian
+  // al item, así que cambiar el catálogo después no altera facturas ya emitidas).
+  productoId      String?
+  producto        Producto? @relation(fields: [productoId], references: [id])
   
   @@map("items_factura")
+}
+
+// Catálogo de productos y servicios que se seleccionan al crear una factura.
+model Producto {
+  id              String    @id @default(cuid())
+  nombre          String
+  tipo            TipoProducto @default(SERVICIO)
+  descripcion     String?
+  precio          Decimal   @db.Decimal(10, 2)
+  activo          Boolean   @default(true)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  items           ItemFactura[]
+
+  @@map("productos")
+}
+
+enum TipoProducto {
+  PRODUCTO
+  SERVICIO
 }
 
 // Modelo para cuotas de facturas financiadas
@@ -557,7 +524,7 @@ model PagoCuota {
   @@map("pagos_cuotas")
 }
 
-// REGLA: Cartera nace si honorarios son financiados o facturas son a crédito
+// REGLA: Cartera nace de facturas a crédito
 model Cartera {
   id              String    @id @default(cuid())
   concepto        String
@@ -568,9 +535,7 @@ model Cartera {
   estado          EstadoCartera @default(ACTIVA)
   observaciones   String?
   
-  // Relaciones - Cartera nace de honorarios financiados O facturas a crédito
-  honorarioId     String?
-  honorario       Honorario? @relation(fields: [honorarioId], references: [id])
+  // Relaciones - Cartera nace de facturas a crédito
   facturaId       String?
   factura         Factura?   @relation(fields: [facturaId], references: [id])
   
@@ -841,23 +806,9 @@ enum ResultadoAudiencia {
   PENDIENTE
 }
 
-enum TipoHonorario {
-  ASESORIA
-  REPRESENTACION
-  TRAMITE
-  GESTION_COBRANZA
-}
-
 enum ModalidadPago {
   CONTADO
   FINANCIADO
-}
-
-enum EstadoHonorario {
-  PENDIENTE
-  PAGADO
-  VENCIDO
-  CANCELADO
 }
 
 enum EstadoCuota {

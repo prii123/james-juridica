@@ -17,6 +17,18 @@ export interface ClienteFilters {
   estado?: 'activos' | 'inactivos' | 'todos'
 }
 
+export interface NuevoClienteData {
+  nombre: string
+  apellido?: string | null
+  email: string
+  telefono: string
+  documento: string
+  tipoPersona?: string
+  empresa?: string | null
+  direccion?: string | null
+  ciudad?: string | null
+}
+
 export interface UpdateClienteData {
   nombre?: string
   apellido?: string | null
@@ -125,6 +137,53 @@ export class ClientesService {
     })
     if (!cliente) throw new Error('Cliente no encontrado')
     return cliente
+  }
+
+  /** Crea un cliente a mano. A diferencia de obtenerOCrear, falla si el email o documento ya existen. */
+  async crear(data: NuevoClienteData) {
+    const nombre = data.nombre?.trim()
+    const email = data.email?.trim().toLowerCase()
+    const telefono = data.telefono?.trim()
+    const documento = data.documento?.trim()
+    if (!nombre || !email || !telefono || !documento) {
+      throw new Error('Nombre, email, teléfono y documento son requeridos')
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error('El email no es válido')
+
+    if (await prisma.cliente.findUnique({ where: { email } })) throw new Error('Ya existe un cliente con ese email')
+    if (await prisma.cliente.findUnique({ where: { documento } })) throw new Error('Ya existe un cliente con ese documento')
+
+    return prisma.cliente.create({
+      data: {
+        nombre,
+        apellido: data.apellido?.trim() || undefined,
+        email,
+        telefono,
+        documento,
+        tipoPersona: data.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL',
+        empresa: data.empresa?.trim() || undefined,
+        direccion: data.direccion?.trim() || undefined,
+        ciudad: data.ciudad?.trim() || undefined,
+      },
+    })
+  }
+
+  /**
+   * Creación masiva: procesa fila por fila y no se detiene en los errores. Devuelve cuántos se
+   * crearon y el detalle (fila 1-based, sin contar el encabezado) de los que se rechazaron.
+   */
+  async crearMasivo(filas: NuevoClienteData[]) {
+    const errores: { fila: number; email?: string; error: string }[] = []
+    let creados = 0
+    for (let i = 0; i < filas.length; i++) {
+      try {
+        await this.crear(filas[i])
+        creados++
+      } catch (e: any) {
+        errores.push({ fila: i + 1, email: filas[i]?.email, error: e.message })
+      }
+    }
+    return { total: filas.length, creados, errores }
   }
 
   async actualizar(id: string, data: UpdateClienteData) {

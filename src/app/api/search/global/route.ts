@@ -122,16 +122,12 @@ export async function GET(request: NextRequest) {
           OR: [
             { numero: { contains: query, mode: 'insensitive' } },
             {
-              honorario: {
-                caso: {
-                  cliente: {
-                    OR: [
-                      { nombre: { contains: query, mode: 'insensitive' } },
-                      { apellido: { contains: query, mode: 'insensitive' } },
-                      { documento: { contains: query, mode: 'insensitive' } }
-                    ]
-                  }
-                }
+              cliente: {
+                OR: [
+                  { nombre: { contains: query, mode: 'insensitive' } },
+                  { apellido: { contains: query, mode: 'insensitive' } },
+                  { documento: { contains: query, mode: 'insensitive' } }
+                ]
               }
             }
           ]
@@ -143,19 +139,10 @@ export async function GET(request: NextRequest) {
           estado: true,
           fecha: true,
           modalidadPago: true,
-          honorario: {
+          cliente: {
             select: {
-              caso: {
-                select: {
-                  numeroCaso: true,
-                  cliente: {
-                    select: {
-                      nombre: true,
-                      apellido: true
-                    }
-                  }
-                }
-              }
+              nombre: true,
+              apellido: true
             }
           }
         },
@@ -221,7 +208,7 @@ export async function GET(request: NextRequest) {
         id: factura.id,
         tipo: 'factura',
         titulo: factura.numero,
-        subtitulo: `${factura.honorario?.caso?.cliente?.nombre ?? ''} ${factura.honorario?.caso?.cliente?.apellido ?? ''}`.trim(),
+        subtitulo: `${factura.cliente?.nombre ?? ''} ${factura.cliente?.apellido ?? ''}`.trim(),
         estado: factura.estado,
         detalles: `$${Number(factura.total).toLocaleString()} • ${factura.modalidadPago}`,
         url: `/facturacion/${factura.id}`

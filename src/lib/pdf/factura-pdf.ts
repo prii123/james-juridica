@@ -11,19 +11,7 @@ interface FacturaData {
   estado: string
   ivaActivado: boolean
   observaciones?: string | null
-  honorario?: {
-    tipo: string
-    caso: {
-      numeroCaso: string
-      cliente: {
-        nombre: string
-        apellido?: string | null
-        documento: string
-        email: string
-        telefono: string
-      }
-    }
-  } | null
+  caso?: { numeroCaso: string } | null
   cliente?: {
     nombre: string
     apellido?: string | null
@@ -139,7 +127,7 @@ export async function generateFacturaPDF(factura: FacturaData): Promise<Uint8Arr
   text('DATOS DEL CLIENTE', MARGIN, y, { font: fontBold, size: 12 })
   y -= 20
 
-  const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+  const clienteData = factura.cliente
   const clienteFullName = clienteData
     ? `${clienteData.nombre} ${clienteData.apellido ?? ''}`.trim()
     : factura.clienteNombre || 'No especificado'
@@ -161,9 +149,9 @@ export async function generateFacturaPDF(factura: FacturaData): Promise<Uint8Arr
     y -= 14
   }
 
-  if (factura.honorario?.caso?.numeroCaso) {
+  if (factura.caso?.numeroCaso) {
     text('Caso:', colLabel1, y, { font: fontBold })
-    text(factura.honorario.caso.numeroCaso, colVal1, y)
+    text(factura.caso.numeroCaso, colVal1, y)
     y -= 14
   }
 

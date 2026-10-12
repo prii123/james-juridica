@@ -96,13 +96,13 @@ export default function FinanciacionPage() {
         valorCuota: data.valorCuota ? Number(data.valorCuota) : undefined,
         tasaInteres: data.tasaInteres ? Number(data.tasaInteres) : undefined,
         cliente: {
-          nombre: data.honorario?.caso?.cliente?.nombre ?? data.cliente?.nombre ?? data.clienteNombre ?? '',
-          apellido: data.honorario?.caso?.cliente?.apellido ?? data.cliente?.apellido ?? '',
-          email: data.honorario?.caso?.cliente?.email ?? data.cliente?.email ?? '',
-          telefono: data.honorario?.caso?.cliente?.telefono ?? data.cliente?.telefono ?? ''
+          nombre: data.cliente?.nombre ?? data.clienteNombre ?? '',
+          apellido: data.cliente?.apellido ?? '',
+          email: data.cliente?.email ?? '',
+          telefono: data.cliente?.telefono ?? ''
         },
         caso: {
-          numeroCaso: data.honorario?.caso?.numeroCaso ?? 'N/A'
+          numeroCaso: data.caso?.numeroCaso ?? 'N/A'
         }
       }
 

@@ -24,21 +24,7 @@ export async function GET(
         pagos: {
           select: { valor: true },
         },
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: {
-                  select: {
-                    nombre: true,
-                    apellido: true,
-                    documento: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: {
             nombre: true,
@@ -71,7 +57,7 @@ export async function GET(
       cuotas = calcularCuotas(saldoPendiente, numeroCuotas, tasaInteresMensual, new Date())
     }
 
-    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+    const clienteData = factura.cliente
 
     const pdfBytes = await generateFinanciacionPDF({
       numeroFactura: factura.numero,
@@ -80,7 +66,7 @@ export async function GET(
         apellido: clienteData?.apellido ?? '',
         documento: clienteData?.documento ?? '',
       },
-      caso: { numeroCaso: factura.honorario?.caso?.numeroCaso ?? '' },
+      caso: { numeroCaso: factura.caso?.numeroCaso ?? '' },
       totalFinanciado: saldoPendiente,
       numeroCuotas,
       tasaInteresMensual,

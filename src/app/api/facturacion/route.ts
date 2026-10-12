@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { requirePermission, PERMISSIONS } from '@/lib/permissions'
 import { prisma } from '@/lib/db'
+import { registrarPagoInicialYCuotas } from '@/lib/facturacion-credito'
 
 // GET /api/facturacion - Obtener todas las facturas
 export async function GET(request: NextRequest) {
@@ -25,9 +26,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       whereClause.OR = [
         { numero: { contains: search, mode: 'insensitive' } },
-        { honorario: { caso: { numeroCaso: { contains: search, mode: 'insensitive' } } } },
-        { honorario: { caso: { cliente: { nombre: { contains: search, mode: 'insensitive' } } } } },
-        { honorario: { caso: { cliente: { apellido: { contains: search, mode: 'insensitive' } } } } },
+        { caso: { numeroCaso: { contains: search, mode: 'insensitive' } } },
         { cliente: { nombre: { contains: search, mode: 'insensitive' } } },
         { cliente: { apellido: { contains: search, mode: 'insensitive' } } },
         { clienteNombre: { contains: search, mode: 'insensitive' } }
@@ -41,22 +40,6 @@ export async function GET(request: NextRequest) {
     const facturas = await prisma.factura.findMany({
       where: whereClause,
       include: {
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: {
-                  select: {
-                    id: true,
-                    nombre: true,
-                    apellido: true,
-                    email: true
-                  }
-                }
-              }
-            }
-          }
-        },
         cliente: {
           select: {
             id: true,
@@ -106,25 +89,13 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.FACTURACION.CREATE)
 
     const body = await request.json()
-    const { honorarioId, clienteId, clienteNombre, casoId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres } = body
+    const { clienteId, clienteNombre, casoId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres, ivaActivado, valorPagado, metodoPago } = body
 
     // Validar datos requeridos
     if (!fechaVencimiento || !items || items.length === 0) {
       return NextResponse.json({ 
         error: 'Datos incompletos' 
       }, { status: 400 })
-    }
-
-    // Si se proporciona honorarioId, verificar que existe
-    if (honorarioId) {
-      const honorario = await prisma.honorario.findUnique({
-        where: { id: honorarioId }
-      })
-      if (!honorario) {
-        return NextResponse.json({ 
-          error: 'Honorario no encontrado' 
-        }, { status: 404 })
-      }
     }
 
     // Si se proporciona clienteId, verificar que existe
@@ -139,7 +110,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Si se proporciona casoId (facturación directa, sin honorario), verificar que existe
+    // Si se proporciona casoId (facturación directa de un caso), verificar que existe
     if (casoId) {
       const caso = await prisma.caso.findUnique({ where: { id: casoId } })
       if (!caso) {
@@ -162,8 +133,14 @@ export async function POST(request: NextRequest) {
     const subtotal = items.reduce((sum: number, item: any) => 
       sum + (item.cantidad * item.valorUnitario), 0
     )
-    const impuestos = subtotal * 0.19 // IVA 19%
+    // IVA opcional: por defecto no se cobra (0) salvo que se active explícitamente.
+    const aplicaIva = ivaActivado === true
+    const impuestos = aplicaIva ? subtotal * 0.19 : 0
     const total = subtotal + impuestos
+
+    if (Number(valorPagado) > total + 0.01) {
+      return NextResponse.json({ error: 'El valor pagado no puede ser mayor al total de la factura' }, { status: 400 })
+    }
 
     // Determinar modalidad de pago
     const pagoEsCredito = modalidadPago === 'CREDITO'
@@ -184,7 +161,7 @@ export async function POST(request: NextRequest) {
           tasaInteres: tasaInteres || 0,
         }),
         observaciones: observaciones || '',
-        ...(honorarioId ? { honorarioId } : {}),
+        ivaActivado: aplicaIva,
         ...(clienteId ? { clienteId } : {}),
         ...(clienteNombre ? { clienteNombre } : {}),
         ...(casoId ? { casoId } : {}),
@@ -192,6 +169,7 @@ export async function POST(request: NextRequest) {
         items: {
           create: items.map((item: any) => ({
             descripcion: item.descripcion,
+            ...(item.productoId ? { productoId: item.productoId } : {}),
             cantidad: item.cantidad,
             valorUnitario: item.valorUnitario,
             valorTotal: item.cantidad * item.valorUnitario
@@ -200,15 +178,6 @@ export async function POST(request: NextRequest) {
       },
       include: {
         items: true,
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: true
-              }
-            }
-          }
-        },
         cliente: {
           select: {
             id: true,
@@ -236,7 +205,22 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Facturación directa de un caso (sin honorario): se marca como facturado para que ya no
+    // Pago inicial (valor ya pagado) y, si es a crédito, cuotas sobre el saldo restante.
+    if (pagoEsCredito || Number(valorPagado) > 0) {
+      await registrarPagoInicialYCuotas(
+        prisma,
+        { id: factura.id, total },
+        {
+          financiado: pagoEsCredito,
+          numeroCuotas,
+          tasaInteres,
+          valorPagado: Number(valorPagado) || 0,
+          metodoPago,
+        },
+      )
+    }
+
+    // Facturación de un caso: se marca como facturado para que ya no
     // aparezca al elegir cliente en una próxima factura.
     if (casoId) {
       await prisma.caso.update({ where: { id: casoId }, data: { facturado: 1 } })

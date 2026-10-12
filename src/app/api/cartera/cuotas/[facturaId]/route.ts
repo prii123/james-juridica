@@ -52,15 +52,7 @@ export async function GET(
     const factura = await prisma.factura.findUnique({
       where: { id: facturaId },
       include: {
-        honorario: {
-          include: {
-            caso: {
-              include: {
-                cliente: true
-              }
-            }
-          }
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: {
             nombre: true,
@@ -174,13 +166,13 @@ export async function GET(
         valorCuota: factura.valorCuota ? Number(factura.valorCuota) : null,
         tasaInteres: factura.tasaInteres ? Number(factura.tasaInteres) : null,
         cliente: {
-          nombre: factura.honorario?.caso?.cliente?.nombre ?? factura.cliente?.nombre ?? factura.clienteNombre ?? '',
-          apellido: factura.honorario?.caso?.cliente?.apellido ?? factura.cliente?.apellido ?? '',
-          email: factura.honorario?.caso?.cliente?.email ?? factura.cliente?.email ?? '',
-          telefono: factura.honorario?.caso?.cliente?.telefono ?? factura.cliente?.telefono ?? ''
+          nombre: factura.cliente?.nombre ?? factura.clienteNombre ?? '',
+          apellido: factura.cliente?.apellido ?? '',
+          email: factura.cliente?.email ?? '',
+          telefono: factura.cliente?.telefono ?? ''
         },
         caso: {
-          numeroCaso: factura.honorario?.caso?.numeroCaso ?? ''
+          numeroCaso: factura.caso?.numeroCaso ?? ''
         }
       },
       resumen: {

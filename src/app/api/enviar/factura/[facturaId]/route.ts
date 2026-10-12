@@ -27,9 +27,7 @@ export async function POST(
       where: { id: params.facturaId },
       include: {
         items: true,
-        honorario: {
-          include: { caso: { include: { cliente: true } } }
-        },
+        caso: { select: { id: true, numeroCaso: true } },
         cliente: {
           select: { id: true, nombre: true, apellido: true, email: true, telefono: true, documento: true }
         }
@@ -40,7 +38,7 @@ export async function POST(
       return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
     }
 
-    const clienteData = factura.honorario?.caso?.cliente || factura.cliente
+    const clienteData = factura.cliente
     const clienteNombre = clienteData
       ? `${clienteData.nombre} ${clienteData.apellido || ''}`.trim()
       : factura.clienteNombre || 'Sin cliente'
@@ -61,7 +59,7 @@ export async function POST(
         subtotal: Number(factura.subtotal),
         impuestos: Number(factura.impuestos),
         ivaActivado: factura.ivaActivado,
-        casoNumero: factura.honorario?.caso?.numeroCaso || undefined,
+        casoNumero: factura.caso?.numeroCaso || undefined,
         observaciones: factura.observaciones,
         items: factura.items.map((item) => ({
           descripcion: item.descripcion,
@@ -83,13 +81,7 @@ export async function POST(
         ivaActivado: factura.ivaActivado,
         observaciones: factura.observaciones,
         clienteNombre: factura.clienteNombre,
-        honorario: factura.honorario ? {
-          tipo: factura.honorario.tipo,
-          caso: {
-            numeroCaso: factura.honorario.caso!.numeroCaso,
-            cliente: factura.honorario.caso!.cliente,
-          }
-        } : null,
+        caso: factura.caso ? { numeroCaso: factura.caso.numeroCaso } : null,
         cliente: factura.cliente ? {
           nombre: factura.cliente.nombre,
           apellido: factura.cliente.apellido,

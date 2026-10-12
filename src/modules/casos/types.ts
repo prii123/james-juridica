@@ -76,6 +76,6 @@ export interface CasoWithRelations {
     documentos: number
     actuaciones: number
     audiencias: number
-    honorarios: number
+    facturas: number
   }
 }

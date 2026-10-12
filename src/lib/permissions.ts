@@ -85,7 +85,6 @@ export type PermissionModule =
   | 'casos'
   | 'actuaciones'
   | 'audiencias'
-  | 'honorarios'
   | 'facturacion'
   | 'cartera'
   | 'usuarios'
@@ -146,11 +145,6 @@ export const PERMISSIONS = {
     CREATE: 'audiencias.create',
     EDIT: 'audiencias.edit',
     DELETE: 'audiencias.delete',
-  },
-  HONORARIOS: {
-    VIEW: 'honorarios.view',
-    CREATE: 'honorarios.create',
-    EDIT: 'honorarios.edit',
   },
   FACTURACION: {
     VIEW: 'facturacion.view',
