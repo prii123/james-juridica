@@ -21,6 +21,8 @@ interface Factura {
   numeroCuotas?: number
   valorCuota?: number
   tasaInteres?: number
+  /** Plan de cuotas ya generado para la factura (vacío si aún no se generó). */
+  cuotasGuardadas: CuotaAmortizacion[]
   cliente: {
     nombre: string
     apellido?: string
@@ -51,12 +53,6 @@ export default function FinanciacionPage() {
   const [showSendModal, setShowSendModal] = useState(false)
   const [error, setError] = useState('')
 
-  const [formData] = useState({
-    numeroCuotas: 6,
-    tasaInteres: 2.5, // 2.5% mensual
-    fechaInicio: new Date().toISOString().split('T')[0]
-  })
-
   const [tablaCuotas, setTablaCuotas] = useState<CuotaAmortizacion[]>([])
 
   useEffect(() => {
@@ -69,7 +65,7 @@ export default function FinanciacionPage() {
     if (factura) {
       calcularCuotas()
     }
-  }, [formData, factura])
+  }, [factura])
 
   const fetchFactura = async () => {
     try {
@@ -95,6 +91,14 @@ export default function FinanciacionPage() {
         numeroCuotas: data.numeroCuotas,
         valorCuota: data.valorCuota ? Number(data.valorCuota) : undefined,
         tasaInteres: data.tasaInteres ? Number(data.tasaInteres) : undefined,
+        cuotasGuardadas: (data.cuotasFactura || []).map((c: any) => ({
+          numero: c.numeroCuota,
+          fechaVencimiento: String(c.fechaVencimiento).split('T')[0],
+          valorCuota: Number(c.valor),
+          capital: Number(c.capital),
+          interes: Number(c.interes),
+          saldo: Number(c.saldo)
+        })),
         cliente: {
           nombre: data.cliente?.nombre ?? data.clienteNombre ?? '',
           apellido: data.cliente?.apellido ?? '',
@@ -118,9 +122,18 @@ export default function FinanciacionPage() {
   const calcularCuotas = () => {
     if (!factura) return
 
+    // Si la factura ya tiene su plan de cuotas, se muestra exactamente ese (es el que se cobra).
+    if (factura.cuotasGuardadas.length > 0) {
+      setTablaCuotas(factura.cuotasGuardadas)
+      return
+    }
+
+    // Sin plan generado: se calcula con la financiación configurada en la propia factura (cuotas e
+    // interés), sin inventar valores. Si no tiene financiación configurada, es una simulación en 6
+    // cuotas sin interés.
     const monto = factura.saldoPendiente
-    const cuotas = formData.numeroCuotas
-    const tasaMensual = formData.tasaInteres / 100
+    const cuotas = factura.numeroCuotas && factura.numeroCuotas > 1 ? factura.numeroCuotas : 6
+    const tasaMensual = (factura.tasaInteres ?? 0) / 100
 
     // Sistema francés de amortización
     let valorCuota = 0
@@ -133,7 +146,7 @@ export default function FinanciacionPage() {
 
     const tabla: CuotaAmortizacion[] = []
     let saldoPendiente = monto
-    const fechaInicio = new Date(formData.fechaInicio)
+    const fechaInicio = new Date()
 
     for (let i = 1; i <= cuotas; i++) {
       const interes = saldoPendiente * tasaMensual
@@ -292,7 +305,7 @@ export default function FinanciacionPage() {
               <CardBody>
                 <div className="mb-2 flex justify-between">
                   <span>Capital:</span>
-                  <span>{formatCurrency(factura.saldoPendiente)}</span>
+                  <span>{formatCurrency(tablaCuotas.reduce((sum, c) => sum + c.capital, 0))}</span>
                 </div>
                 <div className="mb-2 flex justify-between">
                   <span>Intereses:</span>
@@ -305,7 +318,7 @@ export default function FinanciacionPage() {
                 </div>
                 <div className="mt-2 text-center">
                   <small className="text-slate-500">
-                    {formData.numeroCuotas} cuotas de ~{formatCurrency(tablaCuotas[0]?.valorCuota || 0)}
+                    {tablaCuotas.length} cuotas de ~{formatCurrency(tablaCuotas[0]?.valorCuota || 0)}
                   </small>
                 </div>
               </CardBody>

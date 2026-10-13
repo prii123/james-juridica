@@ -44,6 +44,10 @@ export async function GET(
           orderBy: {
             fecha: 'desc'
           }
+        },
+        // Plan de cuotas ya generado (si existe), para mostrarlo tal cual en Cartera.
+        cuotasFactura: {
+          orderBy: { numeroCuota: 'asc' }
         }
       }
     })
