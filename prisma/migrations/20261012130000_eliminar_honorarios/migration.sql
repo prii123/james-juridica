@@ -15,11 +15,12 @@ FROM "honorarios" h
 WHERE f."honorarioId" = h."id" AND f."casoId" IS NULL AND h."casoId" IS NOT NULL;
 
 -- 2) Se quitan las referencias al honorario (las llaves foráneas se eliminan con la columna).
-ALTER TABLE "facturas" DROP COLUMN "honorarioId";
-ALTER TABLE "cartera" DROP COLUMN "honorarioId";
+ALTER TABLE "facturas" DROP COLUMN IF EXISTS "honorarioId";
+ALTER TABLE "cartera" DROP COLUMN IF EXISTS "honorarioId";
 
 -- 3) Se borran las tablas y los tipos que solo usaban los honorarios.
-DROP TABLE "cuotas_honorarios";
-DROP TABLE "honorarios";
-DROP TYPE "TipoHonorario";
-DROP TYPE "EstadoHonorario";
+-- En algunas bases esta tabla nunca se creó: IF EXISTS evita que la migración falle por eso.
+DROP TABLE IF EXISTS "cuotas_honorarios";
+DROP TABLE IF EXISTS "honorarios";
+DROP TYPE IF EXISTS "TipoHonorario";
+DROP TYPE IF EXISTS "EstadoHonorario";

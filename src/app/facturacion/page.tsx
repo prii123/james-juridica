@@ -58,6 +58,7 @@ export default function FacturacionPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [estadoFilter, setEstadoFilter] = useState('')
+  const [totalAnuladas, setTotalAnuladas] = useState(0)
 
   useEffect(() => {
     fetchFacturas()
@@ -74,6 +75,7 @@ export default function FacturacionPage() {
       if (response.ok) {
         const data = await response.json()
         setFacturas(data.facturas || [])
+        setTotalAnuladas(data.anuladas ?? 0)
       } else {
         setError('No se pudieron cargar las facturas')
       }
@@ -132,6 +134,12 @@ export default function FacturacionPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/facturacion/anuladas">
+            <Button variant="outline">
+              Anuladas
+              {totalAnuladas > 0 && <Badge variant="secondary">{totalAnuladas}</Badge>}
+            </Button>
+          </Link>
           <Link href="/facturacion/masiva">
             <Button variant="outline">Carga masiva</Button>
           </Link>
@@ -170,7 +178,6 @@ export default function FacturacionPage() {
                 <option value="ENVIADA">Enviada</option>
                 <option value="PAGADA">Pagada</option>
                 <option value="VENCIDA">Vencida</option>
-                <option value="ANULADA">Anulada</option>
               </Select>
             </div>
             <div className="md:col-span-3">

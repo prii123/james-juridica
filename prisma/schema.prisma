@@ -401,6 +401,10 @@ model Factura {
   impuestos       Decimal   @db.Decimal(10, 2) @default(0)
   total           Decimal   @db.Decimal(10, 2)
   estado          EstadoFactura @default(GENERADA)
+  // Datos de la anulación (solo si estado = ANULADA). anuladaPorId es el id del usuario, sin FK.
+  anuladaEn       DateTime?
+  anuladaPorId    String?
+  motivoAnulacion String?
   modalidadPago   ModalidadPago @default(CONTADO)
   observaciones   String?
   ivaActivado     Boolean   @default(true)

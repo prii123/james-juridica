@@ -17,7 +17,7 @@ import {
   User,
   Printer
 } from 'lucide-react'
-import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, type BadgeProps } from '@/components/ui'
+import { Button, Card, CardHeader, CardTitle, CardBody, Badge, Alert, Spinner, Modal, Textarea, Label, type BadgeProps } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 interface Factura {
@@ -41,6 +41,9 @@ interface Factura {
     documento: string
   } | null
   clienteNombre?: string | null
+  anuladaEn?: string | null
+  motivoAnulacion?: string | null
+  anuladaPor?: { nombre: string; apellido?: string | null } | null
   creadoPor: {
     id: string
     nombre: string
@@ -77,6 +80,9 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [anulando, setAnulando] = useState(false)
+  const [motivoAnulacion, setMotivoAnulacion] = useState('')
+  const [errorAnulacion, setErrorAnulacion] = useState('')
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
 
@@ -108,8 +114,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
     const confirmMessage = {
       'ENVIADA': '¿Marcar esta factura como enviada?',
       'PAGADA': '¿Marcar esta factura como pagada?',
-      'VENCIDA': '¿Marcar esta factura como vencida?',
-      'ANULADA': '¿Estás seguro de que quieres anular esta factura? Esta acción no se puede deshacer.'
+      'VENCIDA': '¿Marcar esta factura como vencida?'
     }[nuevoEstado]
 
     if (!confirm(confirmMessage)) return
@@ -132,6 +137,34 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
       }
     } catch (error) {
       setError('Error de conexión')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  // Anular pide un motivo (obligatorio) y no se puede deshacer.
+  const confirmarAnulacion = async () => {
+    if (motivoAnulacion.trim().length < 3) {
+      setErrorAnulacion('Indica el motivo de la anulación')
+      return
+    }
+    try {
+      setUpdating(true)
+      setErrorAnulacion('')
+      const response = await fetch(`/api/facturacion/${params.facturaId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'ANULADA', motivo: motivoAnulacion.trim() }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'No se pudo anular la factura')
+      }
+      setAnulando(false)
+      setMotivoAnulacion('')
+      await fetchFactura()
+    } catch (e: any) {
+      setErrorAnulacion(e.message)
     } finally {
       setUpdating(false)
     }
@@ -236,10 +269,10 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
               <IconoEstado size={12} />
               {estadoConfig.label}
             </Badge>
-            {diasVencimiento < 0 && (
+            {factura.estado !== 'ANULADA' && diasVencimiento < 0 && (
               <Badge variant="danger">Vencida ({Math.abs(diasVencimiento)} días)</Badge>
             )}
-            {diasVencimiento >= 0 && diasVencimiento <= 7 && factura.estado !== 'PAGADA' && (
+            {diasVencimiento >= 0 && diasVencimiento <= 7 && factura.estado !== 'PAGADA' && factura.estado !== 'ANULADA' && (
               <Badge variant="warning">Vence en {diasVencimiento} días</Badge>
             )}
           </div>
@@ -262,14 +295,26 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
             {!downloadingPdf && <Download size={16} />}
             {downloadingPdf ? 'Descargando...' : 'Descargar PDF'}
           </Button>
-          <Button variant="success" onClick={() => setShowSendModal(true)}>
-            <Send size={16} />
-            Enviar
-          </Button>
+          {factura.estado !== 'ANULADA' && (
+            <Button variant="success" onClick={() => setShowSendModal(true)}>
+              <Send size={16} />
+              Enviar
+            </Button>
+          )}
         </div>
       </div>
 
       {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
+
+      {factura.estado === 'ANULADA' && (
+        <Alert variant="warning" title="Factura anulada" className="mb-4">
+          <div className="text-sm">
+            {factura.anuladaEn && <div><strong>Fecha:</strong> {new Date(factura.anuladaEn).toLocaleString('es-CO')}</div>}
+            {factura.anuladaPor && <div><strong>Anulada por:</strong> {factura.anuladaPor.nombre} {factura.anuladaPor.apellido || ''}</div>}
+            <div><strong>Motivo:</strong> {factura.motivoAnulacion || 'No se registró'}</div>
+          </div>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="space-y-4 lg:col-span-8">
@@ -453,7 +498,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
                 <Button
                   variant="outlineDanger"
                   className="justify-center"
-                  onClick={() => handleEstadoChange('ANULADA')}
+                  onClick={() => { setErrorAnulacion(''); setAnulando(true) }}
                   disabled={updating}
                 >
                   <XCircle size={16} />
@@ -482,7 +527,7 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
                     <div className={cn('absolute -left-6 top-1 h-4 w-4 rounded-full border-2 border-white', estadoConfig.dot)} />
                     <div className="ml-2">
                       <h6 className="mb-1 font-semibold text-slate-800">{estadoConfig.label}</h6>
-                      <small className="text-slate-500">{formatDate(factura.updatedAt)}</small>
+                      <small className="text-slate-500">{formatDate(factura.estado === 'ANULADA' && factura.anuladaEn ? factura.anuladaEn : factura.updatedAt)}</small>
                     </div>
                   </div>
                 )}
@@ -491,6 +536,34 @@ export default function FacturaDetailPage({ params }: { params: { facturaId: str
           </Card>
         </div>
       </div>
+
+      {anulando && (
+        <Modal
+          onClose={() => setAnulando(false)}
+          title="Anular factura"
+          icon={<XCircle size={18} />}
+          footer={
+            <>
+              <Button type="button" variant="outline" onClick={() => setAnulando(false)} disabled={updating}>Cancelar</Button>
+              <Button type="button" variant="danger" onClick={confirmarAnulacion} loading={updating}>
+                {updating ? 'Anulando...' : 'Anular factura'}
+              </Button>
+            </>
+          }
+        >
+          {errorAnulacion && <Alert variant="danger" className="mb-3">{errorAnulacion}</Alert>}
+          <p className="mb-3 text-sm text-slate-600">
+            La factura <strong>{factura.numero}</strong> pasará a la página de anuladas, dejará de contar en Cartera y no se podrá reactivar.
+          </p>
+          <Label>Motivo de la anulación *</Label>
+          <Textarea
+            rows={3}
+            value={motivoAnulacion}
+            onChange={(e) => setMotivoAnulacion(e.target.value)}
+            placeholder="Ej.: error de facturación, el cliente desistió..."
+          />
+        </Modal>
+      )}
 
       {showSendModal && factura && (
         <EnviarFacturaModal

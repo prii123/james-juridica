@@ -59,7 +59,12 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(factura)
+    // Nombre de quien la anuló (anuladaPorId no tiene relación en el esquema).
+    const anuladaPor = factura.anuladaPorId
+      ? await prisma.user.findUnique({ where: { id: factura.anuladaPorId }, select: { nombre: true, apellido: true } })
+      : null
+
+    return NextResponse.json({ ...factura, anuladaPor })
 
   } catch (error: any) {
     console.error('Error al obtener factura:', error)
@@ -119,6 +124,17 @@ export async function PATCH(
 
     if (body.estado !== undefined) {
       updateData.estado = body.estado
+
+      // Anular exige un motivo; se guarda también cuándo y quién la anuló.
+      if (body.estado === 'ANULADA') {
+        const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
+        if (motivo.length < 3) {
+          return NextResponse.json({ error: 'Indica el motivo de la anulación' }, { status: 400 })
+        }
+        updateData.motivoAnulacion = motivo
+        updateData.anuladaEn = new Date()
+        updateData.anuladaPorId = session.user.id
+      }
       
     }
 

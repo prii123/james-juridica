@@ -33,9 +33,9 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (estado) {
-      whereClause.estado = estado
-    }
+    // Las anuladas viven en su propia página (/facturacion/anuladas): salvo que se pidan
+    // explícitamente, no aparecen en el listado.
+    whereClause.estado = estado || { not: 'ANULADA' }
 
     const facturas = await prisma.factura.findMany({
       where: whereClause,
@@ -67,7 +67,18 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ facturas })
+    // Para el botón "Anuladas" de la página principal y para mostrar quién anuló cada una.
+    const anuladas = await prisma.factura.count({ where: { estado: 'ANULADA' } })
+    const idsUsuarios = Array.from(new Set(facturas.map((f) => f.anuladaPorId).filter(Boolean) as string[]))
+    const usuarios = idsUsuarios.length
+      ? await prisma.user.findMany({ where: { id: { in: idsUsuarios } }, select: { id: true, nombre: true, apellido: true } })
+      : []
+    const nombrePor = new Map(usuarios.map((u) => [u.id, `${u.nombre} ${u.apellido || ''}`.trim()]))
+
+    return NextResponse.json({
+      facturas: facturas.map((f) => ({ ...f, anuladaPorNombre: f.anuladaPorId ? nombrePor.get(f.anuladaPorId) ?? null : null })),
+      anuladas,
+    })
   } catch (error: any) {
     console.error('Error al obtener facturas:', error)
     return NextResponse.json(
