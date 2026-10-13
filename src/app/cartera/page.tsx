@@ -24,6 +24,7 @@ interface FacturaCartera {
   total: number
   saldoPendiente: number
   diasVencida: number
+  soportesPendientes: number
   estado: string
   modalidadPago: string
   numeroCuotas?: number
@@ -225,6 +226,7 @@ export default function CarteraPage() {
                 <th className="px-4 py-3 font-semibold">Total</th>
                 <th className="px-4 py-3 font-semibold">Saldo</th>
                 <th className="px-4 py-3 font-semibold" title="Fecha de la última cuota pendiente">Vencimiento</th>
+                <th className="px-4 py-3 font-semibold" title="Soportes de pago enviados por el cliente que faltan por aplicar">Soportes</th>
                 <th className="px-4 py-3 font-semibold">Estado</th>
                 <th className="px-4 py-3 font-semibold">Acciones</th>
               </tr>
@@ -232,7 +234,7 @@ export default function CarteraPage() {
             <tbody className="divide-y divide-slate-100">
               {facturas.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-5 text-center">
+                  <td colSpan={10} className="py-5 text-center">
                     <CreditCard size={48} className="mx-auto mb-2 text-slate-300" />
                     <p className="text-slate-500">No hay facturas financiadas que coincidan con los filtros</p>
                   </td>
@@ -284,6 +286,15 @@ export default function CarteraPage() {
                       <div>{new Date(factura.fechaVencimiento).toLocaleDateString()}</div>
                       {factura.diasVencida > 0 && (
                         <small className="text-red-600">Cuota vencida hace {factura.diasVencida} días</small>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      {factura.soportesPendientes > 0 ? (
+                        <Link href={`/cartera/seguimiento/${factura.id}`} title="Ver y aplicar los soportes pendientes">
+                          <Badge variant="warning">{factura.soportesPendientes} por aplicar</Badge>
+                        </Link>
+                      ) : (
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 align-middle">

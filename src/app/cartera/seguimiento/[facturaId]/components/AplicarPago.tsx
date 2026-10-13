@@ -36,8 +36,17 @@ interface DistribucionCuota {
   saldoDisponible: number
 }
 
+/** Comprobante de pago que se está aplicando: se muestra al lado del formulario. */
+interface ComprobanteAplicar {
+  id: string
+  url: string
+  tipoMime: string
+  nombreOriginal: string | null
+}
+
 interface Props {
   facturaId: string
+  comprobante?: ComprobanteAplicar
   cuotas: CuotaSeguimiento[]
   onPagoAplicado: () => void
   onCancel: () => void
@@ -48,6 +57,7 @@ const FORM_ID = 'aplicar-pago-form'
 
 export default function AplicarPago({
   facturaId,
+  comprobante,
   cuotas,
   onPagoAplicado,
   onCancel,
@@ -194,7 +204,8 @@ export default function AplicarPago({
           referencia: formData.referencia || undefined,
           observaciones: formData.observaciones || undefined,
           distribucionCuotas: distribucionFinal,
-          aplicacionAutomatica
+          aplicacionAutomatica,
+          comprobanteId: comprobante?.id
         })
       })
 
@@ -215,9 +226,9 @@ export default function AplicarPago({
   return (
     <Modal
       onClose={onCancel}
-      title="Registrar Pago"
+      title={comprobante ? 'Aplicar comprobante de pago' : 'Registrar Pago'}
       icon={<DollarSign size={20} />}
-      size="lg"
+      size={comprobante ? 'xl' : 'lg'}
       footer={
         <>
           <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
@@ -230,6 +241,31 @@ export default function AplicarPago({
         </>
       }
     >
+      <div className={comprobante ? 'grid grid-cols-1 gap-4 lg:grid-cols-2' : undefined}>
+      {comprobante && (
+        <div className="lg:sticky lg:top-0 lg:self-start">
+          <p className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">
+            Soporte de pago
+            <a href={comprobante.url} target="_blank" rel="noopener noreferrer" className="text-xs font-normal text-blue-800 hover:underline">
+              Abrir en otra pestaña
+            </a>
+          </p>
+          {comprobante.tipoMime.startsWith('image/') ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={comprobante.url}
+              alt={comprobante.nombreOriginal || 'Comprobante de pago'}
+              className="max-h-[65vh] w-full rounded-lg border border-slate-200 bg-slate-50 object-contain"
+            />
+          ) : (
+            <iframe
+              src={comprobante.url}
+              title="Comprobante de pago"
+              className="h-[65vh] w-full rounded-lg border border-slate-200"
+            />
+          )}
+        </div>
+      )}
       <form id={FORM_ID} onSubmit={handleSubmit}>
         {error && (
           <Alert variant="danger" className="mb-4">
@@ -423,6 +459,7 @@ export default function AplicarPago({
           </Card>
         )}
       </form>
+      </div>
     </Modal>
   )
 }

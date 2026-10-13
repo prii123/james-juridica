@@ -82,6 +82,8 @@ function NuevaFacturaContent() {
   const [casoId, setCasoId] = useState('')
 
   const [formData, setFormData] = useState({
+    // Fecha de creación de la factura (hoy por defecto, en hora local).
+    fecha: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
     fechaVencimiento: '',
     observaciones: '',
     modalidadPago: 'CONTADO',
@@ -263,6 +265,11 @@ function NuevaFacturaContent() {
 
     if (!selectedCliente) {
       setError('Selecciona un cliente. Si no existe, créalo primero en Clientes.')
+      return
+    }
+
+    if (!formData.fecha) {
+      setError('Ingresa la fecha de creación')
       return
     }
 
@@ -453,14 +460,23 @@ function NuevaFacturaContent() {
 
                   </div>
                   <div>
-                    <Label>Fecha de Vencimiento *</Label>
+                    <Label>Fecha de Creación *</Label>
                     <Input
                       type="date"
-                      value={formData.fechaVencimiento}
-                      onChange={(e) => handleInputChange('fechaVencimiento', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      value={formData.fecha}
+                      onChange={(e) => handleInputChange('fecha', e.target.value)}
                       required
                     />
+                    <div className="mt-3">
+                      <Label>Fecha de Vencimiento *</Label>
+                      <Input
+                        type="date"
+                        value={formData.fechaVencimiento}
+                        onChange={(e) => handleInputChange('fechaVencimiento', e.target.value)}
+                        min={formData.fecha}
+                        required
+                      />
+                    </div>
                     <div className="mt-3">
                       <Label>Modalidad de Pago</Label>
                       <div className="flex gap-2">

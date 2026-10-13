@@ -429,6 +429,7 @@ model Factura {
   pagos           Pago[]
   cartera         Cartera[] // Para facturas a crédito va a cartera
   cuotasFactura   CuotaFactura[] // Cuotas de financiación
+  comprobantesPago ComprobantePago[] // Soportes de pago (los carga el chatbot de WhatsApp)
   
   @@map("facturas")
 }
@@ -590,6 +591,36 @@ model Pago {
   updatedAt       DateTime  @updatedAt
   
   @@map("pagos")
+}
+
+// Soporte de pago (imagen/PDF) que el cliente envía por WhatsApp. Lo crea el chatbot; el archivo
+// está en un bucket S3 (s3Bucket/s3Key). Al aplicar el pago desde Cartera pasa a APROBADO.
+model ComprobantePago {
+  id              String    @id
+  clienteId       String
+  facturaId       String?
+  factura         Factura?  @relation(fields: [facturaId], references: [id])
+  telefono        String
+  waMessageId     String    @unique
+  s3Bucket        String
+  s3Key           String
+  nombreOriginal  String?
+  tipoMime        String
+  tamano          Int
+  estado          EstadoComprobante @default(PENDIENTE_REVISION)
+  observaciones   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+
+  @@index([clienteId])
+  @@index([estado])
+  @@map("comprobantes_pago")
+}
+
+enum EstadoComprobante {
+  PENDIENTE_REVISION
+  APROBADO
+  RECHAZADO
 }
 
 // Modelo de Acuerdos de Pago

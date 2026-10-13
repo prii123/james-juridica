@@ -9,6 +9,7 @@ import TimelineCuotas from './components/TimelineCuotas'
 import ResumenCuotas from './components/ResumenCuotas'
 import AplicarPago from './components/AplicarPago'
 import HistorialPagos from './components/HistorialPagos'
+import ComprobantesPago, { type ComprobanteItem } from './components/ComprobantesPago'
 import {
   ArrowLeft,
   Plus,
@@ -104,6 +105,9 @@ export default function SeguimientoCuotasPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [mostrarFormularioPago, setMostrarFormularioPago] = useState(false)
+  const [comprobantes, setComprobantes] = useState<ComprobanteItem[]>([])
+  const [comprobantesError, setComprobantesError] = useState<string | null>(null)
+  const [comprobanteAplicar, setComprobanteAplicar] = useState<ComprobanteItem | null>(null)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
 
@@ -130,6 +134,19 @@ export default function SeguimientoCuotasPage() {
       setResumen(data.resumen)
       setHistorialPagos(data.historialPagos)
 
+      // Los comprobantes son un complemento: si fallan no se bloquea el seguimiento, pero el
+      // motivo se muestra en su tarjeta en lugar de dejarla vacía.
+      try {
+        const res = await fetch(`/api/cartera/comprobantes/${facturaId}`)
+        const body = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(body.error || 'No se pudieron cargar los comprobantes')
+        setComprobantes(body.comprobantes || [])
+        setComprobantesError(null)
+      } catch (e: any) {
+        setComprobantes([])
+        setComprobantesError(e.message)
+      }
+
     } catch (error) {
       setError('Error al cargar el seguimiento de cuotas')
       console.error('Error:', error)
@@ -141,6 +158,7 @@ export default function SeguimientoCuotasPage() {
   const handlePagoAplicado = async () => {
     await fetchDatosSeguimiento()
     setMostrarFormularioPago(false)
+    setComprobanteAplicar(null)
   }
 
   const handleDownloadPDF = async () => {
@@ -262,6 +280,9 @@ export default function SeguimientoCuotasPage() {
         </div>
 
         <div className="lg:col-span-4">
+          {/* Comprobantes de pago enviados por el cliente */}
+          <ComprobantesPago comprobantes={comprobantes} error={comprobantesError} onAplicar={setComprobanteAplicar} />
+
           {/* Historial de Pagos */}
           <HistorialPagos
             pagos={historialPagos}
@@ -277,6 +298,18 @@ export default function SeguimientoCuotasPage() {
           cuotas={cuotas}
           onPagoAplicado={handlePagoAplicado}
           onCancel={() => setMostrarFormularioPago(false)}
+          formatCurrency={formatCurrency}
+        />
+      )}
+
+      {/* Modal para aplicar un comprobante de pago (muestra el soporte al lado) */}
+      {comprobanteAplicar && (
+        <AplicarPago
+          facturaId={facturaId}
+          comprobante={comprobanteAplicar}
+          cuotas={cuotas}
+          onPagoAplicado={handlePagoAplicado}
+          onCancel={() => setComprobanteAplicar(null)}
           formatCurrency={formatCurrency}
         />
       )}

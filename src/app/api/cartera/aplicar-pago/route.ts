@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
       referencia,
       observaciones,
       distribucionCuotas, // Array de { cuotaId, valorAplicado }
-      aplicacionAutomatica = false
+      aplicacionAutomatica = false,
+      comprobanteId // opcional: soporte de pago que se está aplicando; pasa a APROBADO
     } = body
 
     // Validaciones básicas
@@ -204,6 +205,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Si el pago viene de un comprobante, debe ser de esta factura y estar pendiente de revisión.
+    if (comprobanteId) {
+      const comprobante = await prisma.comprobantePago.findUnique({ where: { id: comprobanteId } })
+      if (!comprobante || comprobante.facturaId !== facturaId) {
+        return NextResponse.json({ error: 'El comprobante no corresponde a esta factura' }, { status: 400 })
+      }
+      if (comprobante.estado !== 'PENDIENTE_REVISION') {
+        return NextResponse.json({ error: 'Este comprobante ya fue procesado' }, { status: 400 })
+      }
+    }
+
     // Ejecutar la transacción
     const resultado = await prisma.$transaction(async (tx) => {
       // Crear el pago
@@ -260,6 +272,14 @@ export async function POST(request: NextRequest) {
             }
           })
         }
+      }
+
+      // El comprobante queda aprobado: ya se aplicó su pago.
+      if (comprobanteId) {
+        await tx.comprobantePago.update({
+          where: { id: comprobanteId },
+          data: { estado: 'APROBADO' }
+        })
       }
 
       return { pago, aplicaciones }

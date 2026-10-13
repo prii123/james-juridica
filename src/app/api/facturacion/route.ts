@@ -89,13 +89,24 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.FACTURACION.CREATE)
 
     const body = await request.json()
-    const { clienteId, clienteNombre, casoId, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres, ivaActivado, valorPagado, metodoPago } = body
+    const { clienteId, clienteNombre, casoId, fecha, fechaVencimiento, observaciones, items, modalidadPago, numeroCuotas, tasaInteres, ivaActivado, valorPagado, metodoPago } = body
 
     // Validar datos requeridos
     if (!fechaVencimiento || !items || items.length === 0) {
       return NextResponse.json({ 
         error: 'Datos incompletos' 
       }, { status: 400 })
+    }
+
+    // Fecha de creación: la que se indique (AAAA-MM-DD) o, si no viene, hoy. Se guarda a mediodía
+    // para que la zona horaria no la corra de día.
+    const fechaFactura = fecha ? new Date(`${String(fecha).slice(0, 10)}T12:00:00`) : new Date()
+    if (Number.isNaN(fechaFactura.getTime())) {
+      return NextResponse.json({ error: 'La fecha de creación no es válida' }, { status: 400 })
+    }
+    // Se comparan como texto AAAA-MM-DD para que la zona horaria no influya.
+    if (fecha && String(fechaVencimiento).slice(0, 10) < String(fecha).slice(0, 10)) {
+      return NextResponse.json({ error: 'La fecha de vencimiento no puede ser anterior a la fecha de creación' }, { status: 400 })
     }
 
     // Si se proporciona clienteId, verificar que existe
@@ -149,7 +160,7 @@ export async function POST(request: NextRequest) {
     const factura = await prisma.factura.create({
       data: {
         numero: numeroFactura,
-        fecha: new Date(),
+        fecha: fechaFactura,
         fechaVencimiento: new Date(fechaVencimiento),
         subtotal: subtotal,
         impuestos: impuestos,

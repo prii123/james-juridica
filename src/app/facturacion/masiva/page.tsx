@@ -9,7 +9,7 @@ import { parsearCsv, normalizar, descargarCsv } from '@/lib/csv'
 
 const CAMPOS = [
   'factura', 'clienteDocumento', 'clienteEmail', 'producto', 'cantidad', 'valorUnitario',
-  'fechaVencimiento', 'modalidadPago', 'numeroCuotas', 'tasaInteres', 'iva', 'observaciones',
+  'fecha', 'fechaVencimiento', 'modalidadPago', 'numeroCuotas', 'tasaInteres', 'iva', 'observaciones',
 ] as const
 type Campo = (typeof CAMPOS)[number]
 type Fila = Record<Campo, string>
@@ -20,6 +20,7 @@ const ALIAS: Record<string, Campo> = {
   clienteemail: 'clienteEmail', email: 'clienteEmail', correo: 'clienteEmail', emailcliente: 'clienteEmail',
   producto: 'producto', servicio: 'producto', productoservicio: 'producto', productooservicio: 'producto',
   cantidad: 'cantidad', valorunitario: 'valorUnitario', precio: 'valorUnitario',
+  fecha: 'fecha', fechafactura: 'fecha', fechacreacion: 'fecha', fechadecreacion: 'fecha',
   fechavencimiento: 'fechaVencimiento', vencimiento: 'fechaVencimiento',
   modalidadpago: 'modalidadPago', modalidad: 'modalidadPago',
   numerocuotas: 'numeroCuotas', cuotas: 'numeroCuotas', tasainteres: 'tasaInteres', tasa: 'tasaInteres',
@@ -57,10 +58,10 @@ interface Resultado {
 const PLANTILLA =
   CAMPOS.join(',') + '\n' +
   // Factura de contado con un item.
-  ',1020304050,,Asesoría jurídica,1,,2026-11-30,CONTADO,,,,,NO,\n' +
-  // Factura a crédito con dos items (comparten "A-1"), 6 cuotas, 12% mensual y abono inicial.
-  'A-1,1020304050,,Servicio de insolvencia,1,3000000,2026-12-15,CREDITO,6,1.5,500000,TRANSFERENCIA,NO,Plan de pagos\n' +
-  'A-1,,,Radicación,2,200000,,,,,,,,\n'
+  ',1020304050,,Asesoría jurídica,1,,2026-10-12,2026-11-30,CONTADO,,,NO,' + '\n' +
+  // Factura a crédito con dos items (comparten "A-1"), en 6 cuotas al 1.5% mensual.
+  'A-1,1020304050,,Servicio de insolvencia,1,3000000,2026-10-12,2026-12-15,CREDITO,6,1.5,NO,Plan de pagos' + '\n' +
+  'A-1,,,Radicación,2,200000,,,,,,,' + '\n'
 
 export default function FacturacionMasivaPage() {
   const [filas, setFilas] = useState<Fila[]>([])
@@ -202,7 +203,7 @@ export default function FacturacionMasivaPage() {
             <CardHeader><CardTitle>Columnas</CardTitle></CardHeader>
             <CardBody className="space-y-2 text-sm text-slate-600">
               <p className="mb-0"><strong>Obligatorias:</strong> <code>clienteDocumento</code> (o <code>clienteEmail</code>) y <code>producto</code>. El cliente y el producto o servicio deben existir antes.</p>
-              <p className="mb-0"><strong>Opcionales:</strong> <code>cantidad</code> (1), <code>valorUnitario</code> (precio del catálogo), <code>fechaVencimiento</code> (hoy + 30 días; AAAA-MM-DD o DD/MM/AAAA), <code>iva</code> (SI/NO, por defecto NO), <code>observaciones</code>.</p>
+              <p className="mb-0"><strong>Opcionales:</strong> <code>cantidad</code> (1), <code>valorUnitario</code> (precio del catálogo), <code>fecha</code> de creación (hoy) y <code>fechaVencimiento</code> (30 días después de la creación); formato AAAA-MM-DD o DD/MM/AAAA, <code>iva</code> (SI/NO, por defecto NO), <code>observaciones</code>.</p>
               <p className="mb-0"><strong>Crédito:</strong> <code>modalidadPago</code> = CREDITO con <code>numeroCuotas</code> (2 a 60) y, si aplica, <code>tasaInteres</code> (% mensual, 0 por defecto). Los pagos se cargan después desde Cartera → Pagos masivos.</p>
               <p className="mb-0"><strong>Varios items en una factura:</strong> repite el mismo valor en <code>factura</code>; los datos generales se toman de la primera fila del grupo. Sin ese valor, cada fila es una factura.</p>
             </CardBody>

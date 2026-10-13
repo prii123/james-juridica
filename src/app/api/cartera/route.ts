@@ -53,7 +53,9 @@ export async function GET(request: NextRequest) {
           }
         },
         pagos: true,
-        cuotasFactura: { select: { fechaVencimiento: true, estado: true } }
+        cuotasFactura: { select: { fechaVencimiento: true, estado: true } },
+        // Soportes de pago que el cliente envió y aún no se han aplicado.
+        _count: { select: { comprobantesPago: { where: { estado: 'PENDIENTE_REVISION' } } } }
       },
       orderBy: {
         createdAt: 'desc'
@@ -86,6 +88,7 @@ export async function GET(request: NextRequest) {
         total: Number(factura.total),
         saldoPendiente,
         diasVencida,
+        soportesPendientes: factura._count?.comprobantesPago ?? 0,
         estado: factura.estado,
         modalidadPago: factura.modalidadPago,
         numeroCuotas: factura.numeroCuotas ?? 1,

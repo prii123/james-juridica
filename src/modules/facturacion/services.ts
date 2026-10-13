@@ -9,6 +9,7 @@ export interface FilaFacturaMasiva {
   producto?: string
   cantidad?: string
   valorUnitario?: string
+  fecha?: string
   fechaVencimiento?: string
   modalidadPago?: string
   numeroCuotas?: string
@@ -107,12 +108,19 @@ export class FacturacionService {
     const impuestos = aplicaIva ? subtotal * 0.19 : 0
     const total = subtotal + impuestos
 
-    // Fecha de vencimiento: por defecto 30 días desde hoy.
+    // Fecha de creación: por defecto hoy.
+    let fechaFactura = fecha(cab.fecha)
+    if (limpio(cab.fecha) && !fechaFactura) throw new Error('fecha no válida (use AAAA-MM-DD o DD/MM/AAAA)')
+    if (!fechaFactura) fechaFactura = new Date()
+
+    // Fecha de vencimiento: por defecto 30 días después de la fecha de creación.
     let vencimiento = fecha(cab.fechaVencimiento)
     if (limpio(cab.fechaVencimiento) && !vencimiento) throw new Error('fechaVencimiento no válida (use AAAA-MM-DD o DD/MM/AAAA)')
     if (!vencimiento) {
-      vencimiento = new Date()
+      vencimiento = new Date(fechaFactura)
       vencimiento.setDate(vencimiento.getDate() + 30)
+    } else if (vencimiento.getTime() < new Date(fechaFactura.getFullYear(), fechaFactura.getMonth(), fechaFactura.getDate()).getTime()) {
+      throw new Error('fechaVencimiento no puede ser anterior a la fecha de creación')
     }
 
     // Modalidad: crédito exige cantidad de cuotas.
@@ -142,7 +150,7 @@ export class FacturacionService {
       const factura = await tx.factura.create({
         data: {
           numero,
-          fecha: new Date(),
+          fecha: fechaFactura,
           fechaVencimiento: vencimiento!,
           subtotal,
           impuestos,
