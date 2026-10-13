@@ -281,7 +281,7 @@ export default function SeguimientoCuotasPage() {
 
         <div className="lg:col-span-4">
           {/* Comprobantes de pago enviados por el cliente */}
-          <ComprobantesPago comprobantes={comprobantes} error={comprobantesError} onAplicar={setComprobanteAplicar} />
+          <ComprobantesPago comprobantes={comprobantes} error={comprobantesError} onAplicar={setComprobanteAplicar} onRechazado={fetchDatosSeguimiento} />
 
           {/* Historial de Pagos */}
           <HistorialPagos
