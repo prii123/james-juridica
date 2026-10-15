@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card'
@@ -17,10 +17,7 @@ import {
   MapPin,
   Scale,
   Gavel,
-  Plus,
-  RefreshCw,
-  CheckCircle2,
-  AlertCircle
+  Plus
 } from 'lucide-react'
 import { EstadoAsesoria, TipoAudiencia } from '@prisma/client'
 
@@ -89,55 +86,6 @@ export default function CalendarioPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [syncStatus, setSyncStatus] = useState<{
-    syncing: boolean
-    lastSync: Date | null
-    configured: boolean
-    message: string
-  }>({ syncing: false, lastSync: null, configured: false, message: '' })
-
-  const triggerSync = useCallback(async () => {
-    if (syncStatus.syncing) return
-    setSyncStatus(prev => ({ ...prev, syncing: true, message: 'Sincronizando con Google Calendar...' }))
-    try {
-      const res = await fetch('/api/calendario/sync', { method: 'POST' })
-      const result = await res.json()
-      if (result.success) {
-        setSyncStatus(prev => ({
-          ...prev,
-          syncing: false,
-          lastSync: new Date(),
-          message: `Sincronizado: ${result.created} creados, ${result.updated} actualizados`,
-        }))
-      } else {
-        setSyncStatus(prev => ({
-          ...prev,
-          syncing: false,
-          message: `Error: ${result.errors?.join(', ') || 'Error al sincronizar'}`,
-        }))
-      }
-    } catch {
-      setSyncStatus(prev => ({
-        ...prev,
-        syncing: false,
-        message: 'Error de conexión al sincronizar',
-      }))
-    }
-  }, [syncStatus.syncing])
-
-  useEffect(() => {
-    fetch('/api/calendario/sync')
-      .then(res => res.json())
-      .then(data => {
-        setSyncStatus(prev => ({ ...prev, configured: data.configured }))
-        if (data.configured) {
-          triggerSync()
-        }
-      })
-      .catch(() => {})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   useEffect(() => {
     fetchEvents()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,37 +223,8 @@ export default function CalendarioPage() {
           <p className="mt-1 text-sm text-slate-500">
             Visualiza y gestiona todos tus eventos: asesorías, audiencias y más
           </p>
-          {syncStatus.configured && (
-            <div className="mt-1.5 flex items-center gap-2">
-              {syncStatus.syncing ? (
-                <span className="flex items-center gap-1 text-xs text-slate-500">
-                  <RefreshCw size={12} className="animate-spin" /> Sincronizando...
-                </span>
-              ) : syncStatus.lastSync ? (
-                <span className="flex items-center gap-1 text-xs text-slate-500">
-                  <CheckCircle2 size={12} className="text-teal-700" />
-                  Última sincronización: {syncStatus.lastSync.toLocaleTimeString('es-CO')}
-                </span>
-              ) : null}
-              {syncStatus.message && !syncStatus.syncing && syncStatus.message.startsWith('Error') && (
-                <span className="flex items-center gap-1 text-xs text-red-600">
-                  <AlertCircle size={12} /> {syncStatus.message}
-                </span>
-              )}
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-2">
-          {syncStatus.configured && (
-            <Button
-              variant="outline"
-              onClick={triggerSync}
-              disabled={syncStatus.syncing}
-            >
-              <RefreshCw size={16} className={syncStatus.syncing ? 'animate-spin' : ''} />
-              Sincronizar
-            </Button>
-          )}
           <Link href="/asesorias/nueva" className={buttonVariants({ variant: 'primary' })}>
             <Plus size={16} />
             Nueva Asesoría

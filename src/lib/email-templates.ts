@@ -17,7 +17,7 @@ function formatDate(dateStr: string): string {
 const baseStyles = `
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
   .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; }
-  .header { background: #1a237e; color: #fff; padding: 24px; text-align: center; }
+  .header { background: #08265a; color: #fff; padding: 24px; text-align: center; }
   .header h1 { margin: 0; font-size: 20px; }
   .header p { margin: 4px 0 0; font-size: 12px; opacity: 0.8; }
   .content { padding: 24px; }
@@ -25,7 +25,7 @@ const baseStyles = `
   .info-table td { padding: 6px 0; font-size: 13px; }
   .info-table .label { color: #666; width: 140px; }
   .items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  .items-table th { background: #e8eaf6; padding: 8px 10px; text-align: left; font-size: 12px; color: #283593; }
+  .items-table th { background: #e1e9f6; padding: 8px 10px; text-align: left; font-size: 12px; color: #08265a; }
   .items-table td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 13px; }
   .items-table .right { text-align: right; }
   .totals { margin-top: 12px; text-align: right; }
@@ -37,7 +37,7 @@ const baseStyles = `
   .badge-pagada { background: #e8f5e9; color: #2e7d32; }
   .badge-vencida { background: #ffebee; color: #c62828; }
   .badge-parcial { background: #e3f2fd; color: #1565c0; }
-  .section-title { font-size: 16px; color: #1a237e; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #e8eaf6; }
+  .section-title { font-size: 16px; color: #08265a; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #e1e9f6; }
 `
 
 interface FacturaEmailData {
@@ -75,7 +75,7 @@ export function facturaEmailHTML(data: FacturaEmailData): string {
       <p>Sistema de Gestion Juridica</p>
     </div>
     <div class="content">
-      <h2 style="margin:0 0 16px;color:#1a237e;font-size:18px;">${data.numeroFactura}</h2>
+      <h2 style="margin:0 0 16px;color:#08265a;font-size:18px;">${data.numeroFactura}</h2>
       <table class="info-table">
         <tr><td class="label">Cliente:</td><td><strong>${data.clienteNombre}</strong>${data.casoNumero ? ` &middot; Caso ${data.casoNumero}` : ''}</td></tr>
         <tr><td class="label">Fecha Emision:</td><td>${formatDate(data.fecha)}</td></tr>

@@ -12,6 +12,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Paleta de marca: negro, azul marino (#08265A) y blanco. Bootstrap todavía se usa en páginas sin
+   migrar; se ajusta su color primario para que coincida con el resto de la interfaz. */
+:root {
+  --bs-primary: #08265a;
+  --bs-primary-rgb: 8, 38, 90;
+  --bs-link-color: #08265a;
+  --bs-link-hover-color: #061c42;
+  --bs-link-color-rgb: 8, 38, 90;
+  --bs-link-hover-color-rgb: 6, 28, 66;
+}
+.btn-primary {
+  --bs-btn-bg: #08265a;
+  --bs-btn-border-color: #08265a;
+  --bs-btn-hover-bg: #061c42;
+  --bs-btn-hover-border-color: #061c42;
+  --bs-btn-active-bg: #030f26;
+  --bs-btn-active-border-color: #030f26;
+  --bs-btn-disabled-bg: #08265a;
+  --bs-btn-disabled-border-color: #08265a;
+}
+.btn-outline-primary {
+  --bs-btn-color: #08265a;
+  --bs-btn-border-color: #08265a;
+  --bs-btn-hover-bg: #08265a;
+  --bs-btn-hover-border-color: #08265a;
+  --bs-btn-active-bg: #061c42;
+  --bs-btn-active-border-color: #061c42;
+}
+
+/* Portátiles pequeños (o con escala de Windows al 125-150 %): tamaño base de 14 px en vez de 16 px.
+   Es el único valor que hay que tocar para afinar la densidad (13px = más compacto, 15px = más holgado). */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  html {
+    font-size: 14px;
+  }
+}
+
 /* Variables CSS para consistencia */
 :root {
   --topbar-height: 80px; /* altura fija del topbar */

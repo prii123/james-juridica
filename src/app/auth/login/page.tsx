@@ -37,16 +37,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-3 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-brand-dark px-3 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-amber-400">
-            <svg className="h-8 w-8 text-slate-900" fill="currentColor" viewBox="0 0 24 24">
+          <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-soft-md">
+            <svg className="h-8 w-8 text-brand-navy" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2M21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H19C20.11 23 21 22.11 21 21V9M19 9H14V4H5V21H19V9Z" />
             </svg>
           </div>
           <h1 className="mb-2 text-2xl font-bold text-white">Insolvencia Colombia</h1>
-          <p className="text-lg font-semibold text-amber-400">Procesos de Insolvencia</p>
+          <p className="text-lg font-semibold text-blue-200">Procesos de Insolvencia</p>
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-xl">

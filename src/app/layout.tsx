@@ -7,7 +7,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Insolvencia Colombia',
+  title: 'Abogado James Tabla',
   description: 'Sistema de gestión para procesos de insolvencia en Colombia',
 }
 
